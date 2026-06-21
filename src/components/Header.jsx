@@ -1,27 +1,44 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import styles from '../styles/App.module.css';
 
-const navItems = [
-  { label: 'Inicio', href: '#inicio' },
-  { label: 'Catálogo', href: '#catalogo' },
-  { label: 'Categorías', href: '#categorias' },
-  { label: 'Sucursales', href: '#sucursales' },
-  { label: 'Noticias', href: '#noticias' },
-  { label: 'Contacto', href: '#contacto' },
+const publicNavItems = [
+  { label: 'Inicio', href: '#/' },
+  { label: 'Nuestra empresa', href: '#/empresa' },
+  { label: 'Sucursales', href: '#/sucursales' },
+  { label: 'Contacto', href: '#/contacto' },
+];
+
+const privateNavItems = [
+  { label: 'Catalogo', href: '#/catalogo' },
+  { label: 'Laboratorios', href: '#/laboratorios' },
+  { label: 'Carrito', href: '#/carrito' },
+  { label: 'Mi cuenta', href: '#/cuenta' },
 ];
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isAuthenticated, logout, user } = useAuth();
+  const { getCartItemCount } = useCart();
+  const navItems = isAuthenticated ? privateNavItems : publicNavItems;
+  const itemCount = getCartItemCount();
+
+  const handleLogout = () => {
+    logout();
+    setMenuOpen(false);
+    window.location.hash = '/';
+  };
 
   return (
     <header className={styles.header}>
-      <a className={styles.brand} href="#inicio" aria-label="Tic Toc Pharma inicio">
+      <a className={styles.brand} href={isAuthenticated ? '#/catalogo' : '#/'} aria-label="Tic Toc Pharma inicio">
         <span className={styles.brandMark} aria-hidden="true">
           TT
         </span>
         <span>
           <strong>Tic Toc Pharma</strong>
-          <small>Catálogo farmacéutico</small>
+          <small>Distribuidora farmaceutica</small>
         </span>
       </a>
 
@@ -44,13 +61,26 @@ export default function Header() {
         aria-label="Navegacion principal"
       >
         {navItems.map((item) => (
-          <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+          <a
+            key={item.href}
+            className={item.href === '#/carrito' ? styles.cartNavLink : undefined}
+            href={item.href}
+            onClick={() => setMenuOpen(false)}
+          >
             {item.label}
+            {item.href === '#/carrito' && <span className={styles.cartCount}>{itemCount}</span>}
           </a>
         ))}
-        <a className={styles.accessButton} href="#contacto" onClick={() => setMenuOpen(false)}>
-          Intranet
-        </a>
+        {isAuthenticated ? (
+          <button className={styles.logoutButton} type="button" onClick={handleLogout}>
+            Cerrar sesion
+          </button>
+        ) : (
+          <a className={styles.accessButton} href="#/login" onClick={() => setMenuOpen(false)}>
+            Iniciar sesion
+          </a>
+        )}
+        {isAuthenticated && <span className={styles.userPill}>{user.company}</span>}
       </nav>
     </header>
   );

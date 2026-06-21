@@ -1,5 +1,5 @@
 import styles from '../styles/App.module.css';
-import { presentations, productTypes } from '../data/products.js';
+import { availabilityOptions, presentations, productTypes } from '../data/products.js';
 
 export default function FilterSidebar({
   categories,
@@ -11,7 +11,7 @@ export default function FilterSidebar({
   onClearFilters,
 }) {
   return (
-    <aside className={styles.filters} aria-label="Filtros de catálogo">
+    <aside className={styles.filters} aria-label="Filtros de catalogo">
       <div className={styles.filtersHeader}>
         <h3>Filtros</h3>
         <button type="button" className={styles.textButton} onClick={onClearFilters}>
@@ -20,7 +20,22 @@ export default function FilterSidebar({
       </div>
 
       <label>
-        Categoría
+        Laboratorio
+        <select
+          value={filters.laboratory}
+          onChange={(event) => onFilterChange('laboratory', event.target.value)}
+        >
+          <option value="">Todos</option>
+          {laboratories.map((laboratory) => (
+            <option key={laboratory.id} value={laboratory.id}>
+              {laboratory.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        Categoria
         <select
           value={filters.category}
           onChange={(event) => onFilterChange('category', event.target.value)}
@@ -29,21 +44,6 @@ export default function FilterSidebar({
           {categories.map((category) => (
             <option key={category} value={category}>
               {category}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
-        Marca / laboratorio
-        <select
-          value={filters.laboratory}
-          onChange={(event) => onFilterChange('laboratory', event.target.value)}
-        >
-          <option value="">Todos</option>
-          {laboratories.map((laboratory) => (
-            <option key={laboratory} value={laboratory}>
-              {laboratory}
             </option>
           ))}
         </select>
@@ -62,7 +62,7 @@ export default function FilterSidebar({
       </label>
 
       <label>
-        Presentación
+        Presentacion
         <select
           value={filters.presentation}
           onChange={(event) => onFilterChange('presentation', event.target.value)}
@@ -77,16 +77,58 @@ export default function FilterSidebar({
       </label>
 
       <label>
-        Requiere receta
+        Clasificacion
         <select
-          value={filters.requiresPrescription}
-          onChange={(event) => onFilterChange('requiresPrescription', event.target.value)}
+          value={filters.classification}
+          onChange={(event) => onFilterChange('classification', event.target.value)}
         >
-          <option value="">Todos</option>
-          <option value="yes">Si</option>
-          <option value="no">No</option>
+          <option value="">Todas</option>
+          <option value="OTC">OTC</option>
+          <option value="RX">RX</option>
+          <option value="Material de curacion">Material de curacion</option>
+          <option value="Suplemento">Suplemento</option>
+          <option value="Naturismo">Naturismo</option>
+          <option value="Perfumeria">Perfumeria</option>
         </select>
       </label>
+
+      <label>
+        Disponibilidad
+        <select
+          value={filters.availability}
+          onChange={(event) => onFilterChange('availability', event.target.value)}
+        >
+          <option value="">Todas</option>
+          {availabilityOptions.map((availability) => (
+            <option key={availability.value} value={availability.value}>
+              {availability.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className={styles.priceRange}>
+        <label>
+          Precio minimo
+          <input
+            min="0"
+            type="number"
+            value={filters.minPrice}
+            onChange={(event) => onFilterChange('minPrice', event.target.value)}
+            placeholder="$0"
+          />
+        </label>
+        <label>
+          Precio maximo
+          <input
+            min="0"
+            type="number"
+            value={filters.maxPrice}
+            onChange={(event) => onFilterChange('maxPrice', event.target.value)}
+            placeholder="$999"
+          />
+        </label>
+      </div>
 
       <label>
         Ordenamiento
@@ -95,6 +137,7 @@ export default function FilterSidebar({
           <option value="az">A-Z</option>
           <option value="priceAsc">Precio menor a mayor</option>
           <option value="priceDesc">Precio mayor a menor</option>
+          <option value="stockDesc">Mayor existencia</option>
         </select>
       </label>
     </aside>

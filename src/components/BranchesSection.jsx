@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import BranchCard from './BranchCard.jsx';
+import { branches as defaultBranches } from '../data/branches.js';
 import styles from '../styles/App.module.css';
 
-export default function BranchesSection({ branches }) {
+export default function BranchesSection({ branches = defaultBranches }) {
   const [locationFilter, setLocationFilter] = useState('');
 
   const locations = useMemo(
@@ -14,16 +15,15 @@ export default function BranchesSection({ branches }) {
   );
 
   const visibleBranches = branches.filter(
-    (branch) =>
-      !locationFilter || branch.state === locationFilter || branch.city === locationFilter,
+    (branch) => !locationFilter || branch.state === locationFilter || branch.city === locationFilter,
   );
 
   return (
     <section className={`${styles.section} ${styles.softSection}`} id="sucursales">
       <div className={styles.sectionHeader}>
-        <p className={styles.eyebrow}>Atención cercana</p>
+        <p className={styles.eyebrow}>Atencion cercana</p>
         <h2>Sucursales</h2>
-        <p>Consulta ciudad, direccion, horario y canales de contacto por sucursal.</p>
+        <p>Consulta direccion, horario y canales de contacto de la distribuidora.</p>
       </div>
 
       <div className={styles.branchToolbar}>

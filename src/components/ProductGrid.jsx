@@ -6,7 +6,7 @@ export default function ProductGrid({ products, onViewDetails }) {
     return (
       <div className={styles.emptyState}>
         <h3>No encontramos productos con esos filtros</h3>
-        <p>Intenta cambiar la búsqueda, categoría, laboratorio o tipo de producto.</p>
+        <p>Intenta cambiar la busqueda, laboratorio, categoria, disponibilidad o rango de precio.</p>
       </div>
     );
   }

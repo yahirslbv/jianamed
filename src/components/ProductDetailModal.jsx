@@ -1,8 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useCart } from '../context/CartContext.jsx';
 import ProductVisual from './ProductVisual.jsx';
 import styles from '../styles/App.module.css';
 
+const currency = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+  maximumFractionDigits: 0,
+});
+
 export default function ProductDetailModal({ product, onClose }) {
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const { addToCart } = useCart();
+
   useEffect(() => {
     if (!product) return undefined;
 
@@ -21,9 +32,21 @@ export default function ProductDetailModal({ product, onClose }) {
     };
   }, [product, onClose]);
 
+  useEffect(() => {
+    setQuantity(1);
+    setAdded(false);
+  }, [product]);
+
   if (!product) {
     return null;
   }
+
+  const isOutOfStock = product.stock <= 0;
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+    setAdded(true);
+  };
 
   return (
     <div className={styles.modalOverlay} role="presentation" onMouseDown={onClose}>
@@ -49,9 +72,10 @@ export default function ProductDetailModal({ product, onClose }) {
                 {product.classification}
               </span>
               {product.requiresPrescription && (
-                <span className={styles.prescriptionTag}>Requiere receta médica</span>
+                <span className={styles.prescriptionTag}>Requiere receta medica</span>
               )}
             </div>
+            <p className={styles.skuText}>{product.sku}</p>
             <h2 id="product-detail-title">{product.name}</h2>
             <dl className={styles.detailList}>
               <div>
@@ -59,23 +83,23 @@ export default function ProductDetailModal({ product, onClose }) {
                 <dd>{product.activeIngredient}</dd>
               </div>
               <div>
-                <dt>Presentación</dt>
+                <dt>Laboratorio</dt>
+                <dd>{product.laboratoryName}</dd>
+              </div>
+              <div>
+                <dt>Presentacion</dt>
                 <dd>{product.presentation}</dd>
               </div>
               <div>
-                <dt>Concentración</dt>
+                <dt>Concentracion</dt>
                 <dd>{product.concentration}</dd>
               </div>
               <div>
-                <dt>Forma farmacéutica</dt>
+                <dt>Forma farmaceutica</dt>
                 <dd>{product.pharmaceuticalForm}</dd>
               </div>
               <div>
-                <dt>Laboratorio</dt>
-                <dd>{product.laboratory}</dd>
-              </div>
-              <div>
-                <dt>Categoría</dt>
+                <dt>Categoria</dt>
                 <dd>{product.category}</dd>
               </div>
               <div>
@@ -88,12 +112,44 @@ export default function ProductDetailModal({ product, onClose }) {
               </div>
               <div>
                 <dt>Disponibilidad</dt>
-                <dd>{product.availability}</dd>
+                <dd>
+                  {product.availability} · Stock {product.stock}
+                </dd>
+              </div>
+              <div>
+                <dt>Precio</dt>
+                <dd>{currency.format(product.price)}</dd>
               </div>
             </dl>
+            <p className={styles.productDescription}>{product.description}</p>
+            <div className={styles.modalCartRow}>
+              <label className={styles.quantityControl}>
+                Cantidad
+                <input
+                  min="1"
+                  type="number"
+                  value={quantity}
+                  onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
+                />
+              </label>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                disabled={isOutOfStock}
+                onClick={handleAddToCart}
+              >
+                {isOutOfStock ? 'Sin existencia' : 'Agregar al carrito'}
+              </button>
+            </div>
+            {added && (
+              <p className={styles.addedMessage} role="status">
+                Producto agregado al carrito.
+              </p>
+            )}
             <p className={styles.safetyNotice}>
-              La información mostrada es únicamente de carácter informativo. Consulte a su médico o
-              farmacéutico. No se automedique.
+              La informacion mostrada es unicamente de caracter informativo. La venta y suministro
+              de productos sujetos a regulacion se realizara unicamente conforme a los requisitos
+              aplicables.
             </p>
           </div>
         </div>

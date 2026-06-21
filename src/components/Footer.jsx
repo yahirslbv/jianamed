@@ -9,27 +9,27 @@ export default function Footer() {
         </span>
         <div>
           <strong>Tic Toc Pharma</strong>
-          <p>Consulte a su médico.</p>
+          <p>Portal B2B para clientes autorizados.</p>
         </div>
       </div>
 
       <nav aria-label="Enlaces de pie de pagina">
-        <a href="#catalogo">Catálogo</a>
-        <a href="#sucursales">Sucursales</a>
-        <a href="#contacto">Contacto</a>
-        <a href="#noticias">Noticias</a>
+        <a href="#/">Inicio</a>
+        <a href="#/empresa">Nuestra empresa</a>
+        <a href="#/sucursales">Sucursales</a>
+        <a href="#/contacto">Contacto</a>
       </nav>
 
       <div className={styles.footerLinks}>
-        <a href="#contacto">Aviso de privacidad</a>
-        <a href="#contacto">Términos y condiciones</a>
-        <a href="#contacto">Farmacovigilancia</a>
+        <a href="#/contacto">Aviso de privacidad</a>
+        <a href="#/contacto">Terminos y condiciones</a>
+        <a href="#/contacto">Farmacovigilancia</a>
       </div>
 
       <div className={styles.socialLinks} aria-label="Redes sociales">
-        <a href="#contacto">Facebook</a>
-        <a href="#contacto">Instagram</a>
-        <a href="#contacto">LinkedIn</a>
+        <a href="#/contacto">Facebook</a>
+        <a href="#/contacto">Instagram</a>
+        <a href="#/contacto">LinkedIn</a>
       </div>
     </footer>
   );

@@ -1,6 +1,9 @@
 import styles from '../styles/App.module.css';
 
 export default function ProductVisual({ product, large = false }) {
+  const visualLabel =
+    product.classification === 'Material de curacion' ? 'MC' : product.classification;
+
   return (
     <div
       className={`${styles.productVisual} ${large ? styles.productVisualLarge : ''}`}
@@ -9,7 +12,7 @@ export default function ProductVisual({ product, large = false }) {
     >
       <span className={styles.packageBack} />
       <span className={styles.packageFront}>
-        <span>{product.classification}</span>
+        <span>{visualLabel}</span>
       </span>
       <span className={styles.blister} />
     </div>

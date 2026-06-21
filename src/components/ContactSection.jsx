@@ -14,14 +14,14 @@ export default function ContactSection() {
     <section className={`${styles.section} ${styles.contactSection}`} id="contacto">
       <div className={styles.contactInfo}>
         <p className={styles.eyebrow}>Contacto</p>
-        <h2>Atención farmacéutica y consultas de disponibilidad</h2>
+        <h2>Atencion comercial para clientes autorizados</h2>
         <p>
-          Comparte tus datos para recibir respuesta del equipo de Tic Toc Pharma. La información del
-          catálogo es informativa y no sustituye una consulta profesional.
+          Comparte tus datos para recibir respuesta del equipo de Tic Toc Pharma. Un agente puede
+          orientarte sobre validacion de acceso, catalogos por laboratorio y disponibilidad.
         </p>
         <dl className={styles.contactList}>
           <div>
-            <dt>Teléfono</dt>
+            <dt>Telefono</dt>
             <dd>+52 664 123 4567</dd>
           </div>
           <div>
@@ -37,7 +37,7 @@ export default function ContactSection() {
         </dl>
         <a
           className={styles.primaryButton}
-          href="https://wa.me/526641234567?text=Hola,%20quiero%20informaci%C3%B3n%20de%20Tic%20Toc%20Pharma"
+          href="https://wa.me/526641234567?text=Hola,%20quiero%20validar%20mi%20acceso%20a%20Tic%20Toc%20Pharma"
           target="_blank"
           rel="noreferrer"
         >
@@ -55,7 +55,7 @@ export default function ContactSection() {
           <input name="email" type="email" autoComplete="email" required />
         </label>
         <label>
-          Teléfono
+          Telefono
           <input name="phone" type="tel" autoComplete="tel" />
         </label>
         <label>
