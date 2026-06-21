@@ -1,12 +1,12 @@
 import ProductCard from './ProductCard.jsx';
 import styles from '../styles/App.module.css';
 
-export default function ProductGrid({ products, onViewDetails }) {
+export default function ProductGrid({ products, onViewDetails, canOrder = true }) {
   if (products.length === 0) {
     return (
       <div className={styles.emptyState}>
         <h3>No encontramos productos con esos filtros</h3>
-        <p>Intenta cambiar la busqueda, laboratorio, categoria, disponibilidad o rango de precio.</p>
+        <p>Intenta cambiar la búsqueda, laboratorio, categoría, disponibilidad o rango de precio.</p>
       </div>
     );
   }
@@ -14,7 +14,12 @@ export default function ProductGrid({ products, onViewDetails }) {
   return (
     <div className={styles.productGrid}>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} onViewDetails={onViewDetails} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          onViewDetails={onViewDetails}
+          canOrder={canOrder}
+        />
       ))}
     </div>
   );

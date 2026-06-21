@@ -9,7 +9,7 @@ const currency = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 0,
 });
 
-export default function ProductDetailModal({ product, onClose }) {
+export default function ProductDetailModal({ product, onClose, canOrder = true }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
@@ -72,7 +72,7 @@ export default function ProductDetailModal({ product, onClose }) {
                 {product.classification}
               </span>
               {product.requiresPrescription && (
-                <span className={styles.prescriptionTag}>Requiere receta medica</span>
+                <span className={styles.prescriptionTag}>Requiere receta médica</span>
               )}
             </div>
             <p className={styles.skuText}>{product.sku}</p>
@@ -87,33 +87,33 @@ export default function ProductDetailModal({ product, onClose }) {
                 <dd>{product.laboratoryName}</dd>
               </div>
               <div>
-                <dt>Presentacion</dt>
+                <dt>Presentación</dt>
                 <dd>{product.presentation}</dd>
               </div>
               <div>
-                <dt>Concentracion</dt>
+                <dt>Concentración</dt>
                 <dd>{product.concentration}</dd>
               </div>
               <div>
-                <dt>Forma farmaceutica</dt>
+                <dt>Forma farmacéutica</dt>
                 <dd>{product.pharmaceuticalForm}</dd>
               </div>
               <div>
-                <dt>Categoria</dt>
+                <dt>Categoría</dt>
                 <dd>{product.category}</dd>
               </div>
               <div>
-                <dt>Clasificacion</dt>
+                <dt>Clasificación</dt>
                 <dd>{product.classification}</dd>
               </div>
               <div>
                 <dt>Requiere receta</dt>
-                <dd>{product.requiresPrescription ? 'Si' : 'No'}</dd>
+                <dd>{product.requiresPrescription ? 'Sí' : 'No'}</dd>
               </div>
               <div>
                 <dt>Disponibilidad</dt>
                 <dd>
-                  {product.availability} · Stock {product.stock}
+                  {product.availability} - Stock {product.stock}
                 </dd>
               </div>
               <div>
@@ -122,33 +122,40 @@ export default function ProductDetailModal({ product, onClose }) {
               </div>
             </dl>
             <p className={styles.productDescription}>{product.description}</p>
-            <div className={styles.modalCartRow}>
-              <label className={styles.quantityControl}>
-                Cantidad
-                <input
-                  min="1"
-                  type="number"
-                  value={quantity}
-                  onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
-                />
-              </label>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                disabled={isOutOfStock}
-                onClick={handleAddToCart}
-              >
-                {isOutOfStock ? 'Sin existencia' : 'Agregar al carrito'}
-              </button>
-            </div>
+            {canOrder ? (
+              <div className={styles.modalCartRow}>
+                <label className={styles.quantityControl}>
+                  Cantidad
+                  <input
+                    min="1"
+                    type="number"
+                    value={quantity}
+                    onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  disabled={isOutOfStock}
+                  onClick={handleAddToCart}
+                >
+                  {isOutOfStock ? 'Sin existencia' : 'Agregar al carrito'}
+                </button>
+              </div>
+            ) : (
+              <p className={styles.catalogNotice}>
+                Vista administrativa del producto. La solicitud de pedido está disponible para
+                clientes autorizados.
+              </p>
+            )}
             {added && (
               <p className={styles.addedMessage} role="status">
                 Producto agregado al carrito.
               </p>
             )}
             <p className={styles.safetyNotice}>
-              La informacion mostrada es unicamente de caracter informativo. La venta y suministro
-              de productos sujetos a regulacion se realizara unicamente conforme a los requisitos
+              La información mostrada es únicamente de carácter informativo. La venta y suministro
+              de productos sujetos a regulación se realizará únicamente conforme a los requisitos
               aplicables.
             </p>
           </div>

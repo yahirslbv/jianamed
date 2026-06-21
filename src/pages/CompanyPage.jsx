@@ -1,6 +1,7 @@
+import LogoMark from '../components/LogoMark.jsx';
 import styles from '../styles/App.module.css';
 
-const values = ['Responsabilidad sanitaria', 'Confianza comercial', 'Surtido oportuno', 'Atencion profesional'];
+const values = ['Responsabilidad sanitaria', 'Confianza comercial', 'Surtido oportuno', 'Atención profesional'];
 
 export default function CompanyPage() {
   return (
@@ -8,27 +9,27 @@ export default function CompanyPage() {
       <div className={styles.companyLayout}>
         <div>
           <p className={styles.eyebrow}>Nuestra empresa</p>
-          <h1>Distribuidora enfocada en clientes farmaceuticos autorizados</h1>
+          <h1>Distribuidora enfocada en clientes farmacéuticos autorizados</h1>
           <p>
-            Tic Toc Pharma conecta farmacias, clinicas y clientes institucionales con catalogos de
-            laboratorios aliados. Nuestro enfoque esta en el abasto ordenado, la trazabilidad
-            comercial y la atencion a clientes que requieren un portal profesional de consulta y
-            preparacion de pedidos.
+            Tic Toc Pharma conecta farmacias, clínicas y clientes institucionales con catálogos de
+            laboratorios aliados. Nuestro enfoque está en el abasto ordenado, la trazabilidad
+            comercial y la atención a clientes que requieren un portal profesional de consulta y
+            preparación de pedidos.
           </p>
         </div>
         <div className={styles.statementGrid}>
           <article>
-            <h2>Mision</h2>
+            <h2>Misión</h2>
             <p>
-              Facilitar el acceso comercial a medicamentos e insumos farmaceuticos mediante un
-              catalogo confiable, atencion especializada y procesos preparados para validacion.
+              Facilitar el acceso comercial a medicamentos e insumos farmacéuticos mediante un
+              catálogo confiable, atención especializada y procesos preparados para validación.
             </p>
           </article>
           <article>
-            <h2>Vision</h2>
+            <h2>Visión</h2>
             <p>
-              Ser una plataforma B2B de referencia para la distribucion farmaceutica regional, con
-              informacion clara, laboratorios aliados y operacion escalable.
+              Ser una plataforma B2B de referencia para la distribución farmacéutica regional, con
+              información clara, laboratorios aliados y operación escalable.
             </p>
           </article>
         </div>
@@ -37,7 +38,7 @@ export default function CompanyPage() {
       <div className={styles.valuesGrid}>
         {values.map((value) => (
           <article key={value}>
-            <span aria-hidden="true">TT</span>
+            <LogoMark className={styles.valueLogoMark} />
             <strong>{value}</strong>
           </article>
         ))}

@@ -2,7 +2,7 @@ import styles from '../styles/App.module.css';
 
 export default function ProductVisual({ product, large = false }) {
   const visualLabel =
-    product.classification === 'Material de curacion' ? 'MC' : product.classification;
+    product.classification === 'Material de curación' ? 'MC' : product.classification;
 
   return (
     <div

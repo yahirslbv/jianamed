@@ -14,14 +14,14 @@ export default function ContactSection() {
     <section className={`${styles.section} ${styles.contactSection}`} id="contacto">
       <div className={styles.contactInfo}>
         <p className={styles.eyebrow}>Contacto</p>
-        <h2>Atencion comercial para clientes autorizados</h2>
+        <h2>Atención comercial para clientes autorizados</h2>
         <p>
           Comparte tus datos para recibir respuesta del equipo de Tic Toc Pharma. Un agente puede
-          orientarte sobre validacion de acceso, catalogos por laboratorio y disponibilidad.
+          orientarte sobre validación de acceso, catálogos por laboratorio y disponibilidad.
         </p>
         <dl className={styles.contactList}>
           <div>
-            <dt>Telefono</dt>
+            <dt>Teléfono</dt>
             <dd>+52 664 123 4567</dd>
           </div>
           <div>
@@ -31,8 +31,8 @@ export default function ContactSection() {
             </dd>
           </div>
           <div>
-            <dt>Horario de atencion</dt>
-            <dd>Lun a sab, 8:00 a 20:00</dd>
+            <dt>Horario de atención</dt>
+            <dd>Lun a sáb., 8:00 a 20:00</dd>
           </div>
         </dl>
         <a
@@ -55,7 +55,7 @@ export default function ContactSection() {
           <input name="email" type="email" autoComplete="email" required />
         </label>
         <label>
-          Telefono
+          Teléfono
           <input name="phone" type="tel" autoComplete="tel" />
         </label>
         <label>
@@ -67,7 +67,7 @@ export default function ContactSection() {
         </button>
         {submitted && (
           <p className={styles.formSuccess} role="status">
-            Mensaje preparado. Conecta este formulario a tu API cuando el backend este listo.
+            Mensaje preparado. Conecta este formulario a tu API cuando el backend esté listo.
           </p>
         )}
       </form>

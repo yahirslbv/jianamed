@@ -8,7 +8,7 @@ export const categories = [
   {
     id: 'genericos',
     name: 'Genéricos',
-    description: 'Alternativas genericas identificadas por principio activo.',
+    description: 'Alternativas genéricas identificadas por principio activo.',
     label: 'GN',
   },
   {
@@ -20,7 +20,7 @@ export const categories = [
   {
     id: 'rx',
     name: 'RX',
-    description: 'Medicamentos que requieren receta y validacion profesional.',
+    description: 'Medicamentos que requieren receta y validación profesional.',
     label: 'RX',
   },
   {

@@ -9,7 +9,7 @@ const currency = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 0,
 });
 
-export default function ProductCard({ product, onViewDetails }) {
+export default function ProductCard({ product, onViewDetails, canOrder = true }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
@@ -34,7 +34,7 @@ export default function ProductCard({ product, onViewDetails }) {
             {product.classification}
           </span>
           {product.requiresPrescription && (
-            <span className={styles.prescriptionTag}>Requiere receta medica</span>
+            <span className={styles.prescriptionTag}>Requiere receta médica</span>
           )}
         </div>
         <p className={styles.skuText}>{product.sku}</p>
@@ -49,39 +49,45 @@ export default function ProductCard({ product, onViewDetails }) {
             <dd>{product.laboratoryName}</dd>
           </div>
           <div>
-            <dt>Presentacion</dt>
+            <dt>Presentación</dt>
             <dd>{product.presentation}</dd>
           </div>
           <div>
-            <dt>Categoria</dt>
+            <dt>Categoría</dt>
             <dd>{product.category}</dd>
           </div>
         </dl>
         <p className={`${styles.availability} ${isOutOfStock ? styles.outOfStock : ''}`}>
-          {product.availability} · Stock {product.stock}
+          {product.availability} - Stock {product.stock}
         </p>
         <p className={styles.priceReference}>{currency.format(product.price)}</p>
-        <label className={styles.quantityControl}>
-          Cantidad
-          <input
-            min="1"
-            type="number"
-            value={quantity}
-            onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
-          />
-        </label>
+        {canOrder ? (
+          <label className={styles.quantityControl}>
+            Cantidad
+            <input
+              min="1"
+              type="number"
+              value={quantity}
+              onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
+            />
+          </label>
+        ) : (
+          <p className={styles.catalogNotice}>Vista administrativa del catálogo.</p>
+        )}
         <div className={styles.cardActions}>
           <button type="button" className={styles.secondarySmall} onClick={() => onViewDetails(product)}>
             Ver detalles
           </button>
-          <button
-            type="button"
-            className={styles.primarySmall}
-            disabled={isOutOfStock}
-            onClick={handleAddToCart}
-          >
-            {isOutOfStock ? 'Sin existencia' : 'Agregar al carrito'}
-          </button>
+          {canOrder && (
+            <button
+              type="button"
+              className={styles.primarySmall}
+              disabled={isOutOfStock}
+              onClick={handleAddToCart}
+            >
+              {isOutOfStock ? 'Sin existencia' : 'Agregar al carrito'}
+            </button>
+          )}
         </div>
         {added && (
           <p className={styles.addedMessage} role="status">

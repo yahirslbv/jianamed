@@ -8,8 +8,8 @@ export default function LaboratoriesPage() {
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Laboratorios aliados</p>
-          <h1>Catalogos por laboratorio</h1>
-          <p>Consulta lineas disponibles y volumen de productos cargados en el catalogo mock.</p>
+          <h1>Catálogos por laboratorio</h1>
+          <p>Consulta líneas disponibles y volumen de productos cargados en el catálogo mock.</p>
         </div>
       </div>
 
@@ -22,7 +22,7 @@ export default function LaboratoriesPage() {
               <h2>{laboratory.name}</h2>
               <p>{laboratory.line}</p>
               <strong>{labProducts.length} productos</strong>
-              <a href={`#/catalogo?laboratory=${laboratory.id}`}>Ver catalogo</a>
+              <a href={`#/catalogo?laboratory=${laboratory.id}`}>Ver catálogo</a>
             </article>
           );
         })}

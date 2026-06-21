@@ -29,10 +29,10 @@ export default function CartPage() {
 
       {isEmpty ? (
         <div className={styles.emptyState}>
-          <h2>Tu carrito esta vacio</h2>
-          <p>Agrega productos desde el catalogo privado para iniciar una solicitud.</p>
+          <h2>Tu carrito está vacío</h2>
+          <p>Agrega productos desde el catálogo privado para iniciar una solicitud.</p>
           <a className={styles.primaryButton} href="#/catalogo">
-            Ir al catalogo
+            Ir al catálogo
           </a>
         </div>
       ) : (
@@ -45,7 +45,7 @@ export default function CartPage() {
                   <p className={styles.skuText}>{product.sku}</p>
                   <h2>{product.name}</h2>
                   <p>
-                    {product.laboratoryName} · {product.presentation}
+                    {product.laboratoryName} - {product.presentation}
                   </p>
                   <p>{currency.format(product.price)} por unidad</p>
                 </div>
@@ -90,7 +90,7 @@ export default function CartPage() {
               Solicitar pedido
             </a>
             <p>
-              El total es estimado y podra validarse por un agente cuando se habilite el flujo de
+              El total es estimado y podrá validarse por un agente cuando se habilite el flujo de
               pedido.
             </p>
           </aside>

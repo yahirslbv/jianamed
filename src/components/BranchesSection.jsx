@@ -21,9 +21,9 @@ export default function BranchesSection({ branches = defaultBranches }) {
   return (
     <section className={`${styles.section} ${styles.softSection}`} id="sucursales">
       <div className={styles.sectionHeader}>
-        <p className={styles.eyebrow}>Atencion cercana</p>
+        <p className={styles.eyebrow}>Atención cercana</p>
         <h2>Sucursales</h2>
-        <p>Consulta direccion, horario y canales de contacto de la distribuidora.</p>
+        <p>Consulta dirección, horario y canales de contacto de la distribuidora.</p>
       </div>
 
       <div className={styles.branchToolbar}>

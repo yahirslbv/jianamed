@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import FilterSidebar from '../components/FilterSidebar.jsx';
 import ProductDetailModal from '../components/ProductDetailModal.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { laboratories } from '../data/laboratories.js';
 import { products } from '../data/products.js';
 import styles from '../styles/App.module.css';
@@ -42,10 +43,12 @@ function getSearchScore(product, query) {
 }
 
 export default function CatalogPage({ initialLaboratory = '' }) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState(initialFilters);
   const [sortOrder, setSortOrder] = useState('relevance');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const canOrder = user.role === 'client';
 
   useEffect(() => {
     if (initialLaboratory) {
@@ -108,20 +111,24 @@ export default function CatalogPage({ initialLaboratory = '' }) {
     <section className={`${styles.section} ${styles.catalogSection}`}>
       <div className={styles.privateHeader}>
         <div>
-          <p className={styles.eyebrow}>Catalogo privado</p>
-          <h1>Catalogo de distribucion</h1>
+          <p className={styles.eyebrow}>Catálogo privado</p>
+          <h1>Catálogo de distribución</h1>
           <p>
-            Busca por producto, principio activo, laboratorio, categoria o SKU. Agrega productos al
-            carrito para preparar una solicitud de pedido.
+            Busca por producto, principio activo, laboratorio, categoría o SKU.{' '}
+            {canOrder
+              ? 'Agrega productos al carrito para preparar una solicitud de pedido.'
+              : 'Consulta el catálogo como administrador para revisar disponibilidad y laboratorios.'}
           </p>
         </div>
-        <a className={styles.secondaryButton} href="#/carrito">
-          Ver carrito
-        </a>
+        {canOrder && (
+          <a className={styles.secondaryButton} href="#/carrito">
+            Ver carrito
+          </a>
+        )}
       </div>
 
       <div className={styles.catalogNotice} role="note">
-        La venta y suministro de productos sujetos a regulacion se realizara unicamente conforme a
+        La venta y suministro de productos sujetos a regulación se realizará únicamente conforme a
         los requisitos aplicables.
       </div>
 
@@ -139,11 +146,11 @@ export default function CatalogPage({ initialLaboratory = '' }) {
           <div className={styles.resultsToolbar}>
             <div>
               <span>{filteredProducts.length} productos</span>
-              <p>Resultados segun busqueda y filtros seleccionados.</p>
+              <p>Resultados según búsqueda y filtros seleccionados.</p>
             </div>
             <div className={styles.catalogSearch}>
               <label className={styles.srOnly} htmlFor="catalog-search">
-                Buscar en catalogo
+                Buscar en catálogo
               </label>
               <input
                 id="catalog-search"
@@ -154,11 +161,19 @@ export default function CatalogPage({ initialLaboratory = '' }) {
               />
             </div>
           </div>
-          <ProductGrid products={filteredProducts} onViewDetails={setSelectedProduct} />
+          <ProductGrid
+            products={filteredProducts}
+            onViewDetails={setSelectedProduct}
+            canOrder={canOrder}
+          />
         </div>
       </div>
 
-      <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        canOrder={canOrder}
+      />
     </section>
   );
 }

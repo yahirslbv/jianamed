@@ -67,16 +67,23 @@
 
 .brandMark {
   align-items: center;
-  background: var(--primary);
+  background: transparent;
   border-radius: var(--radius);
-  color: #ffffff;
   display: inline-flex;
-  font-size: 0.85rem;
-  font-weight: 800;
+  flex: 0 0 auto;
   height: 42px;
   justify-content: center;
   line-height: 1;
+  overflow: hidden;
   width: 42px;
+}
+
+.brandMark img,
+.valueLogoMark img {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
 .nav {
@@ -464,6 +471,11 @@
   gap: 5px;
   margin-top: 20px;
   padding: 14px;
+}
+
+.demoAccess button {
+  justify-self: start;
+  margin-top: 8px;
 }
 
 .loginForm {
@@ -1299,6 +1311,193 @@ button:disabled {
   margin: 18px 0;
 }
 
+.orderReviewLayout {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  margin: 0 auto;
+  max-width: 1240px;
+}
+
+.orderSidePanel,
+.confirmationPanel {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.orderSidePanel {
+  position: sticky;
+  top: 94px;
+}
+
+.orderSidePanel h2,
+.confirmationPanel h1 {
+  color: var(--primary);
+  margin: 0;
+}
+
+.orderSidePanel label,
+.adminFilter {
+  color: #334155;
+  display: grid;
+  font-size: 0.88rem;
+  font-weight: 800;
+  gap: 7px;
+}
+
+.orderSidePanel textarea,
+.adminFilter select {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  min-height: 44px;
+  outline: 0;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.orderSidePanel textarea {
+  resize: vertical;
+}
+
+.orderSidePanel textarea:focus,
+.adminFilter select:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 4px rgba(15, 117, 189, 0.14);
+}
+
+.orderTable {
+  display: grid;
+  gap: 8px;
+}
+
+.orderTableHeader,
+.orderTableRow {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 1fr) minmax(110px, 0.9fr) 84px 96px 100px;
+}
+
+.orderTableHeader {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.orderTableRow {
+  align-items: center;
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.orderTableRow strong {
+  color: var(--primary);
+  display: block;
+}
+
+.orderTableRow small {
+  color: var(--muted);
+  display: block;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.confirmationPanel {
+  margin: 0 auto;
+  max-width: 760px;
+  text-align: center;
+}
+
+.confirmationPanel .detailList {
+  margin: 0 auto;
+  max-width: 520px;
+  text-align: left;
+}
+
+.orderList,
+.adminOrderList {
+  display: grid;
+  gap: 14px;
+  margin: 0 auto;
+  max-width: 1120px;
+}
+
+.orderListCard,
+.adminOrderCard {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.orderListCard {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.orderListCard h2,
+.adminOrderCard h2 {
+  color: var(--primary);
+  margin: 8px 0 6px;
+}
+
+.orderListCard p,
+.adminOrderCard p,
+.orderDetailsDisclosure p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.statusPill {
+  background: #fff8e8;
+  border-radius: 999px;
+  color: var(--warning);
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 7px 9px;
+}
+
+.adminOrderCard {
+  grid-template-columns: minmax(0, 1fr) 150px;
+}
+
+.statusActions,
+.orderDetailsDisclosure {
+  grid-column: 1 / -1;
+}
+
+.statusActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.orderDetailsDisclosure {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.orderDetailsDisclosure summary {
+  color: var(--secondary);
+  cursor: pointer;
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
 .laboratoryGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1392,12 +1591,14 @@ button:disabled {
   }
 
   .catalogLayout,
-  .cartLayout {
+  .cartLayout,
+  .orderReviewLayout {
     grid-template-columns: 1fr;
   }
 
   .filters,
-  .cartSummary {
+  .cartSummary,
+  .orderSidePanel {
     position: static;
   }
 
@@ -1408,6 +1609,14 @@ button:disabled {
   .cartItem .textButton {
     grid-column: 2 / -1;
     justify-self: start;
+  }
+
+  .orderTableHeader {
+    display: none;
+  }
+
+  .orderTableRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1508,6 +1717,12 @@ button:disabled {
   .cartItem .textButton {
     grid-column: 1 / -1;
   }
+
+  .orderListCard,
+  .adminOrderCard {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1579,7 +1794,8 @@ button:disabled {
 
   .priceRange,
   .modalCartRow,
-  .summaryPanel li {
+  .summaryPanel li,
+  .orderTableRow {
     grid-template-columns: 1fr;
   }
 

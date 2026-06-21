@@ -12,7 +12,7 @@ export default function AccountPage() {
           <p className={styles.eyebrow}>Mi cuenta</p>
           <h1>{user.company}</h1>
           <p>
-            Sesion activa para {user.name} · {user.email}
+            Sesión activa para {user.name} · {user.email}
           </p>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default function AccountPage() {
         <article>
           <h2>Estructura administrativa preparada</h2>
           <p>
-            Estos modulos quedan listos como referencia para una etapa posterior con usuarios
+            Estos módulos quedan listos como referencia para una etapa posterior con usuarios
             administradores o vendedores.
           </p>
           <ul>

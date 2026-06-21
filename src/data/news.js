@@ -15,9 +15,9 @@ export const news = [
   },
   {
     id: 'sucursales-horarios',
-    title: 'Actualizacion de horarios en sucursales',
+    title: 'Actualización de horarios en sucursales',
     date: '2026-04-12',
     summary:
-      'Revisa horarios por ciudad antes de visitar tu sucursal y consulta disponibilidad por telefono o WhatsApp.',
+      'Revisa horarios por ciudad antes de visitar tu sucursal y consulta disponibilidad por teléfono o WhatsApp.',
   },
 ];

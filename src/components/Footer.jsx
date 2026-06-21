@@ -1,19 +1,18 @@
+import LogoMark from './LogoMark.jsx';
 import styles from '../styles/App.module.css';
 
 export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerBrand}>
-        <span className={styles.brandMark} aria-hidden="true">
-          TT
-        </span>
+        <LogoMark className={styles.brandMark} />
         <div>
           <strong>Tic Toc Pharma</strong>
           <p>Portal B2B para clientes autorizados.</p>
         </div>
       </div>
 
-      <nav aria-label="Enlaces de pie de pagina">
+      <nav aria-label="Enlaces de pie de página">
         <a href="#/">Inicio</a>
         <a href="#/empresa">Nuestra empresa</a>
         <a href="#/sucursales">Sucursales</a>
@@ -22,7 +21,7 @@ export default function Footer() {
 
       <div className={styles.footerLinks}>
         <a href="#/contacto">Aviso de privacidad</a>
-        <a href="#/contacto">Terminos y condiciones</a>
+        <a href="#/contacto">Términos y condiciones</a>
         <a href="#/contacto">Farmacovigilancia</a>
       </div>
 

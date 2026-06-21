@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LogoMark from './LogoMark.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import styles from '../styles/App.module.css';
@@ -11,17 +12,21 @@ const publicNavItems = [
 ];
 
 const privateNavItems = [
-  { label: 'Catalogo', href: '#/catalogo' },
-  { label: 'Laboratorios', href: '#/laboratorios' },
-  { label: 'Carrito', href: '#/carrito' },
-  { label: 'Mi cuenta', href: '#/cuenta' },
+  { label: 'Catálogo', href: '#/catalogo', roles: ['client', 'admin'] },
+  { label: 'Laboratorios', href: '#/laboratorios', roles: ['client', 'admin'] },
+  { label: 'Carrito', href: '#/carrito', roles: ['client'] },
+  { label: 'Mis pedidos', href: '#/mis-pedidos', roles: ['client'] },
+  { label: 'Admin pedidos', href: '#/admin/pedidos', roles: ['admin'] },
+  { label: 'Mi cuenta', href: '#/cuenta', roles: ['client', 'admin'] },
 ];
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const { getCartItemCount } = useCart();
-  const navItems = isAuthenticated ? privateNavItems : publicNavItems;
+  const navItems = isAuthenticated
+    ? privateNavItems.filter((item) => item.roles.includes(user.role))
+    : publicNavItems;
   const itemCount = getCartItemCount();
 
   const handleLogout = () => {
@@ -33,19 +38,17 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <a className={styles.brand} href={isAuthenticated ? '#/catalogo' : '#/'} aria-label="Tic Toc Pharma inicio">
-        <span className={styles.brandMark} aria-hidden="true">
-          TT
-        </span>
+        <LogoMark className={styles.brandMark} />
         <span>
           <strong>Tic Toc Pharma</strong>
-          <small>Distribuidora farmaceutica</small>
+          <small>Distribuidora farmacéutica</small>
         </span>
       </a>
 
       <button
         className={styles.menuButton}
         type="button"
-        aria-label="Abrir navegacion"
+        aria-label="Abrir navegación"
         aria-expanded={menuOpen}
         aria-controls="main-navigation"
         onClick={() => setMenuOpen((isOpen) => !isOpen)}
@@ -58,7 +61,7 @@ export default function Header() {
       <nav
         id="main-navigation"
         className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}
-        aria-label="Navegacion principal"
+        aria-label="Navegación principal"
       >
         {navItems.map((item) => (
           <a
@@ -73,11 +76,11 @@ export default function Header() {
         ))}
         {isAuthenticated ? (
           <button className={styles.logoutButton} type="button" onClick={handleLogout}>
-            Cerrar sesion
+            Cerrar sesión
           </button>
         ) : (
           <a className={styles.accessButton} href="#/login" onClick={() => setMenuOpen(false)}>
-            Iniciar sesion
+            Iniciar sesión
           </a>
         )}
         {isAuthenticated && <span className={styles.userPill}>{user.company}</span>}

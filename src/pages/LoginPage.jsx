@@ -8,6 +8,12 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
   const [password, setPassword] = useState('demo123');
   const [error, setError] = useState('');
 
+  const useDemoAccess = (demoEmail, demoPassword) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError('');
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const result = login({ email, password });
@@ -25,15 +31,34 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
       <div className={styles.loginPanel}>
         <div>
           <p className={styles.eyebrow}>Acceso autorizado</p>
-          <h1>Iniciar sesion</h1>
+          <h1>Iniciar sesión</h1>
           <p>
-            Ingresa con tu usuario autorizado para consultar catalogos, agregar productos al
+            Ingresa con tu usuario autorizado para consultar catálogos, agregar productos al
             carrito y preparar solicitudes de pedido.
           </p>
           <div className={styles.demoAccess}>
-            <strong>Demo</strong>
+            <strong>Cliente demo</strong>
             <span>cliente@demo.com</span>
             <span>demo123</span>
+            <button
+              className={styles.secondarySmall}
+              type="button"
+              onClick={() => useDemoAccess('cliente@demo.com', 'demo123')}
+            >
+              Usar cliente
+            </button>
+          </div>
+          <div className={styles.demoAccess}>
+            <strong>Admin demo</strong>
+            <span>admin@demo.com</span>
+            <span>admin123</span>
+            <button
+              className={styles.secondarySmall}
+              type="button"
+              onClick={() => useDemoAccess('admin@demo.com', 'admin123')}
+            >
+              Usar admin
+            </button>
           </div>
         </div>
 
@@ -49,7 +74,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
             />
           </label>
           <label>
-            Contrasena
+            Contraseña
             <input
               type="password"
               value={password}
@@ -59,7 +84,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
             />
           </label>
           <button className={styles.primaryButton} type="submit">
-            Entrar al catalogo
+            Entrar al catálogo
           </button>
           {error && (
             <p className={styles.formError} role="alert">
@@ -67,7 +92,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
             </p>
           )}
           <p className={styles.loginHelp}>
-            No estas registrado? Comunicate con un agente de ventas para validar tu acceso.
+            ¿No estás registrado? Comunícate con un agente de ventas para validar tu acceso.
           </p>
         </form>
       </div>

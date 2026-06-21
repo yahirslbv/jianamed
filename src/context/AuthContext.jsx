@@ -3,13 +3,24 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 const AuthContext = createContext(null);
 const SESSION_KEY = 'tic-toc-pharma-session';
 
-const demoUser = {
-  id: 'demo-client',
-  name: 'Cliente Demo',
-  email: 'cliente@demo.com',
-  role: 'client',
-  company: 'Farmacia Demo del Norte',
-};
+const demoUsers = [
+  {
+    id: 'demo-client',
+    name: 'Cliente Demo',
+    email: 'cliente@demo.com',
+    password: 'demo123',
+    role: 'client',
+    company: 'Farmacia Demo del Norte',
+  },
+  {
+    id: 'demo-admin',
+    name: 'Admin Demo',
+    email: 'admin@demo.com',
+    password: 'admin123',
+    role: 'admin',
+    company: 'Tic Toc Pharma',
+  },
+];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -34,14 +45,21 @@ export function AuthProvider({ children }) {
       user,
       isAuthenticated: Boolean(user),
       login: ({ email, password }) => {
-        if (email.trim().toLowerCase() === 'cliente@demo.com' && password === 'demo123') {
-          setUser(demoUser);
+        const matchedUser = demoUsers.find(
+          (demoUser) =>
+            demoUser.email === email.trim().toLowerCase() && demoUser.password === password,
+        );
+
+        if (matchedUser) {
+          const { password: _password, ...sessionUser } = matchedUser;
+          setUser(sessionUser);
           return { ok: true };
         }
 
         return {
           ok: false,
-          message: 'Credenciales no validas. Usa cliente@demo.com / demo123 para la demo.',
+          message:
+            'Credenciales no válidas. Usa cliente@demo.com / demo123 o admin@demo.com / admin123.',
         };
       },
       logout: () => setUser(null),

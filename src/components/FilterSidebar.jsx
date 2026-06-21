@@ -11,7 +11,7 @@ export default function FilterSidebar({
   onClearFilters,
 }) {
   return (
-    <aside className={styles.filters} aria-label="Filtros de catalogo">
+    <aside className={styles.filters} aria-label="Filtros de catálogo">
       <div className={styles.filtersHeader}>
         <h3>Filtros</h3>
         <button type="button" className={styles.textButton} onClick={onClearFilters}>
@@ -35,7 +35,7 @@ export default function FilterSidebar({
       </label>
 
       <label>
-        Categoria
+        Categoría
         <select
           value={filters.category}
           onChange={(event) => onFilterChange('category', event.target.value)}
@@ -62,7 +62,7 @@ export default function FilterSidebar({
       </label>
 
       <label>
-        Presentacion
+        Presentación
         <select
           value={filters.presentation}
           onChange={(event) => onFilterChange('presentation', event.target.value)}
@@ -77,7 +77,7 @@ export default function FilterSidebar({
       </label>
 
       <label>
-        Clasificacion
+        Clasificación
         <select
           value={filters.classification}
           onChange={(event) => onFilterChange('classification', event.target.value)}
@@ -85,10 +85,10 @@ export default function FilterSidebar({
           <option value="">Todas</option>
           <option value="OTC">OTC</option>
           <option value="RX">RX</option>
-          <option value="Material de curacion">Material de curacion</option>
+          <option value="Material de curación">Material de curación</option>
           <option value="Suplemento">Suplemento</option>
           <option value="Naturismo">Naturismo</option>
-          <option value="Perfumeria">Perfumeria</option>
+          <option value="Perfumería">Perfumería</option>
         </select>
       </label>
 
@@ -109,7 +109,7 @@ export default function FilterSidebar({
 
       <div className={styles.priceRange}>
         <label>
-          Precio minimo
+          Precio mínimo
           <input
             min="0"
             type="number"
@@ -119,7 +119,7 @@ export default function FilterSidebar({
           />
         </label>
         <label>
-          Precio maximo
+          Precio máximo
           <input
             min="0"
             type="number"
