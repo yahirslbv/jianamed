@@ -36,6 +36,7 @@ export default function ProductCard({ product, onViewDetails, canOrder = true })
           {product.requiresPrescription && (
             <span className={styles.prescriptionTag}>Requiere receta médica</span>
           )}
+          {product.offer && <span className={styles.offerTag}>Oferta</span>}
         </div>
         <p className={styles.skuText}>{product.sku}</p>
         <h3>{product.name}</h3>
@@ -60,7 +61,13 @@ export default function ProductCard({ product, onViewDetails, canOrder = true })
         <p className={`${styles.availability} ${isOutOfStock ? styles.outOfStock : ''}`}>
           {product.availability} - Stock {product.stock}
         </p>
-        <p className={styles.priceReference}>{currency.format(product.price)}</p>
+        <div className={styles.productPrice}>
+          {product.originalPrice > product.price && (
+            <span className={styles.originalPrice}>{currency.format(product.originalPrice)}</span>
+          )}
+          <p className={styles.priceReference}>{currency.format(product.price)}</p>
+          {product.offer && <small>{product.offer.title}</small>}
+        </div>
         {canOrder ? (
           <label className={styles.quantityControl}>
             Cantidad

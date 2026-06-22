@@ -96,13 +96,31 @@ export async function getProduct(id) {
   }
 }
 
+function createProductRequestBody(product) {
+  if (!product.imageFile) return product;
+
+  const formData = new FormData();
+  Object.entries(product).forEach(([key, value]) => {
+    if (key === 'imageFile' || value === undefined || value === null) return;
+    formData.append(key, String(value));
+  });
+  formData.append('image', product.imageFile);
+  return formData;
+}
+
 export async function createProduct(product) {
-  const response = await apiClient('/products', { method: 'POST', body: product });
+  const response = await apiClient('/products', {
+    method: 'POST',
+    body: createProductRequestBody(product),
+  });
   return mapApiProduct(response.product);
 }
 
 export async function updateProduct(id, product) {
-  const response = await apiClient(`/products/${id}`, { method: 'PUT', body: product });
+  const response = await apiClient(`/products/${id}`, {
+    method: 'PUT',
+    body: createProductRequestBody(product),
+  });
   return mapApiProduct(response.product);
 }
 

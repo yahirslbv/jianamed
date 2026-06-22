@@ -51,7 +51,7 @@ export function getFallbackLastOrderId() {
   return localStorage.getItem(LAST_ORDER_KEY);
 }
 
-export function createFallbackOrder({ user, items, observations }) {
+export function createFallbackOrder({ user, items, observations, checkout = {} }) {
   const orders = readOrders();
   const orderItems = items.map(({ product, quantity }) => ({
     productId: product.id,
@@ -75,6 +75,7 @@ export function createFallbackOrder({ user, items, observations }) {
     total: subtotal,
     status: initialOrderStatus,
     observations: observations.trim(),
+    checkout,
     createdAt: new Date().toISOString(),
   };
 

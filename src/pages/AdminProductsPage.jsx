@@ -85,6 +85,8 @@ export default function AdminProductsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const loadData = async () => {
     setIsLoading(true);
@@ -139,6 +141,25 @@ export default function AdminProductsPage() {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   };
 
+  const handleImageFileChange = (event) => {
+    const [file] = event.target.files;
+    setImageFile(file || null);
+
+    if (!file) {
+      setImagePreview(form.imageUrl || '');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => setImagePreview(String(reader.result || '')));
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageUrlChange = (value) => {
+    updateForm('imageUrl', value);
+    if (!imageFile) setImagePreview(value);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSaving(true);
@@ -150,6 +171,7 @@ export default function AdminProductsPage() {
         ...form,
         price: Number(form.price),
         stock: Number.parseInt(form.stock, 10),
+        imageFile,
       };
       const product = editingId
         ? await updateProduct(editingId, payload)
@@ -162,6 +184,8 @@ export default function AdminProductsPage() {
       setSuccess(editingId ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.');
       setEditingId(null);
       setForm(emptyProduct);
+      setImageFile(null);
+      setImagePreview('');
     } catch (requestError) {
       setError(requestError.message || 'No fue posible guardar el producto.');
     } finally {
@@ -172,6 +196,8 @@ export default function AdminProductsPage() {
   const handleEdit = (product) => {
     setEditingId(product.id);
     setForm(getFormValues(product));
+    setImageFile(null);
+    setImagePreview(product.image || product.imageUrl || '');
     setError('');
     setSuccess('');
   };
@@ -353,6 +379,8 @@ export default function AdminProductsPage() {
                 onClick={() => {
                   setEditingId(null);
                   setForm(emptyProduct);
+                  setImageFile(null);
+                  setImagePreview('');
                 }}
               >
                 Cancelar edición
@@ -495,9 +523,22 @@ export default function AdminProductsPage() {
             </label>
             <label>
               Imagen URL
-              <input value={form.imageUrl} onChange={(event) => updateForm('imageUrl', event.target.value)} />
+              <input value={form.imageUrl} onChange={(event) => handleImageUrlChange(event.target.value)} />
+            </label>
+            <label>
+              Subir imagen
+              <input
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                type="file"
+                onChange={handleImageFileChange}
+              />
             </label>
           </div>
+          {imagePreview && (
+            <div className={styles.productImagePreview}>
+              <img src={imagePreview} alt="Vista previa del producto" />
+            </div>
+          )}
           <div className={styles.adminProductChecks}>
             <label>
               <input

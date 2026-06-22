@@ -74,6 +74,7 @@ export default function ProductDetailModal({ product, onClose, canOrder = true }
               {product.requiresPrescription && (
                 <span className={styles.prescriptionTag}>Requiere receta médica</span>
               )}
+              {product.offer && <span className={styles.offerTag}>Oferta</span>}
             </div>
             <p className={styles.skuText}>{product.sku}</p>
             <h2 id="product-detail-title">{product.name}</h2>
@@ -118,7 +119,12 @@ export default function ProductDetailModal({ product, onClose, canOrder = true }
               </div>
               <div>
                 <dt>Precio</dt>
-                <dd>{currency.format(product.price)}</dd>
+                <dd className={styles.modalPrice}>
+                  {product.originalPrice > product.price && (
+                    <span className={styles.originalPrice}>{currency.format(product.originalPrice)}</span>
+                  )}
+                  <strong>{currency.format(product.price)}</strong>
+                </dd>
               </div>
             </dl>
             <p className={styles.productDescription}>{product.description}</p>

@@ -8,6 +8,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+:root[data-theme='dark'] {
+  color: #e6edf7;
+  background: #111827;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -20,6 +25,10 @@ body {
   margin: 0;
   min-width: 320px;
   background: #ffffff;
+}
+
+:root[data-theme='dark'] body {
+  background: #111827;
 }
 
 body.modal-open {

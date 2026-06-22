@@ -22,6 +22,8 @@ export const PRODUCT_TYPES = [
   'MEDICAL_SUPPLY',
 ];
 
+export const OFFER_DISCOUNT_TYPES = ['PERCENTAGE', 'FIXED_AMOUNT'];
+
 export const ORDER_STATUSES = [
   'PENDING_REVIEW',
   'IN_REVIEW',

@@ -12,6 +12,18 @@ export function serializeUser(user) {
           id: user.customer.id,
           businessName: user.customer.businessName,
           commercialName: user.customer.commercialName,
+          rfc: user.customer.rfc,
+          contactName: user.customer.contactName,
+          phone: user.customer.phone,
+          address: user.customer.address,
+          city: user.customer.city,
+          state: user.customer.state,
+          postalCode: user.customer.postalCode,
+          creditEnabled: user.customer.creditEnabled,
+          creditLimit: user.customer.creditLimit,
+          creditUsed: user.customer.creditUsed,
+          creditAvailable: Math.max(0, user.customer.creditLimit - user.customer.creditUsed),
+          creditStatus: user.customer.creditStatus,
           isAuthorized: user.customer.isAuthorized,
         }
       : null,
@@ -38,7 +50,10 @@ export function serializeCategory(category) {
   };
 }
 
-export function serializeProduct(product) {
+export function serializeProduct(product, offerApplication = null) {
+  const originalPrice = offerApplication?.originalPrice ?? product.price;
+  const price = offerApplication?.finalPrice ?? product.price;
+
   return {
     id: product.id,
     sku: product.sku,
@@ -59,7 +74,18 @@ export function serializeProduct(product) {
     isControlled: product.isControlled,
     productType: product.productType,
     productTypeLabel: PRODUCT_TYPE_LABELS[product.productType] || product.productType,
-    price: product.price,
+    price,
+    originalPrice,
+    discountAmount: offerApplication?.discountAmount ?? 0,
+    offer: offerApplication
+      ? {
+          id: offerApplication.offer.id,
+          title: offerApplication.offer.title,
+          discountType: offerApplication.offer.discountType,
+          discountValue: offerApplication.offer.discountValue,
+          endsAt: offerApplication.offer.endsAt,
+        }
+      : null,
     stock: product.stock,
     imageUrl: product.imageUrl,
     description: product.description,
@@ -69,19 +95,59 @@ export function serializeProduct(product) {
   };
 }
 
+export function serializeOffer(offer) {
+  const scope = offer.product
+    ? { type: 'PRODUCT', label: offer.product.commercialName, productId: offer.productId }
+    : offer.laboratory
+      ? { type: 'LABORATORY', label: offer.laboratory.name, laboratoryId: offer.laboratoryId }
+      : offer.category
+        ? { type: 'CATEGORY', label: offer.category.name, categoryId: offer.categoryId }
+        : { type: 'PRODUCT_TYPE', label: offer.productType, productType: offer.productType };
+
+  return {
+    id: offer.id,
+    title: offer.title,
+    description: offer.description || '',
+    discountType: offer.discountType,
+    discountValue: offer.discountValue,
+    startsAt: offer.startsAt,
+    endsAt: offer.endsAt,
+    isActive: offer.isActive,
+    productId: offer.productId,
+    laboratoryId: offer.laboratoryId,
+    categoryId: offer.categoryId,
+    productType: offer.productType,
+    scope,
+    createdAt: offer.createdAt,
+    updatedAt: offer.updatedAt,
+  };
+}
+
 export function serializeOrder(order) {
   return {
     id: order.id,
     folio: order.folio,
     clientId: order.userId,
     customerId: order.customerId,
-    clientName: order.customer?.businessName || order.user?.name || '',
-    clientEmail: order.user?.email || '',
+    clientName: order.clientName || order.customer?.businessName || order.user?.name || '',
+    clientEmail: order.clientEmail || order.user?.email || '',
     status: order.status,
     statusLabel: ORDER_STATUS_LABELS[order.status] || order.status,
     subtotal: order.subtotal,
+    discountTotal: order.discountTotal || 0,
     total: order.total,
     observations: order.observations || '',
+    checkout: {
+      deliveryAddress: order.deliveryAddress || '',
+      deliveryCity: order.deliveryCity || '',
+      deliveryState: order.deliveryState || '',
+      deliveryPostalCode: order.deliveryPostalCode || '',
+      billingBusinessName: order.billingBusinessName || '',
+      billingRfc: order.billingRfc || '',
+      billingAddress: order.billingAddress || '',
+      responsibleName: order.responsibleName || '',
+      responsiblePhone: order.responsiblePhone || '',
+    },
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     items: order.items.map((item) => ({
@@ -93,6 +159,9 @@ export function serializeOrder(order) {
       presentation: item.presentation,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      originalUnitPrice: item.originalUnitPrice || item.unitPrice,
+      discountAmount: item.discountAmount || 0,
+      offerTitle: item.offerTitle || '',
       subtotal: item.subtotal,
     })),
   };

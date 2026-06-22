@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
           setUser(response.user);
           localStorage.removeItem(FALLBACK_SESSION_KEY);
           localStorage.removeItem(LEGACY_SESSION_KEY);
-          return { ok: true };
+          return { ok: true, user: response.user };
         } catch (error) {
           if (!shouldUseLocalFallback(error)) {
             return { ok: false, message: error.message };
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
           const { password: _password, ...sessionUser } = matchedUser;
           setUser(sessionUser);
           localStorage.setItem(FALLBACK_SESSION_KEY, JSON.stringify(sessionUser));
-          return { ok: true };
+          return { ok: true, user: sessionUser };
         }
 
         return {

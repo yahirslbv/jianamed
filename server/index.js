@@ -5,7 +5,12 @@ import cookieParser from 'cookie-parser';
 import prisma from './db.js';
 import authRoutes from './routes/auth.js';
 import catalogRoutes from './routes/catalog.js';
+import offerRoutes from './routes/offers.js';
 import orderRoutes from './routes/orders.js';
+import reportRoutes from './routes/reports.js';
+import auditRoutes from './routes/audit.js';
+import { isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
+import { requireAuth } from './auth.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -30,9 +35,23 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tic-toc-pharma-api' });
 });
 
+app.get('/api/uploads/products/:filename', requireAuth, (req, res) => {
+  const { filename } = req.params;
+  if (!isSafeProductImageFilename(filename)) {
+    return res.status(404).json({ message: 'Imagen no encontrada.' });
+  }
+
+  return res.sendFile(filename, { root: productUploadDirectory }, (error) => {
+    if (error && !res.headersSent) res.status(404).json({ message: 'Imagen no encontrada.' });
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api', catalogRoutes);
+app.use('/api', offerRoutes);
 app.use('/api', orderRoutes);
+app.use('/api', reportRoutes);
+app.use('/api', auditRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: `Ruta no encontrada: ${req.method} ${req.path}` });
@@ -47,6 +66,12 @@ app.use((error, _req, res, _next) => {
   }
   if (error.code === 'P2025') {
     return res.status(404).json({ message: 'Registro no encontrado.' });
+  }
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'La imagen no puede superar 2 MB.' });
+  }
+  if (error.code === 'INVALID_PRODUCT_IMAGE') {
+    return res.status(400).json({ message: error.message });
   }
 
   console.error(error);

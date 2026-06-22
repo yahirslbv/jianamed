@@ -3,6 +3,8 @@ import prisma from '../db.js';
 import { HEALTH_FRACTIONS, PRODUCT_TYPES, isAllowed } from '../constants.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { serializeCategory, serializeLaboratory, serializeProduct } from '../serializers.js';
+import { getActiveOffers, getOfferApplication } from '../services/offers.js';
+import { getProductImageUrl, productImageUpload } from '../uploads.js';
 
 const router = Router();
 
@@ -29,7 +31,7 @@ function toBoolean(value, fallback = false) {
   return fallback;
 }
 
-function getProductPayload(body) {
+function getProductPayload(body, uploadedImageUrl = null) {
   const requiredFields = [
     'sku',
     'commercialName',
@@ -75,7 +77,7 @@ function getProductPayload(body) {
       productType: body.productType,
       price,
       stock,
-      imageUrl: body.imageUrl?.trim() || null,
+      imageUrl: uploadedImageUrl || body.imageUrl?.trim() || null,
       description: body.description?.trim() || null,
       isActive: body.isActive === undefined ? true : toBoolean(body.isActive),
     },
@@ -118,13 +120,20 @@ router.get('/products', requireAuth, async (req, res, next) => {
       ];
     }
 
-    const products = await prisma.product.findMany({
-      where,
-      include: productInclude,
-      orderBy: { commercialName: 'asc' },
-    });
+    const [products, activeOffers] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: productInclude,
+        orderBy: { commercialName: 'asc' },
+      }),
+      getActiveOffers(prisma),
+    ]);
 
-    res.json({ products: products.map(serializeProduct) });
+    res.json({
+      products: products.map((product) =>
+        serializeProduct(product, getOfferApplication(product, activeOffers)),
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -141,15 +150,21 @@ router.get('/products/:id', requireAuth, async (req, res, next) => {
       return res.status(404).json({ message: 'Producto no encontrado.' });
     }
 
-    return res.json({ product: serializeProduct(product) });
+    const activeOffers = await getActiveOffers(prisma);
+    return res.json({ product: serializeProduct(product, getOfferApplication(product, activeOffers)) });
   } catch (error) {
     return next(error);
   }
 });
 
-router.post('/products', requireAuth, requireRole('admin'), async (req, res, next) => {
+router.post(
+  '/products',
+  requireAuth,
+  requireRole('admin'),
+  productImageUpload.single('image'),
+  async (req, res, next) => {
   try {
-    const payload = getProductPayload(req.body);
+    const payload = getProductPayload(req.body, getProductImageUrl(req.file));
     if (payload.error) return res.status(400).json({ message: payload.error });
 
     const product = await prisma.product.create({
@@ -157,16 +172,28 @@ router.post('/products', requireAuth, requireRole('admin'), async (req, res, nex
       include: productInclude,
     });
     await createAuditLog(req.user.id, 'CREATE', 'Product', product.id, { sku: product.sku });
+    if (req.file) {
+      await createAuditLog(req.user.id, 'UPLOAD_IMAGE', 'Product', product.id, {
+        sku: product.sku,
+        filename: req.file.filename,
+      });
+    }
 
     return res.status(201).json({ product: serializeProduct(product) });
   } catch (error) {
     return next(error);
   }
-});
+  },
+);
 
-router.put('/products/:id', requireAuth, requireRole('admin'), async (req, res, next) => {
+router.put(
+  '/products/:id',
+  requireAuth,
+  requireRole('admin'),
+  productImageUpload.single('image'),
+  async (req, res, next) => {
   try {
-    const payload = getProductPayload(req.body);
+    const payload = getProductPayload(req.body, getProductImageUrl(req.file));
     if (payload.error) return res.status(400).json({ message: payload.error });
 
     const product = await prisma.product.update({
@@ -175,12 +202,19 @@ router.put('/products/:id', requireAuth, requireRole('admin'), async (req, res, 
       include: productInclude,
     });
     await createAuditLog(req.user.id, 'UPDATE', 'Product', product.id, { sku: product.sku });
+    if (req.file) {
+      await createAuditLog(req.user.id, 'UPLOAD_IMAGE', 'Product', product.id, {
+        sku: product.sku,
+        filename: req.file.filename,
+      });
+    }
 
     return res.json({ product: serializeProduct(product) });
   } catch (error) {
     return next(error);
   }
-});
+  },
+);
 
 router.patch('/products/:id/status', requireAuth, requireRole('admin'), async (req, res, next) => {
   try {

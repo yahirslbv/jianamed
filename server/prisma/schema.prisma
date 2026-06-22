@@ -35,6 +35,11 @@ model Customer {
   postalCode      String
   sanitaryLicense String?
   isAuthorized    Boolean  @default(true)
+  // Virtual credit is prepared for a later stage and does not affect checkout yet.
+  creditEnabled   Boolean  @default(false)
+  creditLimit     Float    @default(0)
+  creditUsed      Float    @default(0)
+  creditStatus    String   @default("DISABLED")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders          Order[]
   createdAt       DateTime @default(now())
@@ -48,6 +53,7 @@ model Laboratory {
   description String?
   isActive    Boolean   @default(true)
   products    Product[]
+  offers      Offer[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -59,6 +65,7 @@ model Category {
   description String?
   isActive    Boolean   @default(true)
   products    Product[]
+  offers      Offer[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -89,12 +96,38 @@ model Product {
   category                     Category       @relation(fields: [categoryId], references: [id])
   inventoryLots                InventoryLot[]
   orderItems                   OrderItem[]
+  offers                       Offer[]
   createdAt                    DateTime       @default(now())
   updatedAt                    DateTime       @updatedAt
 
   @@index([laboratoryId])
   @@index([categoryId])
   @@index([isActive])
+}
+
+model Offer {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  discountType  String
+  discountValue Float
+  startsAt      DateTime
+  endsAt        DateTime
+  isActive      Boolean     @default(true)
+  productId     String?
+  laboratoryId  String?
+  categoryId    String?
+  productType   String?
+  product       Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  laboratory    Laboratory? @relation(fields: [laboratoryId], references: [id], onDelete: SetNull)
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@index([productId])
+  @@index([laboratoryId])
+  @@index([categoryId])
 }
 
 model InventoryLot {
@@ -112,19 +145,31 @@ model InventoryLot {
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  folio        String      @unique
-  userId       String
-  customerId   String
-  status       String      @default("PENDING_REVIEW")
-  subtotal     Float
-  total        Float
-  observations String?
-  user         User        @relation(fields: [userId], references: [id])
-  customer     Customer    @relation(fields: [customerId], references: [id])
-  items        OrderItem[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id                  String      @id @default(cuid())
+  folio               String      @unique
+  userId              String
+  customerId          String
+  clientName          String?
+  clientEmail         String?
+  status              String      @default("PENDING_REVIEW")
+  subtotal            Float
+  discountTotal       Float       @default(0)
+  total               Float
+  deliveryAddress     String?
+  deliveryCity        String?
+  deliveryState       String?
+  deliveryPostalCode  String?
+  billingBusinessName String?
+  billingRfc          String?
+  billingAddress      String?
+  responsibleName     String?
+  responsiblePhone    String?
+  observations        String?
+  user                User        @relation(fields: [userId], references: [id])
+  customer            Customer    @relation(fields: [customerId], references: [id])
+  items               OrderItem[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   @@index([userId])
   @@index([customerId])
@@ -132,18 +177,21 @@ model Order {
 }
 
 model OrderItem {
-  id             String  @id @default(cuid())
-  orderId        String
-  productId      String
-  sku            String
-  productName    String
-  laboratoryName String
-  presentation   String
-  quantity       Int
-  unitPrice      Float
-  subtotal       Float
-  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product @relation(fields: [productId], references: [id])
+  id                String  @id @default(cuid())
+  orderId           String
+  productId         String
+  sku               String
+  productName       String
+  laboratoryName    String
+  presentation      String
+  quantity          Int
+  unitPrice         Float
+  originalUnitPrice Float   @default(0)
+  discountAmount    Float   @default(0)
+  offerTitle        String?
+  subtotal          Float
+  order             Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])

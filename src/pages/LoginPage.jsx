@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLanguage } from '../context/LanguageContext.jsx';
 import styles from '../styles/App.module.css';
 
-export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
+export default function LoginPage({ redirectTo = '', navigate }) {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('cliente@demo.com');
   const [password, setPassword] = useState('demo123');
   const [error, setError] = useState('');
@@ -23,7 +25,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
     setIsSubmitting(false);
 
     if (result.ok) {
-      navigate(redirectTo || '/catalogo');
+      navigate(redirectTo || (result.user?.role === 'client' ? '/inicio-cliente' : '/catalogo'));
       return;
     }
 
@@ -35,7 +37,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
       <div className={styles.loginPanel}>
         <div>
           <p className={styles.eyebrow}>Acceso autorizado</p>
-          <h1>Iniciar sesión</h1>
+          <h1>{t('login.title')}</h1>
           <p>
             Ingresa con tu usuario autorizado para consultar catálogos, agregar productos al
             carrito y preparar solicitudes de pedido.
@@ -68,7 +70,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
 
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           <label>
-            Usuario o correo
+            {t('login.email')}
             <input
               type="email"
               value={email}
@@ -78,7 +80,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
             />
           </label>
           <label>
-            Contraseña
+            {t('login.password')}
             <input
               type="password"
               value={password}
@@ -88,7 +90,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
             />
           </label>
           <button className={styles.primaryButton} type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Validando acceso...' : 'Entrar al catálogo'}
+            {isSubmitting ? 'Validando acceso...' : t('login.submit')}
           </button>
           {error && (
             <p className={styles.formError} role="alert">

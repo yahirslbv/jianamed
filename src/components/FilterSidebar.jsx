@@ -15,7 +15,7 @@ export default function FilterSidebar({
       <div className={styles.filtersHeader}>
         <h3>Filtros</h3>
         <button type="button" className={styles.textButton} onClick={onClearFilters}>
-          Limpiar
+          Limpiar filtros
         </button>
       </div>
 

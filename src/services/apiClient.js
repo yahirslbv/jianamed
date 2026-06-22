@@ -16,8 +16,9 @@ function buildUrl(path) {
 export async function apiClient(path, options = {}) {
   const headers = new Headers(options.headers);
   const hasBody = options.body !== undefined;
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
-  if (hasBody && !headers.has('Content-Type')) {
+  if (hasBody && !isFormData && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -26,7 +27,10 @@ export async function apiClient(path, options = {}) {
     response = await fetch(buildUrl(path), {
       ...options,
       headers,
-      body: hasBody && typeof options.body !== 'string' ? JSON.stringify(options.body) : options.body,
+      body:
+        hasBody && !isFormData && typeof options.body !== 'string'
+          ? JSON.stringify(options.body)
+          : options.body,
       credentials: 'include',
     });
   } catch {

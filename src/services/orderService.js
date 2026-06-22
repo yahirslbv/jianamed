@@ -60,20 +60,21 @@ export function getLastOrderId() {
   }
 }
 
-export async function createOrder({ user, items, observations }) {
+export async function createOrder({ user, items, observations, checkout }) {
   try {
     const response = await apiClient('/orders', {
       method: 'POST',
       body: {
         items: items.map(({ product, quantity }) => ({ productId: product.id, quantity })),
         observations,
+        checkout,
       },
     });
     const order = normalizeOrder(response.order);
     localStorage.setItem(LAST_ORDER_KEY, order.id);
     return order;
   } catch (error) {
-    if (shouldUseLocalFallback(error)) return createFallbackOrder({ user, items, observations });
+    if (shouldUseLocalFallback(error)) return createFallbackOrder({ user, items, observations, checkout });
     throw error;
   }
 }

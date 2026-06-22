@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { canCancelOrder, cancelOrder, getOrders } from '../services/orderService.js';
+import { useLanguage } from '../context/LanguageContext.jsx';
 import styles from '../styles/App.module.css';
 
 const currency = new Intl.NumberFormat('es-MX', {
@@ -74,6 +75,7 @@ function OrderDetail({ order, onClose }) {
 }
 
 export default function MyOrdersPage() {
+  const { t } = useLanguage();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +134,7 @@ export default function MyOrdersPage() {
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Mis pedidos</p>
-          <h1>Solicitudes enviadas</h1>
+          <h1>{t('orders.title')}</h1>
           <p>Consulta folio, fecha, total y estado de las solicitudes creadas.</p>
         </div>
         <a className={styles.secondaryButton} href="#/catalogo">

@@ -1,5 +1,6 @@
 import ProductVisual from '../components/ProductVisual.jsx';
 import { useCart } from '../context/CartContext.jsx';
+import { useLanguage } from '../context/LanguageContext.jsx';
 import styles from '../styles/App.module.css';
 
 const currency = new Intl.NumberFormat('es-MX', {
@@ -9,7 +10,17 @@ const currency = new Intl.NumberFormat('es-MX', {
 });
 
 export default function CartPage() {
-  const { items, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartItemCount } = useCart();
+  const { t } = useLanguage();
+  const {
+    items,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getCartSubtotal,
+    getCartDiscount,
+    getCartTotal,
+    getCartItemCount,
+  } = useCart();
   const isEmpty = items.length === 0;
 
   return (
@@ -17,7 +28,7 @@ export default function CartPage() {
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Carrito</p>
-          <h1>Productos seleccionados</h1>
+          <h1>{t('cart.title')}</h1>
           <p>Revisa cantidades y prepara la solicitud de pedido para la siguiente etapa.</p>
         </div>
         {!isEmpty && (
@@ -29,7 +40,7 @@ export default function CartPage() {
 
       {isEmpty ? (
         <div className={styles.emptyState}>
-          <h2>Tu carrito está vacío</h2>
+          <h2>{t('cart.empty')}</h2>
           <p>Agrega productos desde el catálogo privado para iniciar una solicitud.</p>
           <a className={styles.primaryButton} href="#/catalogo">
             Ir al catálogo
@@ -47,7 +58,13 @@ export default function CartPage() {
                   <p>
                     {product.laboratoryName} - {product.presentation}
                   </p>
-                  <p>{currency.format(product.price)} por unidad</p>
+                  <p>
+                    {product.originalPrice > product.price && (
+                      <span className={styles.originalPrice}>{currency.format(product.originalPrice)} </span>
+                    )}
+                    {currency.format(product.price)} por unidad
+                  </p>
+                  {product.offer && <small className={styles.offerCopy}>{product.offer.title}</small>}
                 </div>
                 <label className={styles.quantityControl}>
                   Cantidad
@@ -79,15 +96,19 @@ export default function CartPage() {
               </div>
               <div>
                 <dt>Subtotal</dt>
-                <dd>{currency.format(getCartTotal())}</dd>
+                <dd>{currency.format(getCartSubtotal())}</dd>
+              </div>
+              <div>
+                <dt>Descuentos</dt>
+                <dd className={styles.discountValue}>-{currency.format(getCartDiscount())}</dd>
               </div>
               <div>
                 <dt>Total estimado</dt>
                 <dd>{currency.format(getCartTotal())}</dd>
               </div>
             </dl>
-            <a className={styles.primaryButton} href="#/resumen">
-              Solicitar pedido
+            <a className={styles.primaryButton} href="#/checkout">
+              {t('cart.checkout')}
             </a>
             <p>
               El total es estimado y podrá validarse por un agente cuando se habilite el flujo de

@@ -290,6 +290,10 @@ async function main() {
       state: 'Baja California',
       postalCode: '22000',
       isAuthorized: true,
+      creditEnabled: false,
+      creditLimit: 0,
+      creditUsed: 0,
+      creditStatus: 'DISABLED',
     },
     create: {
       userId: client.id,
@@ -304,6 +308,10 @@ async function main() {
       postalCode: '22000',
       sanitaryLicense: 'LIC-DEMO-001',
       isAuthorized: true,
+      creditEnabled: false,
+      creditLimit: 0,
+      creditUsed: 0,
+      creditStatus: 'DISABLED',
     },
   });
 
@@ -343,6 +351,52 @@ async function main() {
       },
     });
   }
+
+  const offerProducts = await prisma.product.findMany({
+    where: { sku: { in: ['TTP-LOR-010-10', 'TTP-GAS-10X10-25'] } },
+  });
+  const offerProductBySku = new Map(offerProducts.map((product) => [product.sku, product]));
+  const activeOfferStartsAt = new Date('2025-01-01T00:00:00.000Z');
+  const activeOfferEndsAt = new Date('2027-12-31T23:59:59.000Z');
+
+  await prisma.offer.deleteMany({
+    where: {
+      title: {
+        in: ['Oferta Loramed demo', 'Descuento NovaMed demo', 'Oferta material de curacion demo'],
+      },
+    },
+  });
+  await prisma.offer.createMany({
+    data: [
+      {
+        title: 'Oferta Loramed demo',
+        description: 'Precio especial de demostracion para producto seleccionado.',
+        discountType: 'PERCENTAGE',
+        discountValue: 15,
+        startsAt: activeOfferStartsAt,
+        endsAt: activeOfferEndsAt,
+        productId: offerProductBySku.get('TTP-LOR-010-10').id,
+      },
+      {
+        title: 'Descuento NovaMed demo',
+        description: 'Precio especial de demostracion para el laboratorio.',
+        discountType: 'PERCENTAGE',
+        discountValue: 8,
+        startsAt: activeOfferStartsAt,
+        endsAt: activeOfferEndsAt,
+        laboratoryId: laboratoryIds.get('novamed'),
+      },
+      {
+        title: 'Oferta material de curacion demo',
+        description: 'Precio especial de demostracion para material de curacion.',
+        discountType: 'FIXED_AMOUNT',
+        discountValue: 6,
+        startsAt: activeOfferStartsAt,
+        endsAt: activeOfferEndsAt,
+        productId: offerProductBySku.get('TTP-GAS-10X10-25').id,
+      },
+    ],
+  });
 
   const seededProducts = await prisma.product.findMany({
     where: { sku: { in: ['TTP-ANL-500-24', 'TTP-GAS-10X10-25', 'TTP-AMX-875-14'] } },
@@ -398,6 +452,7 @@ async function main() {
         customerId: customer.id,
         status: seedOrder.status,
         subtotal,
+        discountTotal: 0,
         total: subtotal,
         observations: seedOrder.observations,
         items: {
@@ -409,6 +464,8 @@ async function main() {
             presentation: product.presentation,
             quantity,
             unitPrice: product.price,
+            originalUnitPrice: product.price,
+            discountAmount: 0,
             subtotal: product.price * quantity,
           })),
         },
@@ -416,7 +473,7 @@ async function main() {
     });
   }
 
-  console.log('Seed completado: 2 usuarios, 3 laboratorios, 5 categorías, 12 productos y 2 pedidos.');
+  console.log('Seed completado: 2 usuarios, 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
 }
 
 main()

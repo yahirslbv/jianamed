@@ -8,6 +8,14 @@ function normalizeQuantity(quantity) {
   return Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 1;
 }
 
+function getOriginalPrice(product) {
+  return Number(product.originalPrice ?? product.price ?? 0);
+}
+
+function getFinalPrice(product) {
+  return Number(product.price ?? 0);
+}
+
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
     try {
@@ -54,8 +62,16 @@ export function CartProvider({ children }) {
         );
       },
       clearCart: () => setItems([]),
+      getCartSubtotal: () =>
+        items.reduce((total, item) => total + getOriginalPrice(item.product) * item.quantity, 0),
+      getCartDiscount: () =>
+        items.reduce(
+          (total, item) =>
+            total + (getOriginalPrice(item.product) - getFinalPrice(item.product)) * item.quantity,
+          0,
+        ),
       getCartTotal: () =>
-        items.reduce((total, item) => total + (item.product.price || 0) * item.quantity, 0),
+        items.reduce((total, item) => total + getFinalPrice(item.product) * item.quantity, 0),
       getCartItemCount: () => items.reduce((total, item) => total + item.quantity, 0),
     }),
     [items],

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import LogoMark from './LogoMark.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
+import { useLanguage } from '../context/LanguageContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import styles from '../styles/App.module.css';
 
 const publicNavItems = [
@@ -12,19 +14,26 @@ const publicNavItems = [
 ];
 
 const privateNavItems = [
-  { label: 'Catálogo', href: '#/catalogo', roles: ['client', 'admin'] },
-  { label: 'Laboratorios', href: '#/laboratorios', roles: ['client', 'admin'] },
-  { label: 'Carrito', href: '#/carrito', roles: ['client'] },
-  { label: 'Mis pedidos', href: '#/mis-pedidos', roles: ['client'] },
+  { labelKey: 'nav.home', href: '#/inicio-cliente', roles: ['client'] },
+  { labelKey: 'nav.catalog', href: '#/catalogo', roles: ['client', 'admin'] },
+  { labelKey: 'nav.offers', href: '#/ofertas', roles: ['client'] },
+  { labelKey: 'nav.laboratories', href: '#/laboratorios', roles: ['client', 'admin'] },
+  { labelKey: 'nav.cart', href: '#/carrito', roles: ['client'] },
+  { labelKey: 'nav.orders', href: '#/mis-pedidos', roles: ['client'] },
   { label: 'Admin productos', href: '#/admin/productos', roles: ['admin'] },
+  { label: 'Admin ofertas', href: '#/admin/ofertas', roles: ['admin'] },
+  { label: 'Reportes', href: '#/admin/reportes', roles: ['admin'] },
+  { label: 'Auditoria', href: '#/admin/auditoria', roles: ['admin'] },
   { label: 'Admin pedidos', href: '#/admin/pedidos', roles: ['admin'] },
-  { label: 'Mi cuenta', href: '#/cuenta', roles: ['client', 'admin'] },
+  { labelKey: 'nav.account', href: '#/cuenta', roles: ['client', 'admin'] },
 ];
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const { getCartItemCount } = useCart();
+  const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const navItems = isAuthenticated
     ? privateNavItems.filter((item) => item.roles.includes(user.role))
     : publicNavItems;
@@ -71,19 +80,35 @@ export default function Header() {
             href={item.href}
             onClick={() => setMenuOpen(false)}
           >
-            {item.label}
+            {item.labelKey ? t(item.labelKey) : item.label}
             {item.href === '#/carrito' && <span className={styles.cartCount}>{itemCount}</span>}
           </a>
         ))}
         {isAuthenticated ? (
           <button className={styles.logoutButton} type="button" onClick={handleLogout}>
-            Cerrar sesión
+            {t('nav.logout')}
           </button>
         ) : (
           <a className={styles.accessButton} href="#/login" onClick={() => setMenuOpen(false)}>
-            Iniciar sesión
+            {t('nav.login')}
           </a>
         )}
+        <label className={styles.languageSelect}>
+          <span className={styles.srOnly}>Idioma</span>
+          <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+            <option value="es">ES</option>
+            <option value="en">EN</option>
+          </select>
+        </label>
+        <button
+          className={styles.themeToggle}
+          type="button"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+          aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+        >
+          {theme === 'dark' ? '☀' : '◐'}
+        </button>
         {isAuthenticated && <span className={styles.userPill}>{user.company}</span>}
       </nav>
     </header>

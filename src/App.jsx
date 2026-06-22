@@ -13,9 +13,15 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
 import MyOrdersPage from './pages/MyOrdersPage.jsx';
 import AdminOrdersPage from './pages/AdminOrdersPage.jsx';
 import AdminProductsPage from './pages/AdminProductsPage.jsx';
+import AdminOffersPage from './pages/AdminOffersPage.jsx';
 import LaboratoriesPage from './pages/LaboratoriesPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
+import OffersPage from './pages/OffersPage.jsx';
+import ClientDashboardPage from './pages/ClientDashboardPage.jsx';
+import AdminReportsPage from './pages/AdminReportsPage.jsx';
+import AdminAuditPage from './pages/AdminAuditPage.jsx';
 import { useHashRoute } from './hooks/useHashRoute.js';
+import { useTheme } from './context/ThemeContext.jsx';
 import styles from './styles/App.module.css';
 
 function NotFoundPage() {
@@ -34,16 +40,20 @@ function NotFoundPage() {
 
 export default function App() {
   const { route, navigate } = useHashRoute();
-  const redirectTo = route.query.get('redirect') || '/catalogo';
+  const { theme } = useTheme();
+  const redirectTo = route.query.get('redirect') || '';
 
   const privatePages = {
     '/catalogo': {
-      element: <CatalogPage initialLaboratory={route.query.get('laboratory') || ''} />,
+      element: <CatalogPage initialLaboratory={route.query.get('laboratory') || ''} initialCategory={route.query.get('category') || ''} />,
       roles: ['client', 'admin'],
     },
+    '/inicio-cliente': { element: <ClientDashboardPage />, roles: ['client'] },
     '/laboratorios': { element: <LaboratoriesPage />, roles: ['client', 'admin'] },
+    '/ofertas': { element: <OffersPage />, roles: ['client'] },
     '/carrito': { element: <CartPage />, roles: ['client'] },
     '/resumen': { element: <OrderSummaryPage />, roles: ['client'] },
+    '/checkout': { element: <OrderSummaryPage />, roles: ['client'] },
     '/pedido-confirmado': {
       element: <OrderConfirmationPage orderId={route.query.get('id') || ''} />,
       roles: ['client'],
@@ -51,6 +61,9 @@ export default function App() {
     '/mis-pedidos': { element: <MyOrdersPage />, roles: ['client'] },
     '/admin/pedidos': { element: <AdminOrdersPage />, roles: ['admin'] },
     '/admin/productos': { element: <AdminProductsPage />, roles: ['admin'] },
+    '/admin/ofertas': { element: <AdminOffersPage />, roles: ['admin'] },
+    '/admin/reportes': { element: <AdminReportsPage />, roles: ['admin'] },
+    '/admin/auditoria': { element: <AdminAuditPage />, roles: ['admin'] },
     '/cuenta': { element: <AccountPage />, roles: ['client', 'admin'] },
   };
 
@@ -78,7 +91,7 @@ export default function App() {
   }
 
   return (
-    <div className={styles.app}>
+    <div className={styles.app} data-theme={theme}>
       <Header />
       <main>{content}</main>
       <Footer />

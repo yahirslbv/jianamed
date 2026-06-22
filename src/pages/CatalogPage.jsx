@@ -3,6 +3,7 @@ import FilterSidebar from '../components/FilterSidebar.jsx';
 import ProductDetailModal from '../components/ProductDetailModal.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLanguage } from '../context/LanguageContext.jsx';
 import { getLaboratories } from '../services/laboratoryService.js';
 import { getProducts } from '../services/productService.js';
 import styles from '../styles/App.module.css';
@@ -42,8 +43,25 @@ function getSearchScore(product, query) {
   }, 0);
 }
 
-export default function CatalogPage({ initialLaboratory = '' }) {
+function CatalogSkeleton() {
+  return (
+    <div className={styles.productGrid} aria-label="Cargando productos" aria-busy="true">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div className={styles.productSkeleton} key={index}>
+          <span className={styles.skeletonVisual} />
+          <span className={styles.skeletonLine} />
+          <span className={`${styles.skeletonLine} ${styles.skeletonLineShort}`} />
+          <span className={styles.skeletonLine} />
+          <span className={`${styles.skeletonLine} ${styles.skeletonLineMedium}`} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function CatalogPage({ initialLaboratory = '', initialCategory = '' }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState(initialFilters);
   const [sortOrder, setSortOrder] = useState('relevance');
@@ -59,6 +77,12 @@ export default function CatalogPage({ initialLaboratory = '' }) {
       setFilters((currentFilters) => ({ ...currentFilters, laboratory: initialLaboratory }));
     }
   }, [initialLaboratory]);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setFilters((currentFilters) => ({ ...currentFilters, category: initialCategory }));
+    }
+  }, [initialCategory]);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,7 +111,7 @@ export default function CatalogPage({ initialLaboratory = '' }) {
 
   const categoryOptions = useMemo(
     () => Array.from(new Set(products.map((product) => product.category))).sort(),
-    [],
+    [products],
   );
 
   const filteredProducts = useMemo(() => {
@@ -130,18 +154,27 @@ export default function CatalogPage({ initialLaboratory = '' }) {
       const scoreDifference = getSearchScore(b, searchQuery) - getSearchScore(a, searchQuery);
       return scoreDifference || a.name.localeCompare(b.name);
     });
-  }, [filters, searchQuery, sortOrder]);
+  }, [filters, products, searchQuery, sortOrder]);
 
   const handleFilterChange = (name, value) => {
     setFilters((currentFilters) => ({ ...currentFilters, [name]: value }));
   };
+
+  const clearSearchAndFilters = () => {
+    setSearchQuery('');
+    setFilters(initialFilters);
+    setSortOrder('relevance');
+  };
+
+  const hasActiveSearchOrFilters =
+    Boolean(searchQuery.trim()) || Object.values(filters).some((value) => value !== '');
 
   return (
     <section className={`${styles.section} ${styles.catalogSection}`}>
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Catálogo privado</p>
-          <h1>Catálogo de distribución</h1>
+          <h1>{t('catalog.title')}</h1>
           <p>
             Busca por producto, principio activo, laboratorio, categoría o SKU.{' '}
             {canOrder
@@ -169,12 +202,12 @@ export default function CatalogPage({ initialLaboratory = '' }) {
           sortOrder={sortOrder}
           onFilterChange={handleFilterChange}
           onSortChange={setSortOrder}
-          onClearFilters={() => setFilters(initialFilters)}
+          onClearFilters={clearSearchAndFilters}
         />
         <div className={styles.catalogResults}>
           <div className={styles.resultsToolbar}>
             <div>
-              <span>{filteredProducts.length} productos</span>
+              <span>{isCatalogLoading ? 'Cargando productos' : `${filteredProducts.length} productos`}</span>
               <p>Resultados según búsqueda y filtros seleccionados.</p>
             </div>
             <div className={styles.catalogSearch}>
@@ -186,9 +219,14 @@ export default function CatalogPage({ initialLaboratory = '' }) {
                 type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Nombre, SKU, laboratorio o principio activo"
+                placeholder={t('catalog.search')}
               />
             </div>
+            {hasActiveSearchOrFilters && (
+              <button className={styles.secondarySmall} type="button" onClick={clearSearchAndFilters}>
+                {t('catalog.clear')}
+              </button>
+            )}
           </div>
           {catalogError ? (
             <div className={styles.emptyState}>
@@ -196,16 +234,23 @@ export default function CatalogPage({ initialLaboratory = '' }) {
               <p>{catalogError}</p>
             </div>
           ) : isCatalogLoading ? (
-            <div className={styles.emptyState}>
-              <h3>Cargando catálogo</h3>
-              <p>Estamos consultando la disponibilidad actual.</p>
-            </div>
+            <CatalogSkeleton />
           ) : (
-            <ProductGrid
-              products={filteredProducts}
-              onViewDetails={setSelectedProduct}
-              canOrder={canOrder}
-            />
+            filteredProducts.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3>No encontramos productos con esos filtros</h3>
+                <p>Prueba con otra búsqueda o restablece los filtros para ver el catálogo completo.</p>
+                <button className={styles.primarySmall} type="button" onClick={clearSearchAndFilters}>
+                  {t('catalog.clear')}
+                </button>
+              </div>
+            ) : (
+              <ProductGrid
+                products={filteredProducts}
+                onViewDetails={setSelectedProduct}
+                canOrder={canOrder}
+              />
+            )
           )}
         </div>
       </div>

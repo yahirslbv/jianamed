@@ -10,10 +10,28 @@ const currency = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 0,
 });
 
+function createCheckout(user) {
+  const customer = user.customer || {};
+  return {
+    clientName: user.company || user.name || '',
+    clientEmail: user.email || '',
+    deliveryAddress: customer.address || '',
+    deliveryCity: customer.city || '',
+    deliveryState: customer.state || '',
+    deliveryPostalCode: customer.postalCode || '',
+    billingBusinessName: customer.businessName || user.company || '',
+    billingRfc: customer.rfc || '',
+    billingAddress: customer.address || '',
+    responsibleName: customer.contactName || user.name || '',
+    responsiblePhone: customer.phone || '',
+  };
+}
+
 export default function OrderSummaryPage() {
   const { user } = useAuth();
-  const { items, clearCart, getCartTotal } = useCart();
+  const { items, clearCart, getCartSubtotal, getCartDiscount, getCartTotal } = useCart();
   const [observations, setObservations] = useState('');
+  const [checkout, setCheckout] = useState(() => createCheckout(user));
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEmpty = items.length === 0;
@@ -28,7 +46,7 @@ export default function OrderSummaryPage() {
     setError('');
 
     try {
-      const order = await createOrder({ user, items, observations });
+      const order = await createOrder({ user, items, observations, checkout });
       clearCart();
       window.location.hash = `/pedido-confirmado?id=${order.id}`;
     } catch (requestError) {
@@ -36,6 +54,10 @@ export default function OrderSummaryPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const updateCheckout = (field, value) => {
+    setCheckout((current) => ({ ...current, [field]: value }));
   };
 
   return (
@@ -84,33 +106,74 @@ export default function OrderSummaryPage() {
                   <span>{product.laboratoryName}</span>
                   <span>{product.presentation}</span>
                   <span>{quantity}</span>
-                  <span>{currency.format(product.price)}</span>
+                  <span>
+                    {product.originalPrice > product.price && (
+                      <small className={styles.originalPrice}>{currency.format(product.originalPrice)} </small>
+                    )}
+                    {currency.format(product.price)}
+                  </span>
                   <span>{currency.format(product.price * quantity)}</span>
                 </div>
               ))}
             </div>
             <div className={styles.summaryTotal}>
-              <span>Subtotal general</span>
+              <span>Subtotal</span>
+              <strong>{currency.format(getCartSubtotal())}</strong>
+              <span>Descuentos</span>
+              <strong className={styles.discountValue}>-{currency.format(getCartDiscount())}</strong>
+              <span>Total estimado</span>
               <strong>{currency.format(getCartTotal())}</strong>
             </div>
           </div>
 
           <aside className={styles.orderSidePanel}>
-            <h2>Cliente</h2>
-            <dl className={styles.detailList}>
-              <div>
-                <dt>Cliente</dt>
-                <dd>{user.company || user.name}</dd>
-              </div>
-              <div>
-                <dt>Contacto</dt>
-                <dd>{user.email}</dd>
-              </div>
-              <div>
-                <dt>Estado inicial</dt>
-                <dd>Pendiente de revisión</dd>
-              </div>
-            </dl>
+            <h2>Datos de solicitud</h2>
+            <div className={styles.checkoutFormGrid}>
+              <label>
+                Cliente
+                <input value={checkout.clientName} onChange={(event) => updateCheckout('clientName', event.target.value)} required />
+              </label>
+              <label>
+                Correo de contacto
+                <input type="email" value={checkout.clientEmail} onChange={(event) => updateCheckout('clientEmail', event.target.value)} required />
+              </label>
+              <label className={styles.checkoutFullWidth}>
+                Direccion de entrega
+                <input value={checkout.deliveryAddress} onChange={(event) => updateCheckout('deliveryAddress', event.target.value)} required />
+              </label>
+              <label>
+                Ciudad
+                <input value={checkout.deliveryCity} onChange={(event) => updateCheckout('deliveryCity', event.target.value)} required />
+              </label>
+              <label>
+                Estado
+                <input value={checkout.deliveryState} onChange={(event) => updateCheckout('deliveryState', event.target.value)} required />
+              </label>
+              <label>
+                Codigo postal
+                <input value={checkout.deliveryPostalCode} onChange={(event) => updateCheckout('deliveryPostalCode', event.target.value)} required />
+              </label>
+              <label>
+                Responsable
+                <input value={checkout.responsibleName} onChange={(event) => updateCheckout('responsibleName', event.target.value)} required />
+              </label>
+              <label>
+                Telefono responsable
+                <input type="tel" value={checkout.responsiblePhone} onChange={(event) => updateCheckout('responsiblePhone', event.target.value)} required />
+              </label>
+              <label className={styles.checkoutFullWidth}>
+                Razon social
+                <input value={checkout.billingBusinessName} onChange={(event) => updateCheckout('billingBusinessName', event.target.value)} />
+              </label>
+              <label>
+                RFC
+                <input value={checkout.billingRfc} onChange={(event) => updateCheckout('billingRfc', event.target.value)} />
+              </label>
+              <label>
+                Direccion fiscal
+                <input value={checkout.billingAddress} onChange={(event) => updateCheckout('billingAddress', event.target.value)} />
+              </label>
+            </div>
             <label>
               Observaciones del cliente
               <textarea
@@ -134,7 +197,7 @@ export default function OrderSummaryPage() {
               </p>
             )}
             <p className={styles.catalogNotice}>
-              No se procesará pago en esta etapa. La solicitud será revisada por un agente.
+              La solicitud sera revisada por un agente antes de confirmar disponibilidad, condiciones comerciales y surtido.
             </p>
           </aside>
         </div>

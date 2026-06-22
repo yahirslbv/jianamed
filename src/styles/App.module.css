@@ -1,17 +1,41 @@
 .app {
-  --primary: #283890;
-  --secondary: #0f75bd;
-  --soft: #f1f4f9;
-  --text: #1f2937;
-  --muted: #5d6979;
-  --line: #dbe3ef;
+  --color-background: #ffffff;
+  --color-background-soft: #f1f4f9;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-muted: #5d6979;
+  --color-border: #dbe3ef;
+  --color-primary: #283890;
+  --color-secondary: #0f75bd;
+  --primary: var(--color-primary);
+  --secondary: var(--color-secondary);
+  --soft: var(--color-background-soft);
+  --text: var(--color-text);
+  --muted: var(--color-muted);
+  --line: var(--color-border);
   --success: #147a5c;
   --warning: #9a5b13;
   --rx: #66438a;
   --shadow: 0 18px 48px rgba(20, 35, 70, 0.12);
   --radius: 8px;
   color: var(--text);
+  background: var(--color-background);
   min-height: 100vh;
+}
+
+.app[data-theme='dark'] {
+  --color-background: #111827;
+  --color-background-soft: #172033;
+  --color-surface: #1d2939;
+  --color-text: #e6edf7;
+  --color-muted: #aebbd0;
+  --color-border: #34445c;
+  --color-primary: #aebcff;
+  --color-secondary: #55b6f5;
+  --success: #5ac7a3;
+  --warning: #f1ba69;
+  --rx: #d7bbff;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 }
 
 .srOnly {
@@ -238,6 +262,89 @@
   height: 2px;
   margin: 5px 0;
   width: 24px;
+}
+
+.languageSelect select {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+  min-height: 36px;
+  padding: 6px 8px;
+}
+
+.themeToggle {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--primary);
+  display: inline-flex;
+  font-size: 1rem;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  width: 36px;
+}
+
+.app[data-theme='dark'] .header,
+.app[data-theme='dark'] .productCard,
+.app[data-theme='dark'] .branchCard,
+.app[data-theme='dark'] .newsCard,
+.app[data-theme='dark'] .contactForm,
+.app[data-theme='dark'] .filters,
+.app[data-theme='dark'] .resultsToolbar,
+.app[data-theme='dark'] .cartSummary,
+.app[data-theme='dark'] .orderSidePanel,
+.app[data-theme='dark'] .confirmationPanel,
+.app[data-theme='dark'] .orderListCard,
+.app[data-theme='dark'] .adminOrderCard,
+.app[data-theme='dark'] .adminProductRow,
+.app[data-theme='dark'] .adminProductForm,
+.app[data-theme='dark'] .adminOfferRow,
+.app[data-theme='dark'] .offerCard,
+.app[data-theme='dark'] .dashboardHero,
+.app[data-theme='dark'] .dashboardPanel,
+.app[data-theme='dark'] .dashboardSection,
+.app[data-theme='dark'] .dashboardAction,
+.app[data-theme='dark'] .reportFilters,
+.app[data-theme='dark'] .reportResults,
+.app[data-theme='dark'] .emptyState,
+.app[data-theme='dark'] .modal {
+  background: var(--color-surface);
+}
+
+.app[data-theme='dark'] .nav,
+.app[data-theme='dark'] .productVisual,
+.app[data-theme='dark'] .productSkeleton,
+.app[data-theme='dark'] .dashboardOfferStrip article,
+.app[data-theme='dark'] .dashboardProductStrip a,
+.app[data-theme='dark'] .orderTableRow,
+.app[data-theme='dark'] .reportTable th {
+  background: var(--color-background-soft);
+}
+
+.app[data-theme='dark'] .nav a,
+.app[data-theme='dark'] .reportFilters label,
+.app[data-theme='dark'] .orderSidePanel label,
+.app[data-theme='dark'] .filters label,
+.app[data-theme='dark'] .adminProductForm label,
+.app[data-theme='dark'] .reportTable td {
+  color: var(--text);
+}
+
+.app[data-theme='dark'] input,
+.app[data-theme='dark'] select,
+.app[data-theme='dark'] textarea,
+.app[data-theme='dark'] .secondaryButton,
+.app[data-theme='dark'] .secondarySmall,
+.app[data-theme='dark'] .logoutButton,
+.app[data-theme='dark'] .closeButton,
+.app[data-theme='dark'] .languageSelect select {
+  background: var(--color-surface);
+  color: var(--text);
 }
 
 .hero {
@@ -542,6 +649,206 @@
   max-width: 780px;
 }
 
+.dashboardHero {
+  align-items: end;
+  background: #ffffff;
+  border-bottom: 4px solid var(--secondary);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin: 0 auto 18px;
+  max-width: 1240px;
+  padding: clamp(22px, 4vw, 40px);
+}
+
+.dashboardHero h1,
+.dashboardPanel h2,
+.dashboardSection h2 {
+  color: var(--primary);
+  margin: 0;
+}
+
+.dashboardHero p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 10px 0 0;
+  max-width: 660px;
+}
+
+.dashboardQuickGrid,
+.dashboardColumns {
+  display: grid;
+  gap: 16px;
+  margin: 0 auto 18px;
+  max-width: 1240px;
+}
+
+.dashboardQuickGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboardAction {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  color: inherit;
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.dashboardAction:hover,
+.dashboardAction:focus-visible {
+  border-color: var(--secondary);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.dashboardAction strong {
+  color: var(--primary);
+}
+
+.dashboardAction span,
+.dashboardMuted {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.dashboardColumns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboardPanel,
+.dashboardSection {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  padding: 18px;
+}
+
+.dashboardPanelHeader {
+  align-items: end;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.dashboardPanelHeader > a {
+  color: var(--secondary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboardCategoryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboardCategoryList a {
+  background: #e8f4fc;
+  border: 1px solid rgba(15, 117, 189, 0.16);
+  border-radius: var(--radius);
+  color: var(--secondary);
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.dashboardOrderList {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboardOrderList a {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: inherit;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  text-decoration: none;
+}
+
+.dashboardOrderList span {
+  display: grid;
+  gap: 3px;
+}
+
+.dashboardOrderList small,
+.dashboardOrderList em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.dashboardOrderList span:last-child {
+  justify-items: end;
+}
+
+.dashboardSection {
+  margin: 18px auto 0;
+  max-width: 1240px;
+}
+
+.dashboardOfferStrip,
+.dashboardProductStrip {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboardOfferStrip article,
+.dashboardProductStrip a {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 8px;
+  min-height: 120px;
+  padding: 14px;
+}
+
+.dashboardOfferStrip strong,
+.dashboardProductStrip strong {
+  color: var(--primary);
+}
+
+.dashboardOfferStrip small,
+.dashboardProductStrip small {
+  color: var(--muted);
+}
+
+.dashboardProductStrip a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboardProductStrip a > span {
+  color: var(--success);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.dashboardNotice {
+  background: #fff8e8;
+  border: 1px solid rgba(154, 91, 19, 0.25);
+  border-radius: var(--radius);
+  color: #5f3b0e;
+  font-weight: 700;
+  line-height: 1.55;
+  margin: 18px auto 0;
+  max-width: 1240px;
+  padding: 14px 16px;
+}
+
 .section {
   padding: clamp(56px, 8vw, 88px) clamp(18px, 5vw, 64px);
   scroll-margin-top: 78px;
@@ -576,6 +883,7 @@
 
 .categoryGrid,
 .productGrid,
+.offerGrid,
 .branchGrid,
 .newsGrid {
   display: grid;
@@ -776,6 +1084,69 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.offerGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1240px;
+}
+
+.offerCard,
+.offerSkeleton {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+}
+
+.offerCard {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.offerCard h2 {
+  color: var(--primary);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.offerCard p,
+.offerCard dd {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.offerCard dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.offerCard dl div {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 3px;
+  padding-top: 10px;
+}
+
+.offerCard dt {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.offerValue {
+  color: var(--success);
+  font-size: 1.55rem;
+}
+
+.offerSkeleton {
+  animation: skeletonPulse 1.2s ease-in-out infinite alternate;
+  height: 280px;
+}
+
 .productCard,
 .branchCard,
 .newsCard,
@@ -791,6 +1162,51 @@
   grid-template-rows: auto 1fr;
   min-height: 100%;
   overflow: hidden;
+}
+
+.productSkeleton {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 13px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.skeletonVisual,
+.skeletonLine {
+  animation: skeletonPulse 1.2s ease-in-out infinite alternate;
+  background: #e7edf5;
+  border-radius: 4px;
+  display: block;
+}
+
+.skeletonVisual {
+  height: 148px;
+  margin: -16px -16px 4px;
+}
+
+.skeletonLine {
+  height: 14px;
+}
+
+.skeletonLineShort {
+  width: 44%;
+}
+
+.skeletonLineMedium {
+  width: 72%;
+}
+
+@keyframes skeletonPulse {
+  from {
+    opacity: 0.58;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .productVisual {
@@ -810,6 +1226,30 @@
   border-radius: var(--radius);
   height: min(360px, 52vw);
   min-height: 260px;
+}
+
+.productImage {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.productImagePreview {
+  align-items: center;
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  height: 180px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.productImagePreview img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
 .packageBack,
@@ -902,6 +1342,17 @@
   color: var(--warning);
 }
 
+.offerTag {
+  background: #e7f6f0;
+  border-radius: 999px;
+  color: var(--success);
+  display: inline-flex;
+  font-size: 0.73rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 7px 9px;
+}
+
 .productContent h3 {
   color: var(--primary);
   font-size: 1.18rem;
@@ -972,6 +1423,31 @@
   margin: 0;
 }
 
+.productPrice {
+  display: grid;
+  gap: 3px;
+}
+
+.productPrice small,
+.offerCopy {
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.originalPrice {
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration: line-through;
+}
+
+.modalPrice {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .cardActions {
   display: grid;
   gap: 8px;
@@ -1010,6 +1486,10 @@ button:disabled {
 
 .emptyState p {
   margin: 0;
+}
+
+.emptyState .primarySmall {
+  margin-top: 18px;
 }
 
 .modalOverlay {
@@ -1285,6 +1765,10 @@ button:disabled {
   font-weight: 900;
 }
 
+.discountValue {
+  color: var(--success) !important;
+}
+
 .summaryPanel {
   margin: 0 auto;
   max-width: 880px;
@@ -1351,6 +1835,7 @@ button:disabled {
   gap: 7px;
 }
 
+.orderSidePanel input,
 .orderSidePanel textarea,
 .adminFilter select {
   background: #ffffff;
@@ -1367,10 +1852,21 @@ button:disabled {
   resize: vertical;
 }
 
+.orderSidePanel input:focus,
 .orderSidePanel textarea:focus,
 .adminFilter select:focus {
   border-color: var(--secondary);
   box-shadow: 0 0 0 4px rgba(15, 117, 189, 0.14);
+}
+
+.checkoutFormGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.checkoutFullWidth {
+  grid-column: 1 / -1;
 }
 
 .orderTable {
@@ -1533,6 +2029,176 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
   margin: 0 auto;
   max-width: 1360px;
+}
+
+.adminOfferList {
+  display: grid;
+  gap: 12px;
+}
+
+.adminOfferRow {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+.adminOfferRow h2 {
+  color: var(--primary);
+  font-size: 1.06rem;
+  margin: 8px 0 6px;
+}
+
+.adminOfferRow p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.adminOfferActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: end;
+}
+
+.reportWorkspace {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
+.reportFilters,
+.reportResults {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  padding: 18px;
+}
+
+.reportFilters {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 94px;
+}
+
+.reportFilters > label,
+.reportFilterGrid label {
+  color: #334155;
+  display: grid;
+  font-size: 0.84rem;
+  font-weight: 800;
+  gap: 7px;
+}
+
+.reportFilters input,
+.reportFilters select {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  min-height: 42px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.reportFilterGrid {
+  display: grid;
+  gap: 11px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reportToolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+}
+
+.reportToolbar strong {
+  color: var(--primary);
+}
+
+.reportToolbar p,
+.reportFootnote {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 5px 0 0;
+}
+
+.tableWrapper {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.reportTable {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  min-width: 760px;
+  width: 100%;
+}
+
+.reportTable th,
+.reportTable td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.reportTable th {
+  background: var(--soft);
+  color: var(--primary);
+  font-size: 0.75rem;
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+
+.reportTable td {
+  color: var(--text);
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+
+.inactiveTag {
+  background: #eef2f7;
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.73rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 7px 9px;
+}
+
+.checkboxRow {
+  align-items: center;
+  color: #334155;
+  display: flex;
+  font-size: 0.88rem;
+  font-weight: 800;
+  gap: 8px;
 }
 
 .adminProductFilters,
@@ -1770,6 +2436,8 @@ button:disabled {
 @media (max-width: 1120px) {
   .categoryGrid,
   .productGrid,
+  .offerGrid,
+  .dashboardQuickGrid,
   .branchGrid,
   .laboratoryGrid,
   .accountGrid {
@@ -1779,6 +2447,8 @@ button:disabled {
   .catalogLayout,
   .cartLayout,
   .orderReviewLayout,
+  .dashboardColumns,
+  .reportWorkspace,
   .adminProductWorkspace {
     grid-template-columns: 1fr;
   }
@@ -1786,6 +2456,7 @@ button:disabled {
   .filters,
   .cartSummary,
   .orderSidePanel,
+  .reportFilters,
   .adminProductForm {
     position: static;
   }
@@ -1855,6 +2526,7 @@ button:disabled {
   }
 
   .resultsToolbar,
+  .dashboardHero,
   .contactSection,
   .modalGrid,
   .footer,
@@ -1866,6 +2538,11 @@ button:disabled {
   }
 
   .resultsToolbar {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .dashboardHero {
     align-items: stretch;
     display: grid;
   }
@@ -1908,6 +2585,7 @@ button:disabled {
 
   .orderListCard,
   .adminOrderCard,
+  .adminOfferRow,
   .adminProductRow {
     align-items: stretch;
     grid-template-columns: 1fr;
@@ -1963,6 +2641,10 @@ button:disabled {
 
   .categoryGrid,
   .productGrid,
+  .offerGrid,
+  .dashboardQuickGrid,
+  .dashboardOfferStrip,
+  .dashboardProductStrip,
   .branchGrid,
   .newsGrid,
   .detailList,
@@ -1982,6 +2664,8 @@ button:disabled {
   }
 
   .priceRange,
+  .checkoutFormGrid,
+  .reportFilterGrid,
   .modalCartRow,
   .summaryPanel li,
   .orderTableRow,

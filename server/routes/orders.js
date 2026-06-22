@@ -3,6 +3,7 @@ import prisma from '../db.js';
 import { ORDER_STATUSES, isAllowed } from '../constants.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { serializeOrder } from '../serializers.js';
+import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 
 const router = Router();
 
@@ -39,6 +40,38 @@ function buildOrderFolio(year, sequence) {
   return `PED-${year}-${String(sequence).padStart(4, '0')}`;
 }
 
+function cleanText(value, fallback = '') {
+  return value?.toString().trim() || fallback;
+}
+
+function getCheckoutSnapshot(checkout = {}, user) {
+  const customer = user.customer;
+  const snapshot = {
+    clientName: cleanText(checkout.clientName, customer.businessName || user.name),
+    clientEmail: cleanText(checkout.clientEmail, user.email),
+    deliveryAddress: cleanText(checkout.deliveryAddress, customer.address),
+    deliveryCity: cleanText(checkout.deliveryCity, customer.city),
+    deliveryState: cleanText(checkout.deliveryState, customer.state),
+    deliveryPostalCode: cleanText(checkout.deliveryPostalCode, customer.postalCode),
+    billingBusinessName: cleanText(checkout.billingBusinessName, customer.businessName),
+    billingRfc: cleanText(checkout.billingRfc, customer.rfc || ''),
+    billingAddress: cleanText(checkout.billingAddress, customer.address),
+    responsibleName: cleanText(checkout.responsibleName, customer.contactName),
+    responsiblePhone: cleanText(checkout.responsiblePhone, customer.phone),
+  };
+  const requiredFields = [
+    'deliveryAddress',
+    'deliveryCity',
+    'deliveryState',
+    'deliveryPostalCode',
+    'responsibleName',
+    'responsiblePhone',
+  ];
+  const missingField = requiredFields.find((field) => !snapshot[field]);
+
+  return missingField ? { error: `El campo ${missingField} es obligatorio.` } : { data: snapshot };
+}
+
 async function createOrder(req, res, next) {
   try {
     if (!req.user.customer || !req.user.customer.isAuthorized) {
@@ -47,6 +80,9 @@ async function createOrder(req, res, next) {
 
     const normalized = normalizeItems(req.body.items);
     if (normalized.error) return res.status(400).json({ message: normalized.error });
+
+    const checkout = getCheckoutSnapshot(req.body.checkout, req.user);
+    if (checkout.error) return res.status(400).json({ message: checkout.error });
 
     const observations = req.body.observations?.trim() || null;
     const order = await prisma.$transaction(async (tx) => {
@@ -65,10 +101,32 @@ async function createOrder(req, res, next) {
         }
       }
 
+      const activeOffers = await getActiveOffers(tx);
+      const priceDetailsByProductId = new Map(
+        normalized.items.map((item) => {
+          const product = productsById.get(item.productId);
+          const offerApplication = getOfferApplication(product, activeOffers);
+          const originalUnitPrice = product.price;
+          const discountAmount = offerApplication?.discountAmount || 0;
+          const unitPrice = offerApplication?.finalPrice ?? originalUnitPrice;
+
+          return [item.productId, {
+            originalUnitPrice,
+            discountAmount,
+            unitPrice,
+            offerTitle: offerApplication?.offer.title || null,
+          }];
+        }),
+      );
       const subtotal = normalized.items.reduce((total, item) => {
-        const product = productsById.get(item.productId);
-        return total + product.price * item.quantity;
+        const pricing = priceDetailsByProductId.get(item.productId);
+        return total + pricing.originalUnitPrice * item.quantity;
       }, 0);
+      const discountTotal = normalized.items.reduce((total, item) => {
+        const pricing = priceDetailsByProductId.get(item.productId);
+        return total + pricing.discountAmount * item.quantity;
+      }, 0);
+      const total = subtotal - discountTotal;
       const year = new Date().getFullYear();
       const startOfYear = new Date(year, 0, 1);
       const startOfNextYear = new Date(year + 1, 0, 1);
@@ -89,13 +147,16 @@ async function createOrder(req, res, next) {
           folio: buildOrderFolio(year, sequence),
           userId: req.user.id,
           customerId: req.user.customer.id,
+          ...checkout.data,
           status: 'PENDING_REVIEW',
           subtotal,
-          total: subtotal,
+          discountTotal,
+          total,
           observations,
           items: {
             create: normalized.items.map((item) => {
               const product = productsById.get(item.productId);
+              const pricing = priceDetailsByProductId.get(item.productId);
               return {
                 productId: product.id,
                 sku: product.sku,
@@ -103,8 +164,11 @@ async function createOrder(req, res, next) {
                 laboratoryName: product.laboratory.name,
                 presentation: product.presentation,
                 quantity: item.quantity,
-                unitPrice: product.price,
-                subtotal: product.price * item.quantity,
+                unitPrice: pricing.unitPrice,
+                originalUnitPrice: pricing.originalUnitPrice,
+                discountAmount: pricing.discountAmount,
+                offerTitle: pricing.offerTitle,
+                subtotal: pricing.unitPrice * item.quantity,
               };
             }),
           },
