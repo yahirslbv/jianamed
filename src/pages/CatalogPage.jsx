@@ -70,6 +70,7 @@ export default function CatalogPage({ initialLaboratory = '', initialCategory = 
   const [laboratories, setLaboratories] = useState([]);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState('');
+  const [showAdminNotice, setShowAdminNotice] = useState(true);
   const canOrder = user.role === 'client';
 
   useEffect(() => {
@@ -173,7 +174,16 @@ export default function CatalogPage({ initialLaboratory = '', initialCategory = 
     <section className={`${styles.section} ${styles.catalogSection}`}>
       <div className={styles.privateHeader}>
         <div>
-          <p className={styles.eyebrow}>Catálogo privado</p>
+          {canOrder ? (
+            <p className={styles.eyebrow}>Catálogo privado</p>
+          ) : showAdminNotice ? (
+            <div className={`${styles.adminCatalogNotice} ${styles.headerCatalogNotice}`} role="status">
+              <span>Vista administrativa del catálogo.</span>
+              <button type="button" onClick={() => setShowAdminNotice(false)} aria-label="Cerrar aviso administrativo">
+                Cerrar
+              </button>
+            </div>
+          ) : null}
           <h1>{t('catalog.title')}</h1>
           <p>
             Busca por producto, principio activo, laboratorio, categoría o SKU.{' '}
@@ -187,11 +197,6 @@ export default function CatalogPage({ initialLaboratory = '', initialCategory = 
             Ver carrito
           </a>
         )}
-      </div>
-
-      <div className={styles.catalogNotice} role="note">
-        La venta y suministro de productos sujetos a regulación se realizará únicamente conforme a
-        los requisitos aplicables.
       </div>
 
       <div className={styles.catalogLayout}>

@@ -68,7 +68,7 @@ export default function ProductCard({ product, onViewDetails, canOrder = true })
           <p className={styles.priceReference}>{currency.format(product.price)}</p>
           {product.offer && <small>{product.offer.title}</small>}
         </div>
-        {canOrder ? (
+        {canOrder && (
           <label className={styles.quantityControl}>
             Cantidad
             <input
@@ -78,8 +78,6 @@ export default function ProductCard({ product, onViewDetails, canOrder = true })
               onChange={(event) => setQuantity(Number.parseInt(event.target.value, 10) || 1)}
             />
           </label>
-        ) : (
-          <p className={styles.catalogNotice}>Vista administrativa del catálogo.</p>
         )}
         <div className={styles.cardActions}>
           <button type="button" className={styles.secondarySmall} onClick={() => onViewDetails(product)}>

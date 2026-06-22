@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LogoMark from './LogoMark.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
@@ -30,6 +30,7 @@ const privateNavItems = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeHash, setActiveHash] = useState(() => window.location.hash || '#/');
   const { isAuthenticated, logout, user } = useAuth();
   const { getCartItemCount } = useCart();
   const { language, setLanguage, t } = useLanguage();
@@ -38,6 +39,12 @@ export default function Header() {
     ? privateNavItems.filter((item) => item.roles.includes(user.role))
     : publicNavItems;
   const itemCount = getCartItemCount();
+
+  useEffect(() => {
+    const syncActiveHash = () => setActiveHash(window.location.hash || '#/');
+    window.addEventListener('hashchange', syncActiveHash);
+    return () => window.removeEventListener('hashchange', syncActiveHash);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -76,7 +83,7 @@ export default function Header() {
         {navItems.map((item) => (
           <a
             key={item.href}
-            className={item.href === '#/carrito' ? styles.cartNavLink : undefined}
+            className={[styles.navLink, item.href === activeHash ? styles.navLinkActive : '', item.href === '#/carrito' ? styles.cartNavLink : ''].filter(Boolean).join(' ')}
             href={item.href}
             onClick={() => setMenuOpen(false)}
           >
