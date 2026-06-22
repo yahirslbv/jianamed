@@ -7,6 +7,7 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
   const [email, setEmail] = useState('cliente@demo.com');
   const [password, setPassword] = useState('demo123');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const useDemoAccess = (demoEmail, demoPassword) => {
     setEmail(demoEmail);
@@ -14,9 +15,12 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
     setError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = login({ email, password });
+    setIsSubmitting(true);
+    setError('');
+    const result = await login({ email, password });
+    setIsSubmitting(false);
 
     if (result.ok) {
       navigate(redirectTo || '/catalogo');
@@ -83,8 +87,8 @@ export default function LoginPage({ redirectTo = '/catalogo', navigate }) {
               required
             />
           </label>
-          <button className={styles.primaryButton} type="submit">
-            Entrar al catálogo
+          <button className={styles.primaryButton} type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Validando acceso...' : 'Entrar al catálogo'}
           </button>
           {error && (
             <p className={styles.formError} role="alert">

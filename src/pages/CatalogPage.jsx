@@ -3,8 +3,8 @@ import FilterSidebar from '../components/FilterSidebar.jsx';
 import ProductDetailModal from '../components/ProductDetailModal.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { laboratories } from '../data/laboratories.js';
-import { products } from '../data/products.js';
+import { getLaboratories } from '../services/laboratoryService.js';
+import { getProducts } from '../services/productService.js';
 import styles from '../styles/App.module.css';
 
 const initialFilters = {
@@ -48,6 +48,10 @@ export default function CatalogPage({ initialLaboratory = '' }) {
   const [filters, setFilters] = useState(initialFilters);
   const [sortOrder, setSortOrder] = useState('relevance');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [laboratories, setLaboratories] = useState([]);
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
   const canOrder = user.role === 'client';
 
   useEffect(() => {
@@ -55,6 +59,31 @@ export default function CatalogPage({ initialLaboratory = '' }) {
       setFilters((currentFilters) => ({ ...currentFilters, laboratory: initialLaboratory }));
     }
   }, [initialLaboratory]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([
+      getProducts({ includeInactive: user.role === 'admin' ? 'true' : undefined }),
+      getLaboratories({ includeInactive: user.role === 'admin' }),
+    ])
+      .then(([loadedProducts, loadedLaboratories]) => {
+        if (!isMounted) return;
+        setProducts(loadedProducts);
+        setLaboratories(loadedLaboratories);
+        setCatalogError('');
+      })
+      .catch((error) => {
+        if (isMounted) setCatalogError(error.message);
+      })
+      .finally(() => {
+        if (isMounted) setIsCatalogLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user.role]);
 
   const categoryOptions = useMemo(
     () => Array.from(new Set(products.map((product) => product.category))).sort(),
@@ -161,11 +190,23 @@ export default function CatalogPage({ initialLaboratory = '' }) {
               />
             </div>
           </div>
-          <ProductGrid
-            products={filteredProducts}
-            onViewDetails={setSelectedProduct}
-            canOrder={canOrder}
-          />
+          {catalogError ? (
+            <div className={styles.emptyState}>
+              <h3>No fue posible cargar el catálogo</h3>
+              <p>{catalogError}</p>
+            </div>
+          ) : isCatalogLoading ? (
+            <div className={styles.emptyState}>
+              <h3>Cargando catálogo</h3>
+              <p>Estamos consultando la disponibilidad actual.</p>
+            </div>
+          ) : (
+            <ProductGrid
+              products={filteredProducts}
+              onViewDetails={setSelectedProduct}
+              canOrder={canOrder}
+            />
+          )}
         </div>
       </div>
 

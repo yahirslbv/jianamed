@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         String     @default("client")
+  isActive     Boolean    @default(true)
+  customer     Customer?
+  orders       Order[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  businessName    String
+  commercialName  String?
+  rfc             String?
+  contactName     String
+  phone           String
+  address         String
+  city            String
+  state           String
+  postalCode      String
+  sanitaryLicense String?
+  isAuthorized    Boolean  @default(true)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders          Order[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Laboratory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                           String         @id @default(cuid())
+  sku                          String         @unique
+  commercialName               String
+  genericName                  String
+  activeIngredient             String
+  laboratoryId                 String
+  categoryId                   String
+  pharmaceuticalForm           String
+  concentration                String
+  presentation                 String
+  sanitaryRegistration         String?
+  healthFraction               String         @default("NOT_APPLICABLE")
+  requiresPrescription         Boolean        @default(false)
+  requiresRetainedPrescription Boolean        @default(false)
+  isControlled                 Boolean        @default(false)
+  productType                  String
+  price                        Float
+  stock                        Int            @default(0)
+  imageUrl                     String?
+  description                  String?
+  isActive                     Boolean        @default(true)
+  laboratory                   Laboratory     @relation(fields: [laboratoryId], references: [id])
+  category                     Category       @relation(fields: [categoryId], references: [id])
+  inventoryLots                InventoryLot[]
+  orderItems                   OrderItem[]
+  createdAt                    DateTime       @default(now())
+  updatedAt                    DateTime       @updatedAt
+
+  @@index([laboratoryId])
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model InventoryLot {
+  id                String   @id @default(cuid())
+  productId         String
+  lotNumber         String
+  expirationDate    DateTime
+  quantity          Int
+  warehouseLocation String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([productId, lotNumber])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  folio        String      @unique
+  userId       String
+  customerId   String
+  status       String      @default("PENDING_REVIEW")
+  subtotal     Float
+  total        Float
+  observations String?
+  user         User        @relation(fields: [userId], references: [id])
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  items        OrderItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  productId      String
+  sku            String
+  productName    String
+  laboratoryName String
+  presentation   String
+  quantity       Int
+  unitPrice      Float
+  subtotal       Float
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  details   String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}

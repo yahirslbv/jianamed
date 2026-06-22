@@ -1,4 +1,14 @@
-export const productTypes = ['Medicamento', 'OTC', 'RX', 'Material de curación', 'Naturismo', 'Perfumería', 'Suplemento'];
+export const productTypes = [
+  'Medicamento',
+  'Genérico',
+  'OTC',
+  'RX',
+  'Material de curación',
+  'Naturismo',
+  'Perfumería',
+  'Suplemento',
+  'Insumo médico',
+];
 
 export const presentations = [
   'Tabletas',

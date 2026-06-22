@@ -1,16 +1,46 @@
+import { useEffect, useState } from 'react';
 import { getLastOrderId, getOrderById } from '../services/orderService.js';
 import styles from '../styles/App.module.css';
 
 export default function OrderConfirmationPage({ orderId }) {
   const resolvedOrderId = orderId || getLastOrderId();
-  const order = resolvedOrderId ? getOrderById(resolvedOrderId) : null;
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId));
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!resolvedOrderId) {
+      setIsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    getOrderById(resolvedOrderId)
+      .then((loadedOrder) => {
+        if (isMounted) setOrder(loadedOrder);
+      })
+      .catch(() => {
+        if (isMounted) setOrder(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedOrderId]);
 
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
       <div className={styles.confirmationPanel}>
         <p className={styles.eyebrow}>Pedido creado</p>
         <h1>Solicitud de pedido enviada correctamente</h1>
-        {order ? (
+        {isLoading ? (
+          <p>Consultando el pedido creado...</p>
+        ) : order ? (
           <>
             <dl className={styles.detailList}>
               <div>

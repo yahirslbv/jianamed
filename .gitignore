@@ -2,3 +2,7 @@ node_modules/
 dist/
 .vite/
 *.log
+server/.env
+server/prisma/.env
+server/prisma/dev.db
+server/prisma/dev.db-journal

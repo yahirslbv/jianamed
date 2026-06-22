@@ -15,17 +15,27 @@ export default function OrderSummaryPage() {
   const { items, clearCart, getCartTotal } = useCart();
   const [observations, setObservations] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isEmpty = items.length === 0;
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     if (isEmpty) {
       setError('Agrega productos al carrito antes de confirmar una solicitud.');
       return;
     }
 
-    const order = createOrder({ user, items, observations });
-    clearCart();
-    window.location.hash = `/pedido-confirmado?id=${order.id}`;
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const order = await createOrder({ user, items, observations });
+      clearCart();
+      window.location.hash = `/pedido-confirmado?id=${order.id}`;
+    } catch (requestError) {
+      setError(requestError.message || 'No fue posible crear la solicitud.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -110,8 +120,13 @@ export default function OrderSummaryPage() {
                 placeholder="Notas internas para el agente de ventas"
               />
             </label>
-            <button className={styles.primaryButton} type="button" onClick={handleConfirmOrder}>
-              Confirmar solicitud de pedido
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleConfirmOrder}
+            >
+              {isSubmitting ? 'Enviando solicitud...' : 'Confirmar solicitud de pedido'}
             </button>
             {error && (
               <p className={styles.formError} role="alert">

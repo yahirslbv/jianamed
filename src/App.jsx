@@ -12,6 +12,7 @@ import OrderSummaryPage from './pages/OrderSummaryPage.jsx';
 import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
 import MyOrdersPage from './pages/MyOrdersPage.jsx';
 import AdminOrdersPage from './pages/AdminOrdersPage.jsx';
+import AdminProductsPage from './pages/AdminProductsPage.jsx';
 import LaboratoriesPage from './pages/LaboratoriesPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import { useHashRoute } from './hooks/useHashRoute.js';
@@ -49,6 +50,7 @@ export default function App() {
     },
     '/mis-pedidos': { element: <MyOrdersPage />, roles: ['client'] },
     '/admin/pedidos': { element: <AdminOrdersPage />, roles: ['admin'] },
+    '/admin/productos': { element: <AdminProductsPage />, roles: ['admin'] },
     '/cuenta': { element: <AccountPage />, roles: ['client', 'admin'] },
   };
 

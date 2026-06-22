@@ -16,6 +16,7 @@ const privateNavItems = [
   { label: 'Laboratorios', href: '#/laboratorios', roles: ['client', 'admin'] },
   { label: 'Carrito', href: '#/carrito', roles: ['client'] },
   { label: 'Mis pedidos', href: '#/mis-pedidos', roles: ['client'] },
+  { label: 'Admin productos', href: '#/admin/productos', roles: ['admin'] },
   { label: 'Admin pedidos', href: '#/admin/pedidos', roles: ['admin'] },
   { label: 'Mi cuenta', href: '#/cuenta', roles: ['client', 'admin'] },
 ];
@@ -29,8 +30,8 @@ export default function Header() {
     : publicNavItems;
   const itemCount = getCartItemCount();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setMenuOpen(false);
     window.location.hash = '/';
   };

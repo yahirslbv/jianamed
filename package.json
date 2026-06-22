@@ -4,16 +4,31 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "dev:server": "node --watch server/index.js",
+    "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
+    "prisma:seed": "prisma db seed --schema server/prisma/schema.prisma"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",
+    "prisma": "^6.19.3",
     "vite": "^7.0.0"
+  },
+  "prisma": {
+    "seed": "node server/prisma/seed.js"
   }
 }

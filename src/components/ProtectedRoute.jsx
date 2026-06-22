@@ -3,13 +3,24 @@ import { useAuth } from '../context/AuthContext.jsx';
 import styles from '../styles/App.module.css';
 
 export default function ProtectedRoute({ children, path, navigate, allowedRoles }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       navigate(`/login?redirect=${encodeURIComponent(path)}`);
     }
-  }, [isAuthenticated, navigate, path]);
+  }, [isAuthenticated, isLoading, navigate, path]);
+
+  if (isLoading) {
+    return (
+      <section className={styles.section}>
+        <div className={styles.authGate}>
+          <p className={styles.eyebrow}>Verificando sesión</p>
+          <h1>Preparando tu acceso</h1>
+        </div>
+      </section>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

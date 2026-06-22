@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { orderStatuses } from '../data/orderStatuses.js';
-import { getOrders, updateOrderStatus } from '../services/orderService.js';
+import { getAdminOrders, updateOrderStatus } from '../services/orderService.js';
 import styles from '../styles/App.module.css';
 
 const currency = new Intl.NumberFormat('es-MX', {
@@ -18,17 +18,40 @@ const dateFormatter = new Intl.DateTimeFormat('es-MX', {
 });
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState(() => getOrders());
+  const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadOrders = async () => {
+    setIsLoading(true);
+    try {
+      const loadedOrders = await getAdminOrders();
+      setOrders(loadedOrders);
+      setError('');
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   const visibleOrders = useMemo(
     () => orders.filter((order) => !statusFilter || order.status === statusFilter),
     [orders, statusFilter],
   );
 
-  const handleStatusChange = (orderId, status) => {
-    updateOrderStatus(orderId, status);
-    setOrders(getOrders());
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      await loadOrders();
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
@@ -52,7 +75,17 @@ export default function AdminOrdersPage() {
         </label>
       </div>
 
-      {visibleOrders.length === 0 ? (
+      {error ? (
+        <div className={styles.emptyState}>
+          <h2>No fue posible consultar los pedidos</h2>
+          <p>{error}</p>
+        </div>
+      ) : isLoading ? (
+        <div className={styles.emptyState}>
+          <h2>Cargando solicitudes</h2>
+          <p>Estamos consultando los pedidos registrados.</p>
+        </div>
+      ) : visibleOrders.length === 0 ? (
         <div className={styles.emptyState}>
           <h2>No hay pedidos con ese estado</h2>
           <p>Cuando los clientes confirmen solicitudes aparecerán en esta vista.</p>

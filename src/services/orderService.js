@@ -1,105 +1,119 @@
-import { initialOrderStatus } from '../data/orderStatuses.js';
+import { apiClient, shouldUseLocalFallback } from './apiClient.js';
+import {
+  createFallbackOrder,
+  cancelFallbackOrder,
+  getFallbackLastOrderId,
+  getFallbackOrderById,
+  getFallbackOrders,
+  updateFallbackOrderStatus,
+} from './orderFallbackService.js';
 
-const ORDER_STORAGE_KEY = 'tic-toc-pharma-orders';
 const LAST_ORDER_KEY = 'tic-toc-pharma-last-order-id';
-const legacyStatusLabels = {
-  'Pendiente de revision': 'Pendiente de revisión',
-  'En revision': 'En revisión',
+
+const statusLabels = {
+  PENDING_REVIEW: 'Pendiente de revisión',
+  IN_REVIEW: 'En revisión',
+  APPROVED: 'Aprobado',
+  REJECTED: 'Rechazado',
+  SUPPLIED: 'Surtido',
+  CANCELLED: 'Cancelado',
 };
+
+const statusCodes = Object.fromEntries(
+  Object.entries(statusLabels).map(([code, label]) => [label, code]),
+);
 
 function normalizeOrder(order) {
   return {
     ...order,
-    status: legacyStatusLabels[order.status] || order.status,
+    status: order.statusLabel || statusLabels[order.status] || order.status,
   };
 }
 
-function readOrders() {
+export async function getOrders() {
   try {
-    const storedOrders = localStorage.getItem(ORDER_STORAGE_KEY);
-    const parsedOrders = storedOrders ? JSON.parse(storedOrders) : [];
-    return Array.isArray(parsedOrders) ? parsedOrders.map(normalizeOrder) : [];
-  } catch {
-    return [];
+    const response = await apiClient('/orders');
+    return response.orders.map(normalizeOrder);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return getFallbackOrders();
+    throw error;
   }
 }
 
-function writeOrders(orders) {
-  localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
-}
+export async function getOrderById(orderId) {
+  if (!orderId) return null;
 
-function createOrderId() {
-  return `order-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function createFolio(orders) {
-  const year = new Date().getFullYear();
-  const yearPrefix = `PED-${year}-`;
-  const sequence =
-    orders.filter((order) => order.folio?.startsWith(yearPrefix)).length + 1;
-
-  return `${yearPrefix}${sequence.toString().padStart(4, '0')}`;
-}
-
-function createOrderItem({ product, quantity }) {
-  const unitPrice = product.price || 0;
-
-  return {
-    productId: product.id,
-    sku: product.sku,
-    name: product.name,
-    laboratoryName: product.laboratoryName,
-    presentation: product.presentation,
-    quantity,
-    unitPrice,
-    subtotal: unitPrice * quantity,
-  };
-}
-
-export function getOrders() {
-  return readOrders();
-}
-
-export function getOrderById(orderId) {
-  return readOrders().find((order) => order.id === orderId) || null;
+  try {
+    const response = await apiClient(`/orders/${orderId}`);
+    return normalizeOrder(response.order);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return getFallbackOrderById(orderId);
+    throw error;
+  }
 }
 
 export function getLastOrderId() {
-  return localStorage.getItem(LAST_ORDER_KEY);
+  try {
+    return localStorage.getItem(LAST_ORDER_KEY) || getFallbackLastOrderId();
+  } catch {
+    return null;
+  }
 }
 
-export function getOrdersByClient(clientId) {
-  return readOrders().filter((order) => order.clientId === clientId);
+export async function createOrder({ user, items, observations }) {
+  try {
+    const response = await apiClient('/orders', {
+      method: 'POST',
+      body: {
+        items: items.map(({ product, quantity }) => ({ productId: product.id, quantity })),
+        observations,
+      },
+    });
+    const order = normalizeOrder(response.order);
+    localStorage.setItem(LAST_ORDER_KEY, order.id);
+    return order;
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return createFallbackOrder({ user, items, observations });
+    throw error;
+  }
 }
 
-export function createOrder({ user, items, observations }) {
-  const orders = readOrders();
-  const orderItems = items.map(createOrderItem);
-  const subtotal = orderItems.reduce((total, item) => total + item.subtotal, 0);
-  const order = {
-    id: createOrderId(),
-    folio: createFolio(orders),
-    clientId: user.id,
-    clientName: user.company || user.name,
-    clientEmail: user.email,
-    items: orderItems,
-    subtotal,
-    total: subtotal,
-    status: initialOrderStatus,
-    observations: observations.trim(),
-    createdAt: new Date().toISOString(),
-  };
-
-  writeOrders([order, ...orders]);
-  localStorage.setItem(LAST_ORDER_KEY, order.id);
-  return order;
+export function canCancelOrder(order) {
+  return order?.status === 'PENDING_REVIEW' || order?.status === statusLabels.PENDING_REVIEW;
 }
 
-export function updateOrderStatus(orderId, status) {
-  const orders = readOrders();
-  const updatedOrders = orders.map((order) =>
-    order.id === orderId ? { ...order, status, updatedAt: new Date().toISOString() } : order,
-  );
-  writeOrders(updatedOrders);
-  return updatedOrders.find((order) => order.id === orderId) || null;
+export async function cancelOrder(orderId) {
+  try {
+    const response = await apiClient(`/orders/${orderId}/cancel`, {
+      method: 'PATCH',
+    });
+    return normalizeOrder(response.order);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return cancelFallbackOrder(orderId);
+    throw error;
+  }
+}
+
+export async function getAdminOrders(status = '') {
+  try {
+    const query = status ? `?status=${encodeURIComponent(statusCodes[status] || status)}` : '';
+    const response = await apiClient(`/admin/orders${query}`);
+    return response.orders.map(normalizeOrder);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return getFallbackOrders();
+    throw error;
+  }
+}
+
+export async function updateOrderStatus(orderId, status) {
+  try {
+    const response = await apiClient(`/admin/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: { status: statusCodes[status] || status },
+    });
+    return normalizeOrder(response.order);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return updateFallbackOrderStatus(orderId, status);
+    throw error;
+  }
 }

@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getCurrentUser, login as loginWithApi, logout as logoutWithApi } from '../services/authService.js';
+import { shouldUseLocalFallback } from '../services/apiClient.js';
 
 const AuthContext = createContext(null);
-const SESSION_KEY = 'tic-toc-pharma-session';
+const FALLBACK_SESSION_KEY = 'tic-toc-pharma-fallback-session';
+const LEGACY_SESSION_KEY = 'tic-toc-pharma-session';
 
 const demoUsers = [
   {
@@ -25,26 +28,59 @@ const demoUsers = [
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const storedUser = localStorage.getItem(SESSION_KEY);
+      const storedUser =
+        localStorage.getItem(FALLBACK_SESSION_KEY) || localStorage.getItem(LEGACY_SESSION_KEY);
       return storedUser ? JSON.parse(storedUser) : null;
     } catch {
       return null;
     }
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(SESSION_KEY);
-    }
-  }, [user]);
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((response) => {
+        if (!isMounted) return;
+        setUser(response.user);
+        localStorage.removeItem(FALLBACK_SESSION_KEY);
+        localStorage.removeItem(LEGACY_SESSION_KEY);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        if (!shouldUseLocalFallback(error)) {
+          setUser(null);
+          localStorage.removeItem(FALLBACK_SESSION_KEY);
+          localStorage.removeItem(LEGACY_SESSION_KEY);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const value = useMemo(
     () => ({
       user,
       isAuthenticated: Boolean(user),
-      login: ({ email, password }) => {
+      isLoading,
+      login: async ({ email, password }) => {
+        try {
+          const response = await loginWithApi({ email, password });
+          setUser(response.user);
+          localStorage.removeItem(FALLBACK_SESSION_KEY);
+          localStorage.removeItem(LEGACY_SESSION_KEY);
+          return { ok: true };
+        } catch (error) {
+          if (!shouldUseLocalFallback(error)) {
+            return { ok: false, message: error.message };
+          }
+
         const matchedUser = demoUsers.find(
           (demoUser) =>
             demoUser.email === email.trim().toLowerCase() && demoUser.password === password,
@@ -53,6 +89,7 @@ export function AuthProvider({ children }) {
         if (matchedUser) {
           const { password: _password, ...sessionUser } = matchedUser;
           setUser(sessionUser);
+          localStorage.setItem(FALLBACK_SESSION_KEY, JSON.stringify(sessionUser));
           return { ok: true };
         }
 
@@ -61,10 +98,20 @@ export function AuthProvider({ children }) {
           message:
             'Credenciales no válidas. Usa cliente@demo.com / demo123 o admin@demo.com / admin123.',
         };
+        }
       },
-      logout: () => setUser(null),
+      logout: async () => {
+        try {
+          await logoutWithApi();
+        } catch {
+          // The local fallback is still cleared even if the API is offline.
+        }
+        setUser(null);
+        localStorage.removeItem(FALLBACK_SESSION_KEY);
+        localStorage.removeItem(LEGACY_SESSION_KEY);
+      },
     }),
-    [user],
+    [isLoading, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
