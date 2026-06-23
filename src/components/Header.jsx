@@ -134,6 +134,8 @@ export default function Header() {
                 {user.role === 'admin' && (
                   <>
                     <a href="#/admin/ofertas" role="menuitem" onClick={closeMenus}>Ofertas</a>
+                    <a href="#/admin/clientes" role="menuitem" onClick={closeMenus}>Clientes</a>
+                    <a href="#/admin/importar-productos" role="menuitem" onClick={closeMenus}>Importar productos</a>
                     <a href="#/admin/reportes" role="menuitem" onClick={closeMenus}>Reportes</a>
                     <a href="#/admin/auditoria" role="menuitem" onClick={closeMenus}>Auditoría</a>
                   </>

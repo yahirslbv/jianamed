@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { serializeCategory, serializeLaboratory, serializeProduct } from '../serializers.js';
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 import { getProductImageUrl, productImageUpload } from '../uploads.js';
+import { parseMoneyInput } from '../utils/money.js';
 
 const router = Router();
 
@@ -45,11 +46,11 @@ function getProductPayload(body, uploadedImageUrl = null) {
     'productType',
   ];
   const missingField = requiredFields.find((field) => !body[field]?.toString().trim());
-  const price = Number(body.price);
+  const priceCents = parseMoneyInput(body.price);
   const stock = Number.parseInt(body.stock, 10);
 
   if (missingField) return { error: `El campo ${missingField} es obligatorio.` };
-  if (!Number.isFinite(price) || price < 0) return { error: 'El precio no es válido.' };
+  if (priceCents === null || priceCents < 0) return { error: 'El precio no es válido.' };
   if (!Number.isInteger(stock) || stock < 0) return { error: 'El stock no es válido.' };
   if (!isAllowed(body.productType, PRODUCT_TYPES)) return { error: 'El tipo de producto no es válido.' };
 
@@ -75,7 +76,7 @@ function getProductPayload(body, uploadedImageUrl = null) {
       requiresRetainedPrescription: toBoolean(body.requiresRetainedPrescription),
       isControlled: toBoolean(body.isControlled),
       productType: body.productType,
-      price,
+      priceCents,
       stock,
       imageUrl: uploadedImageUrl || body.imageUrl?.trim() || null,
       description: body.description?.trim() || null,

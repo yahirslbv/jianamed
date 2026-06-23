@@ -37,6 +37,23 @@ export const productImageUpload = multer({
   limits: { fileSize: 2 * 1024 * 1024, files: 1 },
 });
 
+function csvFilter(_req, file, callback) {
+  const extension = path.extname(file.originalname).toLowerCase();
+  const acceptedMimeTypes = new Set(['text/csv', 'application/csv', 'application/vnd.ms-excel', 'text/plain', 'application/octet-stream']);
+  if (extension !== '.csv' || !acceptedMimeTypes.has(file.mimetype)) {
+    const error = new Error('Solo se permiten archivos CSV.');
+    error.code = 'INVALID_PRODUCT_CSV';
+    return callback(error);
+  }
+  return callback(null, true);
+}
+
+export const productCsvUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: csvFilter,
+  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+});
+
 export function getProductImageUrl(file) {
   return file ? `/api/uploads/products/${file.filename}` : null;
 }

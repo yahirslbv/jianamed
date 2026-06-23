@@ -37,8 +37,8 @@ model Customer {
   isAuthorized    Boolean  @default(true)
   // Virtual credit is prepared for a later stage and does not affect checkout yet.
   creditEnabled   Boolean  @default(false)
-  creditLimit     Float    @default(0)
-  creditUsed      Float    @default(0)
+  creditLimitCents Int     @default(0)
+  creditUsedCents  Int     @default(0)
   creditStatus    String   @default("DISABLED")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders          Order[]
@@ -87,7 +87,7 @@ model Product {
   requiresRetainedPrescription Boolean        @default(false)
   isControlled                 Boolean        @default(false)
   productType                  String
-  price                        Float
+  priceCents                   Int
   stock                        Int            @default(0)
   imageUrl                     String?
   description                  String?
@@ -110,7 +110,8 @@ model Offer {
   title         String
   description   String?
   discountType  String
-  discountValue Float
+  discountValueCents Int?
+  discountPercentageBps Int?
   startsAt      DateTime
   endsAt        DateTime
   isActive      Boolean     @default(true)
@@ -152,9 +153,9 @@ model Order {
   clientName          String?
   clientEmail         String?
   status              String      @default("PENDING_REVIEW")
-  subtotal            Float
-  discountTotal       Float       @default(0)
-  total               Float
+  subtotalCents       Int
+  discountTotalCents  Int         @default(0)
+  totalCents          Int
   deliveryAddress     String?
   deliveryCity        String?
   deliveryState       String?
@@ -185,11 +186,11 @@ model OrderItem {
   laboratoryName    String
   presentation      String
   quantity          Int
-  unitPrice         Float
-  originalUnitPrice Float   @default(0)
-  discountAmount    Float   @default(0)
+  unitPriceCents         Int
+  originalUnitPriceCents Int   @default(0)
+  discountAmountCents    Int   @default(0)
   offerTitle        String?
-  subtotal          Float
+  subtotalCents     Int
   order             Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product           Product @relation(fields: [productId], references: [id])
 

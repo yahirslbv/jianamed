@@ -291,8 +291,8 @@ async function main() {
       postalCode: '22000',
       isAuthorized: true,
       creditEnabled: false,
-      creditLimit: 0,
-      creditUsed: 0,
+      creditLimitCents: 0,
+      creditUsedCents: 0,
       creditStatus: 'DISABLED',
     },
     create: {
@@ -309,9 +309,40 @@ async function main() {
       sanitaryLicense: 'LIC-DEMO-001',
       isAuthorized: true,
       creditEnabled: false,
-      creditLimit: 0,
-      creditUsed: 0,
+      creditLimitCents: 0,
+      creditUsedCents: 0,
       creditStatus: 'DISABLED',
+    },
+  });
+
+  const pendingClient = await prisma.user.upsert({
+    where: { email: 'pendiente@demo.com' },
+    update: { name: 'Cliente Pendiente', passwordHash: clientPasswordHash, role: 'client', isActive: true },
+    create: { name: 'Cliente Pendiente', email: 'pendiente@demo.com', passwordHash: clientPasswordHash, role: 'client' },
+  });
+  const inactiveClient = await prisma.user.upsert({
+    where: { email: 'inactivo@demo.com' },
+    update: { name: 'Cliente Inactivo', passwordHash: clientPasswordHash, role: 'client', isActive: false },
+    create: { name: 'Cliente Inactivo', email: 'inactivo@demo.com', passwordHash: clientPasswordHash, role: 'client', isActive: false },
+  });
+  await prisma.customer.upsert({
+    where: { userId: pendingClient.id },
+    update: { isAuthorized: false, creditEnabled: false, creditLimitCents: 0, creditUsedCents: 0, creditStatus: 'DISABLED' },
+    create: {
+      userId: pendingClient.id, businessName: 'Farmacia Pendiente Demo', commercialName: 'Pendiente Demo',
+      rfc: 'FPD010101AAA', contactName: 'Cliente Pendiente', phone: '+52 664 000 0101',
+      address: 'Av. Revolución 100', city: 'Tijuana', state: 'Baja California', postalCode: '22000',
+      isAuthorized: false, creditEnabled: false, creditLimitCents: 0, creditUsedCents: 0, creditStatus: 'DISABLED',
+    },
+  });
+  await prisma.customer.upsert({
+    where: { userId: inactiveClient.id },
+    update: { isAuthorized: true, creditEnabled: false, creditLimitCents: 0, creditUsedCents: 0, creditStatus: 'DISABLED' },
+    create: {
+      userId: inactiveClient.id, businessName: 'Farmacia Inactiva Demo', commercialName: 'Inactiva Demo',
+      rfc: 'FID010101AAA', contactName: 'Cliente Inactivo', phone: '+52 664 000 0102',
+      address: 'Blvd. Agua Caliente 200', city: 'Tijuana', state: 'Baja California', postalCode: '22024',
+      isAuthorized: true, creditEnabled: false, creditLimitCents: 0, creditUsedCents: 0, creditStatus: 'DISABLED',
     },
   });
 
@@ -336,16 +367,18 @@ async function main() {
   const categoryIds = new Map(categoryRows.map((category) => [category.slug, category.id]));
 
   for (const product of products) {
-    const { laboratorySlug, categorySlug, ...productData } = product;
+    const { laboratorySlug, categorySlug, price, ...productData } = product;
     await prisma.product.upsert({
       where: { sku: product.sku },
       update: {
         ...productData,
+        priceCents: Math.round(price * 100),
         laboratoryId: laboratoryIds.get(laboratorySlug),
         categoryId: categoryIds.get(categorySlug),
       },
       create: {
         ...productData,
+        priceCents: Math.round(price * 100),
         laboratoryId: laboratoryIds.get(laboratorySlug),
         categoryId: categoryIds.get(categorySlug),
       },
@@ -372,7 +405,7 @@ async function main() {
         title: 'Oferta Loramed demo',
         description: 'Precio especial de demostracion para producto seleccionado.',
         discountType: 'PERCENTAGE',
-        discountValue: 15,
+        discountPercentageBps: 1500,
         startsAt: activeOfferStartsAt,
         endsAt: activeOfferEndsAt,
         productId: offerProductBySku.get('TTP-LOR-010-10').id,
@@ -381,7 +414,7 @@ async function main() {
         title: 'Descuento NovaMed demo',
         description: 'Precio especial de demostracion para el laboratorio.',
         discountType: 'PERCENTAGE',
-        discountValue: 8,
+        discountPercentageBps: 800,
         startsAt: activeOfferStartsAt,
         endsAt: activeOfferEndsAt,
         laboratoryId: laboratoryIds.get('novamed'),
@@ -390,7 +423,7 @@ async function main() {
         title: 'Oferta material de curacion demo',
         description: 'Precio especial de demostracion para material de curacion.',
         discountType: 'FIXED_AMOUNT',
-        discountValue: 6,
+        discountValueCents: 600,
         startsAt: activeOfferStartsAt,
         endsAt: activeOfferEndsAt,
         productId: offerProductBySku.get('TTP-GAS-10X10-25').id,
@@ -439,8 +472,8 @@ async function main() {
   ];
 
   for (const seedOrder of seedOrders) {
-    const subtotal = seedOrder.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+    const subtotalCents = seedOrder.items.reduce(
+      (total, item) => total + item.product.priceCents * item.quantity,
       0,
     );
     await prisma.order.upsert({
@@ -451,9 +484,9 @@ async function main() {
         userId: client.id,
         customerId: customer.id,
         status: seedOrder.status,
-        subtotal,
-        discountTotal: 0,
-        total: subtotal,
+        subtotalCents,
+        discountTotalCents: 0,
+        totalCents: subtotalCents,
         observations: seedOrder.observations,
         items: {
           create: seedOrder.items.map(({ product, quantity }) => ({
@@ -463,17 +496,17 @@ async function main() {
             laboratoryName: product.laboratory.name,
             presentation: product.presentation,
             quantity,
-            unitPrice: product.price,
-            originalUnitPrice: product.price,
-            discountAmount: 0,
-            subtotal: product.price * quantity,
+            unitPriceCents: product.priceCents,
+            originalUnitPriceCents: product.priceCents,
+            discountAmountCents: 0,
+            subtotalCents: product.priceCents * quantity,
           })),
         },
       },
     });
   }
 
-  console.log('Seed completado: 2 usuarios, 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
+  console.log('Seed completado: clientes autorizado, pendiente e inactivo; 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
 }
 
 main()

@@ -20,6 +20,8 @@ import OffersPage from './pages/OffersPage.jsx';
 import ClientDashboardPage from './pages/ClientDashboardPage.jsx';
 import AdminReportsPage from './pages/AdminReportsPage.jsx';
 import AdminAuditPage from './pages/AdminAuditPage.jsx';
+import AdminCustomersPage from './pages/AdminCustomersPage.jsx';
+import AdminProductImportPage from './pages/AdminProductImportPage.jsx';
 import { useHashRoute } from './hooks/useHashRoute.js';
 import { useTheme } from './context/ThemeContext.jsx';
 import styles from './styles/App.module.css';
@@ -64,6 +66,8 @@ export default function App() {
     '/admin/ofertas': { element: <AdminOffersPage />, roles: ['admin'] },
     '/admin/reportes': { element: <AdminReportsPage />, roles: ['admin'] },
     '/admin/auditoria': { element: <AdminAuditPage />, roles: ['admin'] },
+    '/admin/clientes': { element: <AdminCustomersPage />, roles: ['admin'] },
+    '/admin/importar-productos': { element: <AdminProductImportPage />, roles: ['admin'] },
     '/cuenta': { element: <AccountPage />, roles: ['client', 'admin'] },
   };
 

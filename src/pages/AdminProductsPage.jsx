@@ -292,6 +292,7 @@ export default function AdminProductsPage() {
         <div><p className={styles.eyebrow}>Administración</p><h1>Gestión de productos</h1><p>Catálogo, inventario y requisitos regulatorios.</p></div>
         <div className={styles.adminHeaderActions}>
           <button className={styles.secondaryButton} type="button" onClick={loadData}>Actualizar</button>
+          <a className={styles.secondaryButton} href="#/admin/importar-productos">Importar productos</a>
           <button className={styles.primaryButton} type="button" onClick={openCreate}>Nuevo producto</button>
         </div>
       </div>

@@ -332,7 +332,8 @@
 .app[data-theme='dark'] .reportFilters,
 .app[data-theme='dark'] .reportResults,
 .app[data-theme='dark'] .emptyState,
-.app[data-theme='dark'] .modal {
+.app[data-theme='dark'] .modal,
+.app[data-theme='dark'] .loginPanel {
   background: var(--color-surface);
 }
 
@@ -371,6 +372,120 @@
 .app[data-theme='dark'] .languageSelect select {
   background: var(--color-surface);
   color: var(--text);
+}
+
+.app[data-theme='dark'] .loginPage {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(85, 182, 245, 0.13), transparent 34%),
+    radial-gradient(circle at 88% 96%, rgba(174, 188, 255, 0.1), transparent 30%),
+    var(--color-background-soft);
+}
+
+.app[data-theme='dark'] .loginPanel {
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+.app[data-theme='dark'] .loginForm label {
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .loginForm input {
+  background: #111b2a;
+  border-color: #40536f;
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .loginForm input::placeholder {
+  color: #91a1b8;
+}
+
+.app[data-theme='dark'] .demoAccess {
+  background: #17263a;
+  border: 1px solid #364b68;
+  color: #d8e6ff;
+}
+
+.app[data-theme='dark'] .demoAccess span {
+  color: var(--muted);
+}
+
+.app[data-theme='dark'] .loginHelp {
+  background: #3b311d;
+  border: 1px solid #80652d;
+  color: #ffe3a3 !important;
+}
+
+.app[data-theme='dark'] .loginForm .formError {
+  background: #482331;
+  border: 1px solid #93465d;
+  color: #ffd4de;
+}
+
+.app[data-theme='dark'] .hero {
+  background-image:
+    linear-gradient(90deg, rgba(12, 25, 45, 0.98) 0%, rgba(12, 25, 45, 0.92) 42%, rgba(12, 25, 45, 0.62) 68%, rgba(12, 25, 45, 0.38) 100%),
+    url('/assets/pharma-hero.png');
+}
+
+.app[data-theme='dark'] .heroCopy {
+  color: #d4dfef;
+}
+
+.app[data-theme='dark'] .searchBar {
+  background: #111b2a;
+  border-color: #40536f;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.28);
+}
+
+.app[data-theme='dark'] .searchBar input {
+  background: #111b2a;
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .publicNotice {
+  background: #3b311d;
+  border-color: #80652d;
+  color: #ffe3a3;
+}
+
+.app[data-theme='dark'] .featureGrid article,
+.app[data-theme='dark'] .statementGrid article,
+.app[data-theme='dark'] .valuesGrid article {
+  background: var(--color-surface);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+.app[data-theme='dark'] .valuesGrid span {
+  background: #173a56;
+  color: #a9dcff;
+}
+
+.app[data-theme='dark'] .contactSection {
+  background:
+    radial-gradient(circle at 80% 12%, rgba(85, 182, 245, 0.1), transparent 34%),
+    var(--color-background-soft);
+}
+
+.app[data-theme='dark'] .contactForm label {
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .contactForm input,
+.app[data-theme='dark'] .contactForm textarea {
+  background: #111b2a;
+  border-color: #40536f;
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .footer {
+  background: #0b213d;
+  border-top: 1px solid #284a70;
+}
+
+.app[data-theme='dark'] .footer .brandMark {
+  background: #e6f1ff;
 }
 
 .hero {

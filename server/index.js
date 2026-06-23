@@ -9,6 +9,8 @@ import offerRoutes from './routes/offers.js';
 import orderRoutes from './routes/orders.js';
 import reportRoutes from './routes/reports.js';
 import auditRoutes from './routes/audit.js';
+import customerRoutes from './routes/customers.js';
+import productImportRoutes from './routes/productImport.js';
 import { isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
 import { requireAuth } from './auth.js';
 
@@ -52,6 +54,8 @@ app.use('/api', offerRoutes);
 app.use('/api', orderRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', auditRoutes);
+app.use('/api', customerRoutes);
+app.use('/api', productImportRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: `Ruta no encontrada: ${req.method} ${req.path}` });
@@ -68,9 +72,12 @@ app.use((error, _req, res, _next) => {
     return res.status(404).json({ message: 'Registro no encontrado.' });
   }
   if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ message: 'La imagen no puede superar 2 MB.' });
+    return res.status(400).json({ message: 'El archivo no puede superar 2 MB.' });
   }
   if (error.code === 'INVALID_PRODUCT_IMAGE') {
+    return res.status(400).json({ message: error.message });
+  }
+  if (error.code === 'INVALID_PRODUCT_CSV') {
     return res.status(400).json({ message: error.message });
   }
 

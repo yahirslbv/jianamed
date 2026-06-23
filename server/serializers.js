@@ -1,4 +1,5 @@
 import { ORDER_STATUS_LABELS, PRODUCT_TYPE_LABELS } from './constants.js';
+import { moneyToNumber } from './utils/money.js';
 
 export function serializeUser(user) {
   return {
@@ -20,13 +21,42 @@ export function serializeUser(user) {
           state: user.customer.state,
           postalCode: user.customer.postalCode,
           creditEnabled: user.customer.creditEnabled,
-          creditLimit: user.customer.creditLimit,
-          creditUsed: user.customer.creditUsed,
-          creditAvailable: Math.max(0, user.customer.creditLimit - user.customer.creditUsed),
+          creditLimit: moneyToNumber(user.customer.creditLimitCents),
+          creditUsed: moneyToNumber(user.customer.creditUsedCents),
+          creditAvailable: moneyToNumber(Math.max(0, user.customer.creditLimitCents - user.customer.creditUsedCents)),
           creditStatus: user.customer.creditStatus,
           isAuthorized: user.customer.isAuthorized,
         }
       : null,
+  };
+}
+
+export function serializeCustomer(customer) {
+  const user = customer.user || {};
+  return {
+    id: customer.id,
+    userId: customer.userId,
+    name: user.name || customer.contactName,
+    email: user.email || '',
+    isActive: Boolean(user.isActive),
+    businessName: customer.businessName,
+    commercialName: customer.commercialName,
+    rfc: customer.rfc,
+    contactName: customer.contactName,
+    phone: customer.phone,
+    address: customer.address,
+    city: customer.city,
+    state: customer.state,
+    postalCode: customer.postalCode,
+    sanitaryLicense: customer.sanitaryLicense,
+    isAuthorized: customer.isAuthorized,
+    creditEnabled: customer.creditEnabled,
+    creditLimit: moneyToNumber(customer.creditLimitCents),
+    creditUsed: moneyToNumber(customer.creditUsedCents),
+    creditAvailable: moneyToNumber(Math.max(0, customer.creditLimitCents - customer.creditUsedCents)),
+    creditStatus: customer.creditStatus,
+    createdAt: customer.createdAt,
+    updatedAt: customer.updatedAt,
   };
 }
 
@@ -51,8 +81,8 @@ export function serializeCategory(category) {
 }
 
 export function serializeProduct(product, offerApplication = null) {
-  const originalPrice = offerApplication?.originalPrice ?? product.price;
-  const price = offerApplication?.finalPrice ?? product.price;
+  const originalPrice = offerApplication?.originalPrice ?? moneyToNumber(product.priceCents);
+  const price = offerApplication?.finalPrice ?? moneyToNumber(product.priceCents);
 
   return {
     id: product.id,
@@ -82,7 +112,9 @@ export function serializeProduct(product, offerApplication = null) {
           id: offerApplication.offer.id,
           title: offerApplication.offer.title,
           discountType: offerApplication.offer.discountType,
-          discountValue: offerApplication.offer.discountValue,
+          discountValue: offerApplication.offer.discountType === 'PERCENTAGE'
+            ? Number(offerApplication.offer.discountPercentageBps || 0) / 100
+            : moneyToNumber(offerApplication.offer.discountValueCents),
           endsAt: offerApplication.offer.endsAt,
         }
       : null,
@@ -109,7 +141,9 @@ export function serializeOffer(offer) {
     title: offer.title,
     description: offer.description || '',
     discountType: offer.discountType,
-    discountValue: offer.discountValue,
+    discountValue: offer.discountType === 'PERCENTAGE'
+      ? Number(offer.discountPercentageBps || 0) / 100
+      : moneyToNumber(offer.discountValueCents),
     startsAt: offer.startsAt,
     endsAt: offer.endsAt,
     isActive: offer.isActive,
@@ -133,9 +167,9 @@ export function serializeOrder(order) {
     clientEmail: order.clientEmail || order.user?.email || '',
     status: order.status,
     statusLabel: ORDER_STATUS_LABELS[order.status] || order.status,
-    subtotal: order.subtotal,
-    discountTotal: order.discountTotal || 0,
-    total: order.total,
+    subtotal: moneyToNumber(order.subtotalCents),
+    discountTotal: moneyToNumber(order.discountTotalCents),
+    total: moneyToNumber(order.totalCents),
     observations: order.observations || '',
     checkout: {
       deliveryAddress: order.deliveryAddress || '',
@@ -158,11 +192,11 @@ export function serializeOrder(order) {
       laboratoryName: item.laboratoryName,
       presentation: item.presentation,
       quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      originalUnitPrice: item.originalUnitPrice || item.unitPrice,
-      discountAmount: item.discountAmount || 0,
+      unitPrice: moneyToNumber(item.unitPriceCents),
+      originalUnitPrice: moneyToNumber(item.originalUnitPriceCents || item.unitPriceCents),
+      discountAmount: moneyToNumber(item.discountAmountCents),
       offerTitle: item.offerTitle || '',
-      subtotal: item.subtotal,
+      subtotal: moneyToNumber(item.subtotalCents),
     })),
   };
 }

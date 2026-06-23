@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { canCancelOrder, cancelOrder, getOrders } from '../services/orderService.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -91,6 +92,7 @@ export default function MyOrdersPage() {
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
   const [cancellingOrderId, setCancellingOrderId] = useState('');
+  const [cancelCandidate, setCancelCandidate] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,8 +103,10 @@ export default function MyOrdersPage() {
     return () => { isMounted = false; };
   }, []);
 
-  const handleCancelOrder = async (order) => {
-    if (!window.confirm(`¿Cancelar la solicitud ${order.folio}? Esta acción no se puede deshacer.`)) return;
+  const handleCancelOrder = async () => {
+    const order = cancelCandidate;
+    if (!order) return;
+    setCancelCandidate(null);
     setActionError('');
     setCancellingOrderId(order.id);
     try {
@@ -144,12 +148,20 @@ export default function MyOrdersPage() {
                   <p className={styles.orderStatusCopy}>{status.description}</p>
                   <div className={styles.orderCardActions}>
                     <button className={styles.secondarySmall} type="button" onClick={() => setSelectedOrder(order)}>Ver detalle</button>
-                    {canCancelOrder(order) && <button className={styles.cancelOrderButton} type="button" disabled={cancellingOrderId === order.id} onClick={() => handleCancelOrder(order)}>{cancellingOrderId === order.id ? 'Cancelando...' : 'Cancelar solicitud'}</button>}
+                    {canCancelOrder(order) && <button className={styles.cancelOrderButton} type="button" disabled={cancellingOrderId === order.id} onClick={() => setCancelCandidate(order)}>{cancellingOrderId === order.id ? 'Cancelando...' : 'Cancelar solicitud'}</button>}
                   </div>
                 </article>;
               })}
             </div>}
       <OrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      <ConfirmDialog
+        open={Boolean(cancelCandidate)}
+        title="Cancelar solicitud"
+        description={cancelCandidate ? `¿Cancelar la solicitud ${cancelCandidate.folio}? Esta acción no se puede deshacer.` : ''}
+        confirmLabel="Sí, cancelar solicitud"
+        onClose={() => setCancelCandidate(null)}
+        onConfirm={handleCancelOrder}
+      />
     </section>
   );
 }

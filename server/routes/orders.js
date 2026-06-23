@@ -4,6 +4,7 @@ import { ORDER_STATUSES, isAllowed } from '../constants.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { serializeOrder } from '../serializers.js';
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
+import { calculateOrderTotals, calculateLineSubtotal } from '../utils/money.js';
 
 const router = Router();
 
@@ -75,7 +76,7 @@ function getCheckoutSnapshot(checkout = {}, user) {
 async function createOrder(req, res, next) {
   try {
     if (!req.user.customer || !req.user.customer.isAuthorized) {
-      return res.status(403).json({ message: 'El cliente no está autorizado para solicitar pedidos.' });
+      return res.status(403).json({ message: 'Tu cuenta aún no está autorizada para generar pedidos. Comunícate con un agente de ventas.' });
     }
 
     const normalized = normalizeItems(req.body.items);
@@ -106,27 +107,22 @@ async function createOrder(req, res, next) {
         normalized.items.map((item) => {
           const product = productsById.get(item.productId);
           const offerApplication = getOfferApplication(product, activeOffers);
-          const originalUnitPrice = product.price;
-          const discountAmount = offerApplication?.discountAmount || 0;
-          const unitPrice = offerApplication?.finalPrice ?? originalUnitPrice;
+          const originalUnitPriceCents = product.priceCents;
+          const discountAmountCents = offerApplication?.discountAmountCents || 0;
+          const unitPriceCents = offerApplication?.finalPriceCents ?? originalUnitPriceCents;
 
           return [item.productId, {
-            originalUnitPrice,
-            discountAmount,
-            unitPrice,
+            originalUnitPriceCents,
+            discountAmountCents,
+            unitPriceCents,
             offerTitle: offerApplication?.offer.title || null,
           }];
         }),
       );
-      const subtotal = normalized.items.reduce((total, item) => {
-        const pricing = priceDetailsByProductId.get(item.productId);
-        return total + pricing.originalUnitPrice * item.quantity;
-      }, 0);
-      const discountTotal = normalized.items.reduce((total, item) => {
-        const pricing = priceDetailsByProductId.get(item.productId);
-        return total + pricing.discountAmount * item.quantity;
-      }, 0);
-      const total = subtotal - discountTotal;
+      const totals = calculateOrderTotals(normalized.items.map((item) => ({
+        ...priceDetailsByProductId.get(item.productId),
+        quantity: item.quantity,
+      })));
       const year = new Date().getFullYear();
       const startOfYear = new Date(year, 0, 1);
       const startOfNextYear = new Date(year + 1, 0, 1);
@@ -149,9 +145,7 @@ async function createOrder(req, res, next) {
           customerId: req.user.customer.id,
           ...checkout.data,
           status: 'PENDING_REVIEW',
-          subtotal,
-          discountTotal,
-          total,
+          ...totals,
           observations,
           items: {
             create: normalized.items.map((item) => {
@@ -164,11 +158,11 @@ async function createOrder(req, res, next) {
                 laboratoryName: product.laboratory.name,
                 presentation: product.presentation,
                 quantity: item.quantity,
-                unitPrice: pricing.unitPrice,
-                originalUnitPrice: pricing.originalUnitPrice,
-                discountAmount: pricing.discountAmount,
+                unitPriceCents: pricing.unitPriceCents,
+                originalUnitPriceCents: pricing.originalUnitPriceCents,
+                discountAmountCents: pricing.discountAmountCents,
                 offerTitle: pricing.offerTitle,
-                subtotal: pricing.unitPrice * item.quantity,
+                subtotalCents: calculateLineSubtotal(pricing.unitPriceCents, item.quantity),
               };
             }),
           },

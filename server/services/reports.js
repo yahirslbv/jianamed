@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import prisma from '../db.js';
 import { getActiveOffers, getOfferApplication, offerInclude } from './offers.js';
+import { moneyToNumber } from '../utils/money.js';
 
 export const REPORT_TYPES = ['orders', 'products', 'inventory', 'offers', 'customers'];
 
@@ -93,8 +94,8 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 2,
 });
 
-function toMoney(value) {
-  return currencyFormatter.format(Number(value) || 0);
+function toMoney(cents) {
+  return currencyFormatter.format(moneyToNumber(cents));
 }
 
 function getAppliedFilters(filters) {
@@ -125,8 +126,8 @@ async function getOrderRows(filters) {
         matchesText(clientName, filters.client) &&
         matchesText(clientEmail, filters.email) &&
         matchesText(order.folio, filters.folio) &&
-        matchesRange(order.total, filters.minAmount, filters.maxAmount) &&
-        matchesBoolean(order.discountTotal > 0, filters.hasDiscount)
+        matchesRange(moneyToNumber(order.totalCents), filters.minAmount, filters.maxAmount) &&
+        matchesBoolean(order.discountTotalCents > 0, filters.hasDiscount)
       );
     })
     .map((order) => ({
@@ -135,9 +136,9 @@ async function getOrderRows(filters) {
       clientName: order.clientName || order.customer?.businessName || order.user?.name || '',
       clientEmail: order.clientEmail || order.user?.email || '',
       status: order.status,
-      subtotal: toMoney(order.subtotal),
-      discountTotal: toMoney(order.discountTotal),
-      total: toMoney(order.total),
+      subtotal: toMoney(order.subtotalCents),
+      discountTotal: toMoney(order.discountTotalCents),
+      total: toMoney(order.totalCents),
       observations: order.observations || '',
       deliveryAddress: [order.deliveryAddress, order.deliveryCity, order.deliveryState, order.deliveryPostalCode].filter(Boolean).join(', '),
       responsibleName: order.responsibleName || '',
@@ -168,7 +169,7 @@ function filterProductRecords(records, filters) {
       matchesBoolean(Boolean(offerApplication), filters.hasOffer) &&
       matchesBoolean(lowStock, filters.lowStock) &&
       matchesBoolean(product.stock === 0, filters.outOfStock) &&
-      matchesRange(product.price, filters.minPrice, filters.maxPrice) &&
+      matchesRange(moneyToNumber(product.priceCents), filters.minPrice, filters.maxPrice) &&
       matchesBoolean(product.requiresPrescription, filters.requiresPrescription) &&
       matchesBoolean(product.requiresRetainedPrescription, filters.requiresRetainedPrescription) &&
       matchesBoolean(product.isControlled, filters.isControlled) &&
@@ -193,7 +194,7 @@ async function getProductRows(filters) {
     requiresRetainedPrescription: toYesNo(product.requiresRetainedPrescription),
     isControlled: toYesNo(product.isControlled),
     sanitaryRegistration: product.sanitaryRegistration || '',
-    price: toMoney(product.price),
+    price: toMoney(product.priceCents),
     stock: product.stock,
     isActive: toYesNo(product.isActive),
     hasImage: toYesNo(Boolean(product.imageUrl)),
@@ -212,8 +213,8 @@ async function getInventoryRows(filters) {
     category: product.category.name,
     stock: product.stock,
     stockStatus: product.stock === 0 ? 'Sin stock' : product.stock <= 30 ? 'Stock bajo' : 'Disponible',
-    price: toMoney(product.price),
-    inventoryValue: toMoney(product.price * product.stock),
+    price: toMoney(product.priceCents),
+    inventoryValue: toMoney(product.priceCents * product.stock),
     isActive: toYesNo(product.isActive),
   }));
 }
@@ -238,8 +239,8 @@ async function getOfferRows(filters) {
       title: offer.title,
       discountType: offer.discountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto fijo (MXN)',
       discountValue: offer.discountType === 'PERCENTAGE'
-        ? `${Number(offer.discountValue || 0).toFixed(2)}%`
-        : toMoney(offer.discountValue),
+        ? `${Number(offer.discountPercentageBps || 0) / 100}%`
+        : toMoney(offer.discountValueCents),
       product: offer.product?.commercialName || '',
       laboratory: offer.laboratory?.name || '',
       category: offer.category?.name || '',

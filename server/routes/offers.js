@@ -4,6 +4,7 @@ import { OFFER_DISCOUNT_TYPES, PRODUCT_TYPES, isAllowed } from '../constants.js'
 import { requireAuth, requireRole } from '../auth.js';
 import { serializeOffer } from '../serializers.js';
 import { getActiveOffers, offerInclude } from '../services/offers.js';
+import { parseMoneyInput, parsePercentageInput } from '../utils/money.js';
 
 const router = Router();
 const scopeFields = ['productId', 'laboratoryId', 'categoryId', 'productType'];
@@ -15,7 +16,8 @@ function getOptionalId(value) {
 function getOfferPayload(body) {
   const title = body.title?.trim();
   const discountType = body.discountType;
-  const discountValue = Number(body.discountValue);
+  const discountValueCents = discountType === 'FIXED_AMOUNT' ? parseMoneyInput(body.discountValue) : null;
+  const discountPercentageBps = discountType === 'PERCENTAGE' ? parsePercentageInput(body.discountValue) : null;
   const startsAt = new Date(body.startsAt);
   const endsAt = new Date(body.endsAt);
   const productType = body.productType || null;
@@ -29,11 +31,11 @@ function getOfferPayload(body) {
 
   if (!title) return { error: 'El titulo de la oferta es obligatorio.' };
   if (!isAllowed(discountType, OFFER_DISCOUNT_TYPES)) return { error: 'El tipo de descuento no es valido.' };
-  if (!Number.isFinite(discountValue) || discountValue <= 0) {
-    return { error: 'El valor de descuento debe ser mayor a cero.' };
-  }
-  if (discountType === 'PERCENTAGE' && discountValue > 100) {
+  if (discountType === 'PERCENTAGE' && (discountPercentageBps === null || discountPercentageBps < 0 || discountPercentageBps > 10000)) {
     return { error: 'El descuento porcentual no puede superar 100.' };
+  }
+  if (discountType === 'FIXED_AMOUNT' && (discountValueCents === null || discountValueCents < 0)) {
+    return { error: 'El descuento fijo debe ser un monto válido.' };
   }
   if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || startsAt >= endsAt) {
     return { error: 'La vigencia de la oferta no es valida.' };
@@ -50,7 +52,8 @@ function getOfferPayload(body) {
       title,
       description: body.description?.trim() || null,
       discountType,
-      discountValue,
+      discountValueCents,
+      discountPercentageBps,
       startsAt,
       endsAt,
       isActive: body.isActive === undefined ? true : body.isActive === true || body.isActive === 'true',
@@ -98,6 +101,14 @@ router.post('/offers', requireAuth, requireRole('admin'), async (req, res, next)
     const payload = getOfferPayload(req.body);
     if (payload.error) return res.status(400).json({ message: payload.error });
 
+    if (payload.data.productId && payload.data.discountType === 'FIXED_AMOUNT') {
+      const product = await prisma.product.findUnique({ where: { id: payload.data.productId } });
+      if (!product) return res.status(400).json({ message: 'El producto seleccionado no existe.' });
+      if (payload.data.discountValueCents > product.priceCents) {
+        return res.status(400).json({ message: 'El descuento fijo no puede superar el precio base del producto.' });
+      }
+    }
+
     const offer = await prisma.offer.create({ data: payload.data, include: offerInclude });
     await createAuditLog(req.user.id, 'CREATE', offer);
     return res.status(201).json({ offer: serializeOffer(offer) });
@@ -110,6 +121,14 @@ router.put('/offers/:id', requireAuth, requireRole('admin'), async (req, res, ne
   try {
     const payload = getOfferPayload(req.body);
     if (payload.error) return res.status(400).json({ message: payload.error });
+
+    if (payload.data.productId && payload.data.discountType === 'FIXED_AMOUNT') {
+      const product = await prisma.product.findUnique({ where: { id: payload.data.productId } });
+      if (!product) return res.status(400).json({ message: 'El producto seleccionado no existe.' });
+      if (payload.data.discountValueCents > product.priceCents) {
+        return res.status(400).json({ message: 'El descuento fijo no puede superar el precio base del producto.' });
+      }
+    }
 
     const offer = await prisma.offer.update({
       where: { id: req.params.id },

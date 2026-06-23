@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { calculateOrderTotals } from '../utils/formatters.js';
 
 const CartContext = createContext(null);
 const CART_KEY = 'tic-toc-pharma-cart';
@@ -62,16 +63,9 @@ export function CartProvider({ children }) {
         );
       },
       clearCart: () => setItems([]),
-      getCartSubtotal: () =>
-        items.reduce((total, item) => total + getOriginalPrice(item.product) * item.quantity, 0),
-      getCartDiscount: () =>
-        items.reduce(
-          (total, item) =>
-            total + (getOriginalPrice(item.product) - getFinalPrice(item.product)) * item.quantity,
-          0,
-        ),
-      getCartTotal: () =>
-        items.reduce((total, item) => total + getFinalPrice(item.product) * item.quantity, 0),
+      getCartSubtotal: () => calculateOrderTotals(items).subtotal,
+      getCartDiscount: () => calculateOrderTotals(items).discount,
+      getCartTotal: () => calculateOrderTotals(items).total,
       getCartItemCount: () => items.reduce((total, item) => total + item.quantity, 0),
     }),
     [items],
