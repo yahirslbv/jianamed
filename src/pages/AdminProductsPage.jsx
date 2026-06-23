@@ -13,6 +13,7 @@ import {
   updateProduct,
   updateProductStatus,
 } from '../services/productService.js';
+import { formatCurrencyMXN } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 const emptyProduct = {
@@ -114,7 +115,8 @@ function ProductDetail({ product }) {
         <summary>Inventario y precio</summary>
         <dl className={styles.detailList}>
           <div><dt>Stock</dt><dd>{product.stock}</dd></div>
-          <div><dt>Precio</dt><dd>${Number(product.price).toFixed(2)}</dd></div>
+          <div><dt>Precio base</dt><dd>{formatCurrencyMXN(product.originalPrice ?? product.price)}</dd></div>
+          {product.offer && <div><dt>Precio con oferta</dt><dd>{formatCurrencyMXN(product.price)}</dd></div>}
           <div><dt>Oferta</dt><dd>{product.offer?.title || 'Sin oferta activa'}</dd></div>
         </dl>
       </details>
@@ -128,6 +130,7 @@ export default function AdminProductsPage() {
   const [laboratories, setLaboratories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({ query: '', laboratoryId: '', categoryId: '', healthFraction: '', productType: '', status: 'all' });
+  const [metricFilter, setMetricFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [panel, setPanel] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -175,8 +178,13 @@ export default function AdminProductsPage() {
       && (!filters.healthFraction || product.healthFraction === filters.healthFraction)
       && (!filters.productType || product.productType === filters.productType)
       && (filters.status === 'all' || (filters.status === 'active' && product.isActive) || (filters.status === 'inactive' && !product.isActive))
+      && (!metricFilter
+        || (metricFilter === 'active' && product.isActive)
+        || (metricFilter === 'outOfStock' && product.stock <= 0)
+        || (metricFilter === 'withOffer' && product.offer)
+        || (metricFilter === 'withoutImage' && !(product.image || product.imageUrl)))
     ));
-  }, [filters, products]);
+  }, [filters, metricFilter, products]);
 
   const metrics = useMemo(() => ({
     active: products.filter((product) => product.isActive).length,
@@ -186,7 +194,11 @@ export default function AdminProductsPage() {
   }), [products]);
 
   const updateFilter = (field, value) => setFilters((current) => ({ ...current, [field]: value }));
-  const resetFilters = () => setFilters({ query: '', laboratoryId: '', categoryId: '', healthFraction: '', productType: '', status: 'all' });
+  const resetFilters = () => {
+    setFilters({ query: '', laboratoryId: '', categoryId: '', healthFraction: '', productType: '', status: 'all' });
+    setMetricFilter('');
+  };
+  const toggleMetricFilter = (metric) => setMetricFilter((current) => (current === metric ? '' : metric));
   const updateForm = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
   const openCreate = () => {
@@ -284,18 +296,19 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      <div className={styles.metricGrid}>
-        <article><span>Activos</span><strong>{metrics.active}</strong></article>
-        <article><span>Sin stock</span><strong>{metrics.outOfStock}</strong></article>
-        <article><span>Con oferta</span><strong>{metrics.withOffer}</strong></article>
-        <article><span>Sin imagen</span><strong>{metrics.withoutImage}</strong></article>
+      <div className={styles.metricGrid} aria-label="Filtros rápidos de productos">
+        <button className={metricFilter === 'active' ? styles.metricCardActive : ''} type="button" aria-pressed={metricFilter === 'active'} onClick={() => toggleMetricFilter('active')}><span>Activos</span><strong>{metrics.active}</strong><small>Ver productos</small></button>
+        <button className={metricFilter === 'outOfStock' ? styles.metricCardActive : ''} type="button" aria-pressed={metricFilter === 'outOfStock'} onClick={() => toggleMetricFilter('outOfStock')}><span>Sin stock</span><strong>{metrics.outOfStock}</strong><small>Ver productos</small></button>
+        <button className={metricFilter === 'withOffer' ? styles.metricCardActive : ''} type="button" aria-pressed={metricFilter === 'withOffer'} onClick={() => toggleMetricFilter('withOffer')}><span>Con oferta</span><strong>{metrics.withOffer}</strong><small>Ver productos</small></button>
+        <button className={metricFilter === 'withoutImage' ? styles.metricCardActive : ''} type="button" aria-pressed={metricFilter === 'withoutImage'} onClick={() => toggleMetricFilter('withoutImage')}><span>Sin imagen</span><strong>{metrics.withoutImage}</strong><small>Ver productos</small></button>
       </div>
 
       <div className={styles.adminToolbar}>
         <label className={styles.adminSearch}><span className={styles.srOnly}>Buscar productos</span><input value={filters.query} onChange={(event) => updateFilter('query', event.target.value)} placeholder="Buscar producto o SKU" /></label>
         <button className={styles.secondarySmall} type="button" onClick={() => setShowFilters((value) => !value)}>{showFilters ? 'Ocultar filtros' : 'Filtros avanzados'}</button>
-        {(filters.query || filters.status !== 'all' || filters.laboratoryId || filters.categoryId || filters.healthFraction || filters.productType) && <button className={styles.textButton} type="button" onClick={resetFilters}>Limpiar filtros</button>}
+        {(filters.query || filters.status !== 'all' || filters.laboratoryId || filters.categoryId || filters.healthFraction || filters.productType || metricFilter) && <button className={styles.textButton} type="button" onClick={resetFilters}>Limpiar filtros</button>}
       </div>
+      {metricFilter && <p className={styles.activeFilterNotice}>Filtro rápido activo: <strong>{{ active: 'Activos', outOfStock: 'Sin stock', withOffer: 'Con oferta', withoutImage: 'Sin imagen' }[metricFilter]}</strong>. Se combina con los filtros avanzados.</p>}
 
       {showFilters && <div className={styles.advancedFilters}>
         <label>Laboratorio<select value={filters.laboratoryId} onChange={(event) => updateFilter('laboratoryId', event.target.value)}><option value="">Todos</option>{laboratories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
@@ -308,12 +321,15 @@ export default function AdminProductsPage() {
       {error && <p className={styles.formError}>{error}</p>}
       {isLoading ? <div className={styles.emptyState}><h2>Cargando productos</h2></div> : !visibleProducts.length ? <div className={styles.emptyState}><h2>Sin resultados</h2><button className={styles.secondarySmall} type="button" onClick={resetFilters}>Limpiar filtros</button></div> : <div className={styles.tableWrapper}>
         <table className={`${styles.adminDataTable} ${styles.productDataTable}`}>
+          <colgroup className={styles.productTableColumns}>
+            <col /><col /><col /><col /><col /><col /><col /><col /><col />
+          </colgroup>
           <thead><tr><th>Imagen</th><th>SKU</th><th>Producto</th><th>Laboratorio</th><th>Categoría</th><th>Stock</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>{visibleProducts.map((product) => <tr key={product.id}>
             <td className={styles.productImageCell}><ProductThumbnail product={product} /></td>
             <td className={styles.skuCell}>{product.sku}</td>
-            <td className={styles.productNameCell}><strong>{product.name}</strong><div className={styles.rowBadges}>{product.offer && <StatusBadge tone="success">Oferta</StatusBadge>}{product.stock <= 0 && <StatusBadge tone="danger">Sin stock</StatusBadge>}{product.stock > 0 && product.stock <= 30 && <StatusBadge tone="warning">Stock bajo</StatusBadge>}</div></td>
-            <td className={styles.laboratoryCell} title={product.laboratoryName}>{product.laboratoryName}</td><td className={styles.categoryCell} title={product.category}>{product.category}</td><td className={styles.stockCell}>{product.stock}</td><td className={styles.priceCell}>${Number(product.price).toFixed(2)}</td>
+            <td className={styles.productNameCell}><strong title={product.name}>{product.name}</strong><div className={styles.rowBadges}>{product.offer && <StatusBadge tone="success">Oferta</StatusBadge>}{product.stock <= 0 && <StatusBadge tone="danger">Sin stock</StatusBadge>}{product.stock > 0 && product.stock <= 30 && <StatusBadge tone="warning">Stock bajo</StatusBadge>}</div></td>
+            <td className={styles.laboratoryCell} title={product.laboratoryName}>{product.laboratoryName}</td><td className={styles.categoryCell} title={product.category}>{product.category}</td><td className={styles.stockCell}>{product.stock}</td><td className={styles.priceCell}>{formatCurrencyMXN(product.price)}</td>
             <td className={styles.statusCell}><StatusBadge tone={product.isActive ? 'success' : 'neutral'}>{product.isActive ? 'Activo' : 'Inactivo'}</StatusBadge></td>
             <td className={styles.actionsCell}><div className={styles.actionButtonsGroup}><button className={styles.actionButtonView} type="button" onClick={() => { setSelectedProduct(product); setPanel('detail'); }}>Ver</button><button className={styles.actionButtonEdit} type="button" onClick={() => openEdit(product)}>Editar</button><button className={product.isActive ? styles.actionButtonDeactivate : styles.actionButtonActivate} type="button" onClick={() => setStatusCandidate(product)}>{product.isActive ? 'Desactivar' : 'Activar'}</button></div></td>
           </tr>)}</tbody>
@@ -353,7 +369,7 @@ export default function AdminProductsPage() {
 
           <FormSection title="Inventario e imagen">
             <div className={styles.wizardGrid}>
-              <label>Precio<input min="0" step="0.01" type="number" value={form.price} onChange={(event) => updateForm('price', event.target.value)} required /></label>
+              <label>Precio base<input min="0" step="0.01" type="number" value={form.price} onChange={(event) => updateForm('price', event.target.value)} required /><small className={styles.formHint}>Precio unitario antes de descuentos.</small></label>
               <label>Stock<input min="0" type="number" value={form.stock} onChange={(event) => updateForm('stock', event.target.value)} required /></label>
               <label className={styles.wizardFull}>Imagen URL<input value={form.imageUrl} onChange={(event) => { updateForm('imageUrl', event.target.value); if (!imageFile) setImagePreview(event.target.value); }} /></label>
               <label className={styles.wizardFull}>Subir imagen<input accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" type="file" onChange={handleImageFileChange} /></label>

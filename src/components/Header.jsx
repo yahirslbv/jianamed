@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LogoMark from './LogoMark.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
@@ -13,31 +13,30 @@ const publicNavItems = [
   { label: 'Contacto', href: '#/contacto' },
 ];
 
-const privateNavItems = [
-  { labelKey: 'nav.home', href: '#/inicio-cliente', roles: ['client'] },
-  { labelKey: 'nav.catalog', href: '#/catalogo', roles: ['client', 'admin'] },
-  { labelKey: 'nav.offers', href: '#/ofertas', roles: ['client'] },
-  { labelKey: 'nav.laboratories', href: '#/laboratorios', roles: ['client', 'admin'] },
-  { labelKey: 'nav.cart', href: '#/carrito', roles: ['client'] },
-  { labelKey: 'nav.orders', href: '#/mis-pedidos', roles: ['client'] },
-  { label: 'Admin productos', href: '#/admin/productos', roles: ['admin'] },
-  { label: 'Admin ofertas', href: '#/admin/ofertas', roles: ['admin'] },
-  { label: 'Reportes', href: '#/admin/reportes', roles: ['admin'] },
-  { label: 'Auditoria', href: '#/admin/auditoria', roles: ['admin'] },
-  { label: 'Admin pedidos', href: '#/admin/pedidos', roles: ['admin'] },
-  { labelKey: 'nav.account', href: '#/cuenta', roles: ['client', 'admin'] },
+const clientNavItems = [
+  { labelKey: 'nav.home', href: '#/inicio-cliente' },
+  { labelKey: 'nav.catalog', href: '#/catalogo' },
+  { labelKey: 'nav.offers', href: '#/ofertas' },
+  { labelKey: 'nav.cart', href: '#/carrito' },
+  { labelKey: 'nav.orders', href: '#/mis-pedidos' },
+];
+
+const adminNavItems = [
+  { labelKey: 'nav.catalog', href: '#/catalogo' },
+  { label: 'Administración', href: '#/admin/productos' },
+  { label: 'Pedidos', href: '#/admin/pedidos' },
 ];
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [activeHash, setActiveHash] = useState(() => window.location.hash || '#/');
+  const accountMenuRef = useRef(null);
   const { isAuthenticated, logout, user } = useAuth();
   const { getCartItemCount } = useCart();
   const { language, setLanguage, t } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
-  const navItems = isAuthenticated
-    ? privateNavItems.filter((item) => item.roles.includes(user.role))
-    : publicNavItems;
+  const { themePreference, setThemePreference } = useTheme();
+  const navItems = isAuthenticated ? (user.role === 'admin' ? adminNavItems : clientNavItems) : publicNavItems;
   const itemCount = getCartItemCount();
 
   useEffect(() => {
@@ -46,9 +45,33 @@ export default function Header() {
     return () => window.removeEventListener('hashchange', syncActiveHash);
   }, []);
 
+  useEffect(() => {
+    const closeAccountMenu = (event) => {
+      if (event.key === 'Escape') {
+        setAccountMenuOpen(false);
+        return;
+      }
+      if (event.type === 'mousedown' && !accountMenuRef.current?.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', closeAccountMenu);
+    document.addEventListener('mousedown', closeAccountMenu);
+    return () => {
+      document.removeEventListener('keydown', closeAccountMenu);
+      document.removeEventListener('mousedown', closeAccountMenu);
+    };
+  }, []);
+
+  const closeMenus = () => {
+    setMenuOpen(false);
+    setAccountMenuOpen(false);
+  };
+
   const handleLogout = async () => {
     await logout();
-    setMenuOpen(false);
+    closeMenus();
     window.location.hash = '/';
   };
 
@@ -85,38 +108,64 @@ export default function Header() {
             key={item.href}
             className={[styles.navLink, item.href === activeHash ? styles.navLinkActive : '', item.href === '#/carrito' ? styles.cartNavLink : ''].filter(Boolean).join(' ')}
             href={item.href}
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenus}
           >
             {item.labelKey ? t(item.labelKey) : item.label}
             {item.href === '#/carrito' && <span className={styles.cartCount}>{itemCount}</span>}
           </a>
         ))}
         {isAuthenticated ? (
-          <button className={styles.logoutButton} type="button" onClick={handleLogout}>
-            {t('nav.logout')}
-          </button>
+          <div className={styles.accountMenu} ref={accountMenuRef}>
+            <button
+              className={`${styles.accountMenuButton} ${activeHash === '#/cuenta' ? styles.navLinkActive : ''}`}
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={accountMenuOpen}
+              aria-controls="account-navigation"
+              onClick={() => setAccountMenuOpen((isOpen) => !isOpen)}
+            >
+              {t('nav.account')}
+              <span aria-hidden="true">⌄</span>
+            </button>
+            {accountMenuOpen && (
+              <div className={styles.accountDropdown} id="account-navigation" role="menu" aria-label="Opciones de Mi cuenta">
+                <a href="#/cuenta" role="menuitem" onClick={closeMenus}>Configuración y sesión</a>
+                {user.role === 'client' && <a href="#/laboratorios" role="menuitem" onClick={closeMenus}>Catálogos por laboratorio</a>}
+                {user.role === 'admin' && (
+                  <>
+                    <a href="#/admin/ofertas" role="menuitem" onClick={closeMenus}>Ofertas</a>
+                    <a href="#/admin/reportes" role="menuitem" onClick={closeMenus}>Reportes</a>
+                    <a href="#/admin/auditoria" role="menuitem" onClick={closeMenus}>Auditoría</a>
+                  </>
+                )}
+                <div className={styles.accountDropdownSettings} role="group" aria-label="Preferencias">
+                  <label>
+                    Tema
+                    <select value={themePreference} onChange={(event) => { setThemePreference(event.target.value); setAccountMenuOpen(false); }}>
+                      <option value="system">Sistema</option>
+                      <option value="light">Claro</option>
+                      <option value="dark">Oscuro</option>
+                    </select>
+                  </label>
+                  <label>
+                    Idioma
+                    <select value={language} onChange={(event) => { setLanguage(event.target.value); setAccountMenuOpen(false); }}>
+                      <option value="es">ES</option>
+                      <option value="en">EN</option>
+                    </select>
+                  </label>
+                </div>
+                <button className={styles.accountLogoutButton} type="button" role="menuitem" onClick={handleLogout}>
+                  {t('nav.logout')}
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
-          <a className={styles.accessButton} href="#/login" onClick={() => setMenuOpen(false)}>
+          <a className={styles.accessButton} href="#/login" onClick={closeMenus}>
             {t('nav.login')}
           </a>
         )}
-        <label className={styles.languageSelect}>
-          <span className={styles.srOnly}>Idioma</span>
-          <select value={language} onChange={(event) => setLanguage(event.target.value)}>
-            <option value="es">ES</option>
-            <option value="en">EN</option>
-          </select>
-        </label>
-        <button
-          className={styles.themeToggle}
-          type="button"
-          onClick={toggleTheme}
-          title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-          aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-        >
-          {theme === 'dark' ? '☀' : '◐'}
-        </button>
-        {isAuthenticated && <span className={styles.userPill}>{user.company}</span>}
       </nav>
     </header>
   );

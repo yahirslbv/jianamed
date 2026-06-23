@@ -12,6 +12,7 @@ import {
   updateOfferStatus,
 } from '../services/offerService.js';
 import { getProducts, productTypeOptions } from '../services/productService.js';
+import { formatCurrencyMXN, formatDiscount } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 const defaultDate = () => new Date().toISOString().slice(0, 16);
@@ -52,7 +53,7 @@ function getFormValues(offer) {
 }
 
 function getDiscountLabel(offer) {
-  return offer.discountType === 'PERCENTAGE' ? `${offer.discountValue}%` : `$${Number(offer.discountValue).toFixed(2)}`;
+  return formatDiscount(offer);
 }
 
 function getOfferTiming(offer) {
@@ -189,8 +190,11 @@ export default function AdminOffersPage() {
       setError('Indica el nombre de la oferta.');
       return false;
     }
-    if (Number(form.discountValue) <= 0 || (form.discountType === 'PERCENTAGE' && Number(form.discountValue) > 100)) {
-      setError('Indica un descuento válido.');
+    const discountValue = Number(form.discountValue);
+    if (!Number.isFinite(discountValue) || discountValue < 0 || (form.discountType === 'PERCENTAGE' && discountValue > 100)) {
+      setError(form.discountType === 'PERCENTAGE'
+        ? 'El porcentaje de descuento debe estar entre 0 y 100.'
+        : 'El descuento fijo debe ser un monto en MXN igual o mayor a 0.');
       return false;
     }
     if (!form.scopeValue) {
@@ -200,6 +204,13 @@ export default function AdminOffersPage() {
     if (!form.startsAt || !form.endsAt || new Date(form.endsAt) <= new Date(form.startsAt)) {
       setError('La vigencia debe tener una fecha final posterior al inicio.');
       return false;
+    }
+    if (form.discountType === 'FIXED_AMOUNT' && form.scopeType === 'productId') {
+      const product = products.find((item) => item.id === form.scopeValue);
+      if (product && discountValue > Number(product.originalPrice ?? product.price)) {
+        setError(`El descuento fijo no puede ser mayor al precio base de ${product.name} (${formatCurrencyMXN(product.originalPrice ?? product.price)}).`);
+        return false;
+      }
     }
     setError('');
     return true;
@@ -282,13 +293,13 @@ export default function AdminOffersPage() {
 
       {error && <p className={styles.formError}>{error}</p>}
       {isLoading ? <div className={styles.emptyState}><h2>Cargando ofertas</h2></div> : !visibleOffers.length ? <div className={styles.emptyState}><h2>Sin resultados</h2><button className={styles.secondarySmall} type="button" onClick={() => setFilters({ query: '', status: 'all' })}>Limpiar filtros</button></div> : <div className={styles.tableWrapper}>
-        <table className={styles.adminDataTable}>
+        <table className={`${styles.adminDataTable} ${styles.offerDataTable}`}>
           <thead><tr><th>Título</th><th>Descuento</th><th>Aplicación</th><th>Vigencia</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>{visibleOffers.map((offer) => {
             const timing = getOfferTiming(offer);
             return <tr key={offer.id}>
               <td><strong>{offer.title}</strong>{offer.description && <div className={styles.tableDescription}>{offer.description}</div>}</td>
-              <td>{offer.discountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto fijo'}<div className={styles.rowBadges}><StatusBadge tone="info">{getDiscountLabel(offer)}</StatusBadge></div></td>
+              <td>{offer.discountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto fijo (MXN)'}<div className={styles.rowBadges}><StatusBadge tone="info">{getDiscountLabel(offer)}</StatusBadge></div></td>
               <td>{getScopeLabel(offer)}</td><td>{formatDate(offer.startsAt)}<br />{formatDate(offer.endsAt)}</td>
               <td><div className={styles.rowBadges}><StatusBadge tone={offer.isActive ? 'success' : 'neutral'}>{offer.isActive ? 'Activa' : 'Inactiva'}</StatusBadge><StatusBadge tone={getTimingTone(timing)}>{getTimingLabel(timing)}</StatusBadge></div></td>
               <td><div className={styles.actionButtonsGroup}><button className={styles.actionButtonEdit} type="button" onClick={() => openEdit(offer)}>Editar</button><button className={offer.isActive ? styles.actionButtonDeactivate : styles.actionButtonActivate} type="button" onClick={() => setStatusCandidate(offer)}>{offer.isActive ? 'Desactivar' : 'Activar'}</button></div></td>
@@ -309,7 +320,7 @@ export default function AdminOffersPage() {
           <FormSection title="Descuento">
             <div className={styles.wizardGrid}>
               <label>Tipo de descuento<select value={form.discountType} onChange={(event) => updateForm('discountType', event.target.value)}><option value="PERCENTAGE">Porcentaje</option><option value="FIXED_AMOUNT">Monto fijo</option></select></label>
-              <label>Valor<input min="0.01" max={form.discountType === 'PERCENTAGE' ? '100' : undefined} step="0.01" type="number" value={form.discountValue} onChange={(event) => updateForm('discountValue', event.target.value)} required /></label>
+              <label>Valor ({form.discountType === 'PERCENTAGE' ? '%' : 'MXN'})<input min="0" max={form.discountType === 'PERCENTAGE' ? '100' : undefined} step="0.01" type="number" value={form.discountValue} onChange={(event) => updateForm('discountValue', event.target.value)} required /><small className={styles.formHint}>{form.discountType === 'PERCENTAGE' ? 'De 0 a 100%.' : 'Monto descontado del precio base.'}</small></label>
             </div>
           </FormSection>
 

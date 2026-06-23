@@ -1,13 +1,8 @@
 import ProductVisual from '../components/ProductVisual.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { formatCurrencyMXN } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
-
-const currency = new Intl.NumberFormat('es-MX', {
-  style: 'currency',
-  currency: 'MXN',
-  maximumFractionDigits: 0,
-});
 
 export default function CartPage() {
   const { t } = useLanguage();
@@ -60,9 +55,9 @@ export default function CartPage() {
                   </p>
                   <p>
                     {product.originalPrice > product.price && (
-                      <span className={styles.originalPrice}>{currency.format(product.originalPrice)} </span>
+                      <span className={styles.originalPrice}>Precio base {formatCurrencyMXN(product.originalPrice)} </span>
                     )}
-                    {currency.format(product.price)} por unidad
+                    <span className={styles.appliedUnitPrice}>Precio unitario aplicado {formatCurrencyMXN(product.price)}</span>
                   </p>
                   {product.offer && <small className={styles.offerCopy}>{product.offer.title}</small>}
                 </div>
@@ -75,7 +70,7 @@ export default function CartPage() {
                     onChange={(event) => updateQuantity(product.id, event.target.value)}
                   />
                 </label>
-                <strong>{currency.format(product.price * quantity)}</strong>
+                <strong className={styles.cartLineSubtotal}>Subtotal {formatCurrencyMXN(product.price * quantity)}</strong>
                 <button
                   className={styles.textButton}
                   type="button"
@@ -96,15 +91,15 @@ export default function CartPage() {
               </div>
               <div>
                 <dt>Subtotal</dt>
-                <dd>{currency.format(getCartSubtotal())}</dd>
+                <dd>{formatCurrencyMXN(getCartSubtotal())}</dd>
               </div>
               <div>
                 <dt>Descuentos</dt>
-                <dd className={styles.discountValue}>-{currency.format(getCartDiscount())}</dd>
+                <dd className={styles.discountValue}>-{formatCurrencyMXN(getCartDiscount())}</dd>
               </div>
               <div>
                 <dt>Total estimado</dt>
-                <dd>{currency.format(getCartTotal())}</dd>
+                <dd>{formatCurrencyMXN(getCartTotal())}</dd>
               </div>
             </dl>
             <a className={styles.primaryButton} href="#/checkout">

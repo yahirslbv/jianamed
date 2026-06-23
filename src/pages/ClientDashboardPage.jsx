@@ -5,13 +5,8 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import { getActiveOffers } from '../services/offerService.js';
 import { getOrders } from '../services/orderService.js';
 import { getProducts } from '../services/productService.js';
+import { formatCurrencyMXN, formatDiscount } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
-
-const currency = new Intl.NumberFormat('es-MX', {
-  style: 'currency',
-  currency: 'MXN',
-  maximumFractionDigits: 0,
-});
 
 const dateFormatter = new Intl.DateTimeFormat('es-MX', {
   day: '2-digit',
@@ -20,7 +15,7 @@ const dateFormatter = new Intl.DateTimeFormat('es-MX', {
 });
 
 function getDiscountLabel(offer) {
-  return offer.discountType === 'PERCENTAGE' ? `${offer.discountValue}%` : `$${offer.discountValue}`;
+  return formatDiscount(offer);
 }
 
 export default function ClientDashboardPage() {
@@ -139,7 +134,7 @@ export default function ClientDashboardPage() {
                   </span>
                   <span>
                     <em>{order.status}</em>
-                    <strong>{currency.format(order.total)}</strong>
+                    <strong>{formatCurrencyMXN(order.total)}</strong>
                   </span>
                 </a>
               ))}
@@ -181,9 +176,10 @@ export default function ClientDashboardPage() {
         <div className={styles.dashboardProductStrip}>
           {featuredProducts.map((product) => (
             <a href="#/catalogo" key={product.id}>
-              <span>{product.offer ? 'Oferta' : product.category}</span>
+              <span>{product.offer ? 'Oferta activa' : product.category}</span>
               <strong>{product.name}</strong>
-              <small>{currency.format(product.price)}</small>
+              <small className={styles.dashboardProductMeta}>{product.activeIngredient || product.presentation}</small>
+              <small className={styles.dashboardProductPrice}>{product.offer ? 'Precio con oferta ' : 'Precio unitario '}{formatCurrencyMXN(product.price)}</small>
             </a>
           ))}
           {!isLoading && !featuredProducts.length && <p className={styles.dashboardMuted}>No hay productos disponibles.</p>}

@@ -2,13 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { createOrder } from '../services/orderService.js';
+import { formatCurrencyMXN } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
-
-const currency = new Intl.NumberFormat('es-MX', {
-  style: 'currency',
-  currency: 'MXN',
-  maximumFractionDigits: 0,
-});
 
 function createCheckout(user) {
   const customer = user.customer || {};
@@ -108,21 +103,21 @@ export default function OrderSummaryPage() {
                   <span>{quantity}</span>
                   <span>
                     {product.originalPrice > product.price && (
-                      <small className={styles.originalPrice}>{currency.format(product.originalPrice)} </small>
+                      <small className={styles.originalPrice}>Base {formatCurrencyMXN(product.originalPrice)} </small>
                     )}
-                    {currency.format(product.price)}
+                    {formatCurrencyMXN(product.price)}
                   </span>
-                  <span>{currency.format(product.price * quantity)}</span>
+                  <span>{formatCurrencyMXN(product.price * quantity)}</span>
                 </div>
               ))}
             </div>
             <div className={styles.summaryTotal}>
               <span>Subtotal</span>
-              <strong>{currency.format(getCartSubtotal())}</strong>
+              <strong>{formatCurrencyMXN(getCartSubtotal())}</strong>
               <span>Descuentos</span>
-              <strong className={styles.discountValue}>-{currency.format(getCartDiscount())}</strong>
+              <strong className={styles.discountValue}>-{formatCurrencyMXN(getCartDiscount())}</strong>
               <span>Total estimado</span>
-              <strong>{currency.format(getCartTotal())}</strong>
+              <strong>{formatCurrencyMXN(getCartTotal())}</strong>
             </div>
           </div>
 

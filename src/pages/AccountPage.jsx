@@ -1,58 +1,85 @@
 import { useAuth } from '../context/AuthContext.jsx';
-import { futureAdminModels, futureAdminRoutes } from '../data/adminScaffold.js';
+import { useLanguage } from '../context/LanguageContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import styles from '../styles/App.module.css';
 
 export default function AccountPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { language, setLanguage } = useLanguage();
+  const { theme, themePreference, setThemePreference } = useTheme();
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.hash = '/';
+  };
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${styles.softSection}`}>
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Mi cuenta</p>
-          <h1>{user.company}</h1>
-          <p>
-            Sesión activa para {user.name} · {user.email}
-          </p>
+          <h1>Configuración y sesión</h1>
+          <p>Administra tus preferencias de visualización y consulta los datos de la sesión activa.</p>
         </div>
       </div>
 
-      <div className={styles.accountGrid}>
-        <article>
-          <h2>Acceso actual</h2>
+      <div className={styles.accountSettingsGrid}>
+        <article className={styles.accountProfileCard}>
+          <p className={styles.eyebrow}>Datos de sesión</p>
+          <h2>{user.company}</h2>
           <dl className={styles.detailList}>
-            <div>
-              <dt>Rol</dt>
-              <dd>{user.role}</dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd>Autorizado para demo</dd>
-            </div>
+            <div><dt>Contacto</dt><dd>{user.name}</dd></div>
+            <div><dt>Correo</dt><dd>{user.email}</dd></div>
+            <div><dt>Rol</dt><dd>{user.role === 'admin' ? 'Administración' : 'Cliente autorizado'}</dd></div>
+            <div><dt>Estado</dt><dd>Sesión activa</dd></div>
           </dl>
+          <button className={styles.logoutButton} type="button" onClick={handleLogout}>Cerrar sesión</button>
         </article>
-        <article>
-          <h2>Estructura administrativa preparada</h2>
-          <p>
-            Estos módulos quedan listos como referencia para una etapa posterior con usuarios
-            administradores o vendedores.
-          </p>
-          <ul>
-            {futureAdminRoutes.map((route) => (
-              <li key={route.path}>{route.label}</li>
-            ))}
-          </ul>
+
+        <article className={styles.accountPreferencesCard}>
+          <p className={styles.eyebrow}>Apariencia</p>
+          <h2>Preferencias del portal</h2>
+          <p className={styles.accountCardCopy}>Estas opciones se guardan en este navegador y no modifican la información comercial.</p>
+          <div className={styles.preferenceControls}>
+            <label>
+              Tema
+              <select value={themePreference} onChange={(event) => setThemePreference(event.target.value)}>
+                <option value="system">Usar configuración del sistema</option>
+                <option value="light">Tema claro</option>
+                <option value="dark">Tema oscuro</option>
+              </select>
+              <small>Actualmente se muestra el tema {theme === 'dark' ? 'oscuro' : 'claro'}.</small>
+            </label>
+            <label>
+              Idioma
+              <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+              <small>La traducción inicial se aplica a los controles principales del portal.</small>
+            </label>
+          </div>
         </article>
-        <article>
-          <h2>Modelos futuros</h2>
-          <ul>
-            {Object.entries(futureAdminModels).map(([model, fields]) => (
-              <li key={model}>
-                <strong>{model}</strong>: {fields.join(', ')}
-              </li>
-            ))}
-          </ul>
+
+        <article className={styles.accountUtilityCard}>
+          <p className={styles.eyebrow}>Marca</p>
+          <h2>Logo institucional</h2>
+          <p className={styles.accountCardCopy}>El logo actual es temporal. Solicitar al cliente un PNG o SVG oficial, de buena calidad y con fondo transparente.</p>
+          <span className={styles.accountNote}>Actualización de logo preparada para una etapa posterior.</span>
         </article>
+
+        {user.role === 'admin' && (
+          <article className={styles.accountAdminCard}>
+            <p className={styles.eyebrow}>Administración</p>
+            <h2>Accesos secundarios</h2>
+            <p className={styles.accountCardCopy}>Herramientas administrativas fuera de la navegación principal.</p>
+            <div className={styles.accountAdminLinks}>
+              <a className={styles.secondarySmall} href="#/admin/ofertas">Ofertas</a>
+              <a className={styles.secondarySmall} href="#/admin/reportes">Reportes</a>
+              <a className={styles.secondarySmall} href="#/admin/auditoria">Auditoría</a>
+            </div>
+          </article>
+        )}
       </div>
     </section>
   );

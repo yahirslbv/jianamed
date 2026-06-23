@@ -86,8 +86,15 @@ function toDate(value) {
   return value ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '';
 }
 
+const currencyFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 function toMoney(value) {
-  return Number(value || 0).toFixed(2);
+  return currencyFormatter.format(Number(value) || 0);
 }
 
 function getAppliedFilters(filters) {
@@ -229,8 +236,10 @@ async function getOfferRows(filters) {
     })
     .map((offer) => ({
       title: offer.title,
-      discountType: offer.discountType,
-      discountValue: toMoney(offer.discountValue),
+      discountType: offer.discountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto fijo (MXN)',
+      discountValue: offer.discountType === 'PERCENTAGE'
+        ? `${Number(offer.discountValue || 0).toFixed(2)}%`
+        : toMoney(offer.discountValue),
       product: offer.product?.commercialName || '',
       laboratory: offer.laboratory?.name || '',
       category: offer.category?.name || '',

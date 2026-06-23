@@ -3572,3 +3572,873 @@ button:disabled {
     margin-right: 0;
   }
 }
+
+/* Professional navigation and account preferences */
+.accountMenu {
+  position: relative;
+}
+
+.accountMenuButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  gap: 5px;
+  line-height: 1.25;
+  padding: 8px 9px;
+}
+
+.accountMenuButton:hover,
+.accountMenuButton:focus-visible {
+  background: var(--soft);
+  color: var(--secondary);
+  outline: 0;
+}
+
+.accountMenuButton:focus-visible,
+.accountDropdown a:focus-visible,
+.accountDropdown select:focus-visible,
+.accountLogoutButton:focus-visible,
+.metricGrid button:focus-visible {
+  outline: 2px solid rgba(15, 117, 189, 0.64);
+  outline-offset: 2px;
+}
+
+.accountDropdown {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 4px;
+  min-width: 260px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 70;
+}
+
+.accountDropdown a,
+.accountLogoutButton {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 750;
+  min-height: 38px;
+  padding: 9px 10px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.accountDropdown a:hover,
+.accountDropdown a:focus-visible,
+.accountLogoutButton:hover,
+.accountLogoutButton:focus-visible {
+  background: var(--soft);
+  color: var(--secondary);
+}
+
+.accountDropdownSettings {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  margin: 4px 0;
+  padding: 10px 2px;
+}
+
+.accountDropdownSettings label,
+.preferenceControls label,
+.orderAdminFilters label,
+.orderStatusControl {
+  color: var(--text);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.accountDropdownSettings select,
+.preferenceControls select,
+.orderAdminFilters select,
+.orderAdminFilters input,
+.orderStatusControl select {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 38px;
+  padding: 7px 9px;
+}
+
+.accountSettingsGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1120px;
+}
+
+.accountProfileCard,
+.accountPreferencesCard,
+.accountUtilityCard,
+.accountAdminCard {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(20, 35, 70, 0.08);
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.accountProfileCard h2,
+.accountPreferencesCard h2,
+.accountUtilityCard h2,
+.accountAdminCard h2 {
+  color: var(--primary);
+  margin: 0;
+}
+
+.accountCardCopy {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.preferenceControls {
+  display: grid;
+  gap: 14px;
+}
+
+.preferenceControls small,
+.formHint {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.accountNote {
+  background: var(--soft);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.accountAdminLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Product information hierarchy */
+.folioBadge {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  justify-self: start;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding: 5px 8px;
+}
+
+.productActiveIngredient {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.4;
+  margin: -3px 0 0;
+}
+
+.productDescriptorRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.laboratoryBadge,
+.categoryBadge {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 5px 8px;
+}
+
+.laboratoryBadge {
+  background: color-mix(in srgb, var(--soft) 78%, var(--color-surface));
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.categoryBadge {
+  background: #e8f4fc;
+  color: var(--secondary);
+}
+
+.productPresentation {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  margin: -4px 0 0;
+}
+
+.priceReference {
+  align-items: baseline;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  gap: 5px;
+}
+
+.priceReference strong {
+  color: var(--primary);
+  font-size: 1.06rem;
+}
+
+.originalPrice {
+  font-size: 0.78rem;
+}
+
+.appliedUnitPrice,
+.cartLineSubtotal {
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.cartLineSubtotal {
+  text-align: right;
+}
+
+.dashboardProductMeta {
+  font-size: 0.8rem;
+}
+
+.dashboardProductPrice {
+  color: var(--primary) !important;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+/* Laboratory catalogue discovery */
+.laboratoryFilters {
+  align-items: end;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.4fr repeat(3, minmax(150px, 1fr));
+  margin: 0 auto 18px;
+  max-width: 1120px;
+  padding: 16px;
+}
+
+.laboratoryFiltersHeading {
+  display: grid;
+  gap: 3px;
+}
+
+.laboratoryFiltersHeading strong {
+  color: var(--primary);
+}
+
+.laboratoryFiltersHeading span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.laboratoryFilters label {
+  color: var(--text);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.laboratoryFilters select {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 40px;
+  padding: 8px;
+  width: 100%;
+}
+
+.laboratoryCard {
+  align-content: start;
+}
+
+.laboratoryCardTopline,
+.laboratoryMetrics {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.laboratoryStatus {
+  color: var(--success) !important;
+}
+
+.laboratoryMetrics {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 2px;
+  padding-top: 12px;
+}
+
+.laboratoryMetrics strong {
+  color: var(--primary);
+  font-size: 1.25rem;
+}
+
+.laboratoryCard .secondarySmall {
+  justify-self: start;
+  margin-top: auto;
+}
+
+/* Admin product and offers */
+.metricGrid button {
+  appearance: none;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  min-height: 92px;
+  padding: 15px;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.metricGrid button:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 8px 18px rgba(20, 35, 70, 0.09);
+  transform: translateY(-1px);
+}
+
+.metricGrid button small {
+  color: var(--secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.metricCardActive {
+  background: color-mix(in srgb, var(--color-secondary) 10%, var(--color-surface)) !important;
+  border-color: var(--secondary) !important;
+  box-shadow: inset 0 0 0 1px var(--secondary);
+}
+
+.activeFilterNotice {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: -3px auto 12px;
+  max-width: 1360px;
+}
+
+.activeFilterNotice strong {
+  color: var(--primary);
+}
+
+.adminDataTable th {
+  font-size: 0.86rem;
+  font-weight: 900;
+  padding-bottom: 16px;
+  padding-top: 16px;
+}
+
+.productDataTable {
+  min-width: 1145px;
+}
+
+.productDataTable th:nth-child(3) { width: 270px; }
+.productDataTable th:nth-child(9) { width: 144px; }
+
+.productTableColumns col:nth-child(1) { width: 90px; }
+.productTableColumns col:nth-child(2) { width: 130px; }
+.productTableColumns col:nth-child(3) { width: 255px; }
+.productTableColumns col:nth-child(4) { width: 160px; }
+.productTableColumns col:nth-child(5) { width: 125px; }
+.productTableColumns col:nth-child(6) { width: 65px; }
+.productTableColumns col:nth-child(7) { width: 94px; }
+.productTableColumns col:nth-child(8) { width: 92px; }
+.productTableColumns col:nth-child(9) { width: 132px; }
+
+.productNameCell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.productNameCell strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.productDataTable .adminTableImage,
+.productDataTable .adminTableImageFallback {
+  height: 68px;
+  width: 68px;
+}
+
+.productDataTable .actionButtonsGroup {
+  min-width: 104px;
+  width: 100%;
+}
+
+.offerDataTable {
+  min-width: 1040px;
+  table-layout: fixed;
+}
+
+.offerDataTable th:nth-child(1) { width: 250px; }
+.offerDataTable th:nth-child(2) { width: 145px; }
+.offerDataTable th:nth-child(3) { width: 190px; }
+.offerDataTable th:nth-child(4) { width: 155px; }
+.offerDataTable th:nth-child(5) { width: 140px; }
+.offerDataTable th:nth-child(6) { width: 130px; }
+
+.offerDataTable td:first-child,
+.offerDataTable td:nth-child(3) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Orders */
+.orderStatusExplainer {
+  background: color-mix(in srgb, var(--color-secondary) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 24%, var(--line));
+  border-radius: var(--radius);
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 auto 16px;
+  max-width: 1120px;
+  padding: 12px 14px;
+}
+
+.orderStatusExplainer strong {
+  color: var(--primary);
+}
+
+.orderListCard {
+  align-items: center;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(260px, 1.1fr) minmax(180px, 0.85fr) auto;
+}
+
+.adminOrderCard {
+  align-items: center;
+  grid-template-columns: minmax(230px, 1fr) minmax(230px, 0.9fr) 190px;
+}
+
+.orderCardPrimary h2 {
+  color: var(--primary);
+  font-size: 1.08rem;
+  margin: 8px 0 5px;
+}
+
+.orderCardPrimary p,
+.orderStatusCopy {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.orderCardSummary {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.orderCardSummary span {
+  border-left: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+  padding-left: 10px;
+}
+
+.orderCardSummary small,
+.orderOverviewGrid span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.orderCardSummary strong {
+  color: var(--primary);
+  font-size: 0.94rem;
+}
+
+.orderStatusControl {
+  min-width: 180px;
+}
+
+.orderAdminFilters {
+  align-items: end;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(170px, 0.7fr) minmax(240px, 1.2fr) minmax(150px, 0.55fr) auto;
+  margin: 0 auto 16px;
+  max-width: 1120px;
+  padding: 14px;
+}
+
+.orderDetailsDisclosure {
+  background: var(--soft);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.adminOrderDetailGrid,
+.orderDetailColumns {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+}
+
+.adminOrderDetailGrid .orderTableRow {
+  align-items: start;
+  gap: 8px 18px;
+  grid-template-areas:
+    "product laboratory quantity"
+    "product presentation unit"
+    "product . subtotal";
+  grid-template-columns: minmax(150px, 1.15fr) minmax(120px, 0.9fr) minmax(155px, 1fr);
+  padding: 14px 16px;
+}
+
+.adminOrderDetailGrid .orderTableRow > span {
+  min-width: 0;
+}
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(1) { grid-area: product; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(2) { grid-area: laboratory; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(3) { grid-area: presentation; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(4) { grid-area: quantity; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(5) { grid-area: unit; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(6) { grid-area: subtotal; }
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(2),
+.adminOrderDetailGrid .orderTableRow > span:nth-child(3) {
+  display: grid;
+  gap: 3px;
+  line-height: 1.28;
+}
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(2)::before,
+.adminOrderDetailGrid .orderTableRow > span:nth-child(3)::before {
+  color: var(--muted);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(2)::before { content: 'Laboratorio'; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(3)::before { content: 'Presentación'; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(4)::before { content: 'Cantidad'; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(5)::before { content: 'Unitario'; }
+.adminOrderDetailGrid .orderTableRow > span:nth-child(6)::before { content: 'Subtotal'; }
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(4),
+.adminOrderDetailGrid .orderTableRow > span:nth-child(5),
+.adminOrderDetailGrid .orderTableRow > span:nth-child(6) {
+  align-items: baseline;
+  color: var(--primary);
+  display: flex;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  gap: 12px;
+  justify-content: space-between;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.adminOrderDetailGrid .orderTableRow > span:nth-child(4)::before,
+.adminOrderDetailGrid .orderTableRow > span:nth-child(5)::before,
+.adminOrderDetailGrid .orderTableRow > span:nth-child(6)::before {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.adminOrderDetailGrid section,
+.orderDetailSection,
+.orderStatusTimeline {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.adminOrderDetailGrid h3,
+.orderDetailSection h3 {
+  color: var(--primary);
+  font-size: 0.95rem;
+  margin: 0 0 12px;
+}
+
+.orderDetailHeading {
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+}
+
+.orderDetailHeading h2 {
+  color: var(--primary);
+  margin: 0;
+}
+
+.orderDetailHeading p,
+.orderDetailCopy {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
+.orderOverviewGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.orderOverviewGrid > div {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+}
+
+.orderOverviewGrid strong {
+  color: var(--primary);
+  font-size: 0.95rem;
+}
+
+.orderDetailSectionHeader {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.orderDetailSectionHeader span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.orderTotals {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+}
+
+.orderTotals div {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.orderTotals dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.orderTotals dd {
+  color: var(--primary);
+  font-weight: 850;
+  margin: 0;
+}
+
+.orderStatusTimeline {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.orderStatusTimeline div {
+  border-left: 2px solid var(--secondary);
+  display: grid;
+  gap: 3px;
+  padding-left: 10px;
+}
+
+.orderStatusTimeline strong {
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+
+.orderStatusTimeline span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.app[data-theme='dark'] .accountMenuButton,
+.app[data-theme='dark'] .accountDropdown a,
+.app[data-theme='dark'] .accountLogoutButton {
+  color: var(--text);
+}
+
+.app[data-theme='dark'] .accountMenuButton:hover,
+.app[data-theme='dark'] .accountMenuButton:focus-visible,
+.app[data-theme='dark'] .accountDropdown a:hover,
+.app[data-theme='dark'] .accountLogoutButton:hover {
+  background: #253854;
+  color: #d9e8ff;
+}
+
+.app[data-theme='dark'] .accountProfileCard,
+.app[data-theme='dark'] .accountPreferencesCard,
+.app[data-theme='dark'] .accountUtilityCard,
+.app[data-theme='dark'] .accountAdminCard,
+.app[data-theme='dark'] .laboratoryCard,
+.app[data-theme='dark'] .laboratoryFilters,
+.app[data-theme='dark'] .metricGrid button,
+.app[data-theme='dark'] .orderStatusExplainer,
+.app[data-theme='dark'] .orderDetailsDisclosure,
+.app[data-theme='dark'] .orderDetailSection,
+.app[data-theme='dark'] .adminOrderDetailGrid section,
+.app[data-theme='dark'] .orderStatusTimeline {
+  background: var(--color-surface);
+}
+
+.app[data-theme='dark'] .categoryBadge {
+  background: #183c5b;
+  color: #bce6ff;
+}
+
+.app[data-theme='dark'] .orderOverviewGrid > div {
+  background: var(--color-background-soft);
+}
+
+@media (max-width: 1120px) {
+  .laboratoryFilters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .laboratoryFiltersHeading {
+    grid-column: 1 / -1;
+  }
+
+  .orderListCard,
+  .adminOrderCard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .orderCardActions,
+  .orderDetailsDisclosure {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .accountDropdown {
+    left: 0;
+    right: auto;
+    top: calc(100% + 6px);
+  }
+
+  .orderAdminFilters,
+  .adminOrderDetailGrid,
+  .orderDetailColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .orderOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .accountSettingsGrid,
+  .laboratoryFilters,
+  .orderListCard,
+  .adminOrderCard,
+  .orderAdminFilters,
+  .orderOverviewGrid,
+  .orderCardSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .accountMenu {
+    width: 100%;
+  }
+
+  .accountMenuButton {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .accountDropdown {
+    position: static;
+    width: 100%;
+  }
+
+  .orderCardSummary span {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: 8px 0 0;
+  }
+
+  .orderDetailHeading {
+    align-items: start;
+    display: grid;
+  }
+
+  .adminOrderDetailGrid .orderTableRow {
+    grid-template-areas:
+      "product product"
+      "laboratory presentation"
+      "quantity unit"
+      "subtotal subtotal";
+    grid-template-columns: minmax(0, 1.25fr) minmax(100px, 0.75fr);
+  }
+}

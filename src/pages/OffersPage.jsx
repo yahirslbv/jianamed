@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getActiveOffers } from '../services/offerService.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { formatDiscount } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 const dateFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -10,9 +11,7 @@ const dateFormatter = new Intl.DateTimeFormat('es-MX', {
 });
 
 function getDiscountLabel(offer) {
-  return offer.discountType === 'PERCENTAGE'
-    ? `${offer.discountValue}% de descuento`
-    : `$${offer.discountValue.toFixed(2)} de descuento`;
+  return `${formatDiscount(offer)} de descuento`;
 }
 
 export default function OffersPage() {
