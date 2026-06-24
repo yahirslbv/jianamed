@@ -1,15 +1,40 @@
-import { mkdirSync } from 'node:fs';
+import { constants } from 'node:fs';
+import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import multer from 'multer';
+import { config } from './env.js';
 
-const serverDirectory = path.dirname(fileURLToPath(import.meta.url));
-export const productUploadDirectory = path.join(serverDirectory, 'uploads', 'products');
+export const productUploadDirectory = config.uploadDir;
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
-mkdirSync(productUploadDirectory, { recursive: true });
+/** Creates the configured directory. In production this must be a mounted persistent path. */
+export async function ensureProductUploadDirectory() {
+  await mkdir(productUploadDirectory, { recursive: true });
+  return productUploadDirectory;
+}
+
+/** Verifies the directory with a short write/delete probe without touching product files. */
+export async function checkProductUploadDirectory() {
+  const probe = path.join(productUploadDirectory, `.write-check-${randomUUID()}`);
+  try {
+    await ensureProductUploadDirectory();
+    await access(productUploadDirectory, constants.R_OK | constants.W_OK);
+    await writeFile(probe, '', { flag: 'wx' });
+    await unlink(probe);
+    return { ok: true };
+  } catch (error) {
+    try {
+      await unlink(probe);
+    } catch {
+      // The original error is the useful one; cleanup is best effort.
+    }
+    return { ok: false, error };
+  }
+}
+
+await ensureProductUploadDirectory();
 
 const storage = multer.diskStorage({
   destination: (_req, _file, callback) => callback(null, productUploadDirectory),
@@ -34,7 +59,7 @@ function imageFilter(_req, file, callback) {
 export const productImageUpload = multer({
   storage,
   fileFilter: imageFilter,
-  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+  limits: { fileSize: config.maxUploadMb * 1024 * 1024, files: 1 },
 });
 
 function csvFilter(_req, file, callback) {
@@ -51,7 +76,7 @@ function csvFilter(_req, file, callback) {
 export const productCsvUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter: csvFilter,
-  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+  limits: { fileSize: config.maxUploadMb * 1024 * 1024, files: 1 },
 });
 
 export function getProductImageUrl(file) {

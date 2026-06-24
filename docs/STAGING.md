@@ -13,7 +13,7 @@ Este flujo crea una instancia PostgreSQL local de staging. No despliega producci
 1. Copia `.env.staging.example` como `.env.staging` en la raiz del proyecto.
 2. Reemplaza `SESSION_SECRET` por un valor aleatorio de al menos 32 caracteres.
 3. Conserva `STAGING_ENVIRONMENT=true`. Esta marca protege los scripts de staging contra ejecuciones accidentales.
-4. Para este staging local HTTP conserva `STAGING_LOCAL=true` y `COOKIE_SECURE=false`. Nunca uses esa combinacion en staging publico o produccion; alli se requiere HTTPS y `COOKIE_SECURE=true`.
+4. Para este staging local HTTP conserva `STAGING_LOCAL=true` y `COOKIE_SECURE=false`. Nunca uses esa combinacion en staging publico o produccion; alli se requiere HTTPS y `COOKIE_SECURE=true`. La plantilla tambien declara `UPLOAD_DIR`, `MAX_UPLOAD_MB` y `SERVE_STATIC_FRONTEND=false`.
 
 `.env.staging` esta ignorado por Git. Tambien puedes definir las mismas variables temporalmente en la terminal para CI o una ejecucion puntual.
 
@@ -34,7 +34,7 @@ docker compose -f docker-compose.postgres.yml ps
 npm run postgres:logs
 ```
 
-El script `prisma:seed:postgres` genera el cliente PostgreSQL y rechaza una base que ya tenga Users, Customers, catalogo, ofertas o pedidos. El seed demo es exclusivo para una base de staging vacia. Nunca debe ejecutarse en produccion real.
+El script `prisma:seed:postgres` genera el cliente PostgreSQL y rechaza una base que ya tenga Users, Customers, catalogo, ofertas o pedidos. El seed demo es exclusivo para una base de staging local vacia; `npm run seed:safe` aplica la misma politica. Nunca debe ejecutarse en preproduccion publica ni produccion real.
 
 `staging:check` comprueba configuracion, conexion, migraciones, tablas, enums, indices e integridad de columnas monetarias en centavos. No usa `prisma db push`.
 

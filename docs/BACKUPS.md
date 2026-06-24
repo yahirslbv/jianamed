@@ -1,6 +1,6 @@
 # Backups y restauracion
 
-Nunca guardes `.env`, bases, backups, uploads o logs en Git. Haz backup antes de cada migracion o importacion masiva; como minimo, realiza un backup diario y ensaya restauracion trimestralmente.
+Nunca guardes `.env`, bases, backups, uploads o logs en Git. Haz backup antes de cada migracion, despliegue o importacion masiva; como minimo, realiza un backup diario y ensaya restauracion trimestralmente.
 
 ## PostgreSQL
 
@@ -22,17 +22,17 @@ Para un backup SQL plano, usa `pg_dump --format=plain` y restaura con:
 psql "postgresql://usuario:password@localhost:5432/tictocpharma_restore?schema=public" -f "C:\backups\tictocpharma.sql"
 ```
 
-No agregues `--clean` sin una ventana aprobada y un backup reciente verificado. Despues de restaurar, valida conteos, login, pedido de prueba, reportes e imagen protegida.
+No agregues `--clean` sin una ventana aprobada y un backup reciente verificado. Nunca hagas restore destructivo sobre produccion como primera prueba: restaura primero en una base aislada. Despues de restaurar, valida conteos, login, pedido de prueba, reportes e imagen protegida.
 
 ## Uploads
 
-Mantiene una copia consistente de `server/uploads` junto con la base:
+Mantiene una copia consistente de `UPLOAD_DIR` junto con la base. En desarrollo normalmente es `server/uploads`:
 
 ```powershell
 Compress-Archive -Path server\uploads\* -DestinationPath "C:\backups\uploads-$(Get-Date -Format yyyy-MM-dd-HHmm).zip"
 ```
 
-En sistemas Unix puede usarse `tar -czf uploads-YYYY-MM-DD.tar.gz server/uploads`. En produccion usa volumen persistente u object storage con retencion independiente; el disco efimero de un contenedor no es suficiente.
+En sistemas Unix puede usarse `tar -czf uploads-YYYY-MM-DD.tar.gz "$UPLOAD_DIR"`. Para restaurar, detiene escrituras y extrae el archivo en el volumen configurado despues de restaurar la base. En produccion usa volumen persistente u object storage con retencion independiente; el disco efimero de un contenedor no es suficiente.
 
 ## SQLite local
 
@@ -44,4 +44,5 @@ Para restaurar deliberadamente: `npm run db:restore:local -- --from <archivo.db>
 
 - Guarda fecha, backup usado, responsable y resultado.
 - Verifica que el archivo se puede restaurar, no solo que el comando finaliza.
+- Valida login e imagenes protegidas despues de cada restore.
 - Define retencion acorde con requisitos legales y contractuales.

@@ -2,6 +2,26 @@ import '../env.js';
 import bcrypt from 'bcrypt';
 import prisma from '../db.js';
 
+function assertDemoSeedIsSafe() {
+  const databaseUrl = String(process.env.DATABASE_URL || '');
+  const stagingLocal = process.env.STAGING_LOCAL === 'true';
+  const controlledStaging = process.env.STAGING_ENVIRONMENT === 'true' && stagingLocal;
+
+  if (process.env.NODE_ENV === 'production' && !controlledStaging) {
+    throw new Error('El seed demo esta bloqueado en produccion. Solo se permite en desarrollo o staging local controlado.');
+  }
+
+  if (/^postgres(?:ql)?:\/\//i.test(databaseUrl) && !stagingLocal) {
+    const explicitlyConfirmed = process.env.ALLOW_REMOTE_DEMO_SEED === 'true'
+      && process.env.DEMO_SEED_CONFIRM === 'I_UNDERSTAND_DEMO_DATA';
+    if (!explicitlyConfirmed) {
+      throw new Error('El seed demo para PostgreSQL remoto requiere ALLOW_REMOTE_DEMO_SEED=true y DEMO_SEED_CONFIRM=I_UNDERSTAND_DEMO_DATA.');
+    }
+  }
+}
+
+assertDemoSeedIsSafe();
+
 const laboratories = [
   {
     name: 'NovaMed',

@@ -1,4 +1,4 @@
-import './env.js';
+import { randomUUID } from 'node:crypto';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -14,16 +14,17 @@ import auditRoutes from './routes/audit.js';
 import customerRoutes from './routes/customers.js';
 import userRoutes from './routes/users.js';
 import productImportRoutes from './routes/productImport.js';
-import { isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
+import { checkProductUploadDirectory, isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
 import { purgeExpiredSessions, requireAuth } from './auth.js';
 import { purgeExpiredPreviews } from './services/productImport.js';
-import { config, validateRuntimeEnvironment } from './env.js';
+import { config, staticFrontendDirectory, validateRuntimeEnvironment } from './env.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
 validateRuntimeEnvironment();
 const allowedOrigins = config.frontendOrigins;
 if (config.trustProxy) app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -34,17 +35,39 @@ const loginLimiter = rateLimit({
   message: { message: 'Demasiados intentos. Intenta de nuevo mas tarde.' },
 });
 
+function requestOrigin(req) {
+  const origin = req.get('origin');
+  if (origin) return origin;
+  const referer = req.get('referer');
+  if (!referer) return null;
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return null;
+  }
+}
+
 function enforceTrustedOrigin(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
-  const origin = req.get('origin');
+  const origin = requestOrigin(req);
   // Browser-based production calls must include one of the explicit frontend origins.
+  // A Referer fallback covers browsers that omit Origin on same-site form requests.
   // Local scripts remain convenient in development, while CORS still protects browsers.
   if (!origin && !config.isProduction) return next();
   if (origin && allowedOrigins.includes(origin)) return next();
   return res.status(403).json({ message: 'Origen de solicitud no permitido.' });
 }
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use((req, res, next) => {
+  req.requestId = req.get('x-request-id')?.slice(0, 100) || randomUUID();
+  res.setHeader('x-request-id', req.requestId);
+  next();
+});
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // HSTS is meaningful only for the public HTTPS deployment, never for local HTTP.
+  strictTransportSecurity: config.cookieSecure ? undefined : false,
+}));
 app.use(
   cors({
     origin(origin, callback) {
@@ -62,6 +85,24 @@ app.use(enforceTrustedOrigin);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tic-toc-pharma-api' });
+});
+
+app.get('/api/ready', async (_req, res) => {
+  const [database, uploads] = await Promise.allSettled([
+    prisma.user.count(),
+    checkProductUploadDirectory(),
+  ]);
+  const databaseOk = database.status === 'fulfilled';
+  const uploadsOk = uploads.status === 'fulfilled' && uploads.value.ok;
+  const failedChecks = Number(!databaseOk) + Number(!uploadsOk);
+  const status = failedChecks === 0 ? 'ok' : failedChecks === 2 ? 'error' : 'degraded';
+  const response = {
+    status,
+    service: 'tic-toc-pharma-api',
+    database: databaseOk ? 'ok' : 'error',
+    uploads: uploadsOk ? 'ok' : 'error',
+  };
+  return res.status(failedChecks ? 503 : 200).json(response);
 });
 
 app.get('/api/uploads/products/:filename', requireAuth, (req, res) => {
@@ -86,11 +127,17 @@ app.use('/api', customerRoutes);
 app.use('/api', userRoutes);
 app.use('/api', productImportRoutes);
 
+if (config.serveStaticFrontend) {
+  app.use(express.static(staticFrontendDirectory, { index: false, maxAge: '1h' }));
+  // The SPA fallback intentionally runs after API routes. /api paths keep their JSON 404.
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => res.sendFile('index.html', { root: staticFrontendDirectory }));
+}
+
 app.use((req, res) => {
   res.status(404).json({ message: `Ruta no encontrada: ${req.method} ${req.path}` });
 });
 
-app.use((error, _req, res, _next) => {
+app.use((error, req, res, _next) => {
   if (error.type === 'entity.parse.failed') {
     return res.status(400).json({ message: 'El cuerpo JSON no es valido.' });
   }
@@ -101,7 +148,7 @@ app.use((error, _req, res, _next) => {
     return res.status(404).json({ message: 'Registro no encontrado.' });
   }
   if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ message: 'El archivo no puede superar 2 MB.' });
+    return res.status(400).json({ message: `El archivo no puede superar ${config.maxUploadMb} MB.` });
   }
   if (error.code === 'INVALID_PRODUCT_IMAGE' || error.code === 'INVALID_PRODUCT_CSV') {
     return res.status(400).json({ message: error.message });
@@ -109,7 +156,7 @@ app.use((error, _req, res, _next) => {
 
   const status = Number.isInteger(error.status) ? error.status : 500;
   // Never log request bodies, credentials, cookies, session tokens, or uploaded content.
-  console.error('API request failed', { name: error.name, code: error.code, status });
+  console.error('API request failed', { requestId: req.requestId, name: error.name, code: error.code, status });
   return res.status(status).json({ message: status >= 500 ? 'Error interno del servidor.' : error.message });
 });
 

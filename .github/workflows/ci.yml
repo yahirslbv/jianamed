@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tictoc_ci
+          POSTGRES_PASSWORD: tictoc_ci_password
+          POSTGRES_DB: tictocpharma_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tictoc_ci -d tictocpharma_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tictoc_ci:tictoc_ci_password@localhost:5432/tictocpharma_ci?schema=public
+      SESSION_SECRET: ci-only-session-secret-that-is-long-enough
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: lax
+      FRONTEND_ORIGINS: http://127.0.0.1:5173
+      TRUST_PROXY: "false"
+      STAGING_ENVIRONMENT: "true"
+      STAGING_LOCAL: "true"
+      SERVE_STATIC_FRONTEND: "false"
+      UPLOAD_DIR: ${{ github.workspace }}/.ci-uploads
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+      - name: Build frontend
+        run: npm run build
+      - name: Generate SQLite Prisma Client
+        run: npm run prisma:generate:sqlite
+      - name: Validate PostgreSQL schema
+        run: npx prisma validate --schema server/prisma/postgresql/schema.prisma
+      - name: Generate PostgreSQL Prisma Client
+        run: npm run prisma:generate:postgres
+      - name: Apply PostgreSQL migrations
+        run: npm run prisma:migrate:deploy:postgres
+      - name: Check migrated PostgreSQL staging database
+        run: npm run staging:check

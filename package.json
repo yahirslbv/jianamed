@@ -29,7 +29,10 @@
     "postgres:logs": "node scripts/postgres-compose.js logs",
     "staging:check": "npm run prisma:generate:postgres && node scripts/staging-check.js",
     "staging:server": "npm run prisma:generate:postgres && node scripts/staging-server.js",
-    "staging:smoke": "node scripts/staging-smoke-test.js"
+    "staging:smoke": "node scripts/staging-smoke-test.js",
+    "preprod:check": "node scripts/preprod-check.js",
+    "bootstrap:admin": "node scripts/bootstrap-admin.js",
+    "seed:safe": "node scripts/seed-safe.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

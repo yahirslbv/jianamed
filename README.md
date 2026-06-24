@@ -33,8 +33,8 @@ npm run prisma:migrate:deploy:postgres
 npm run build
 ```
 
-Para una base de staging vacia usa el flujo de [STAGING.md](docs/STAGING.md): `postgres:up`, migraciones, seed protegido y smoke test. Nunca ejecutes el seed demo sobre produccion.
+Para una base de staging vacia usa el flujo de [STAGING.md](docs/STAGING.md): `postgres:up`, migraciones, seed protegido y smoke test. Para una instancia publica consulta [DEPLOYMENT.md](docs/DEPLOYMENT.md), crea el admin con `npm run bootstrap:admin` y valida con `npm run preprod:check`. Nunca ejecutes el seed demo sobre preproduccion publica o produccion.
 
-Antes de publicar, revisa [STAGING.md](docs/STAGING.md), [STAGING_TEST_PLAN.md](docs/STAGING_TEST_PLAN.md), [DATABASE.md](docs/DATABASE.md), [DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md), [BACKUPS.md](docs/BACKUPS.md) y [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+Antes de publicar, revisa [STAGING.md](docs/STAGING.md), [STAGING_TEST_PLAN.md](docs/STAGING_TEST_PLAN.md), [DEPLOYMENT.md](docs/DEPLOYMENT.md), [PREPRODUCTION_CHECKLIST.md](docs/PREPRODUCTION_CHECKLIST.md), [DATABASE.md](docs/DATABASE.md), [DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md), [UPLOADS_AND_STORAGE.md](docs/UPLOADS_AND_STORAGE.md), [BACKUPS.md](docs/BACKUPS.md) y [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
 
 No subas `.env`, bases SQLite, uploads, logs ni backups al repositorio.

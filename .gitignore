@@ -3,6 +3,11 @@ dist/
 .vite/
 *.log
 server/.env
+/.env
+/.env.production
+/.env.production.local
+/.env.preproduction
+/.env.preproduction.local
 /.env.staging
 /.env.staging.local
 server-dev.log
@@ -13,7 +18,10 @@ server/prisma/.env
 server/prisma/dev.db
 server/prisma/dev.db-journal
 backups/
+uploads/
 postgres-data/
 postgres-data
+logs/
+*.db
 server/uploads/products/*
 !server/uploads/products/.gitkeep
