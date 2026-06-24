@@ -1,45 +1,34 @@
-# Checklist de produccion
+# Checklist final de produccion
 
-## Entorno y despliegue
+Este checklist se completa despues de aprobar staging. Staging local puede usar `STAGING_LOCAL=true` y HTTP; produccion nunca puede usar esa excepcion.
 
-- [ ] `NODE_ENV=production`.
-- [ ] `DATABASE_URL` apunta a PostgreSQL, nunca a SQLite.
-- [ ] `SESSION_SECRET` es aleatorio, privado y tiene al menos 32 caracteres.
-- [ ] `COOKIE_SECURE=true` y `COOKIE_SAME_SITE=lax` (o `strict` si el flujo lo permite).
-- [ ] `FRONTEND_ORIGINS` contiene solamente dominios HTTPS reales, sin comodines.
-- [ ] `TRUST_PROXY=true` solo detras de un proxy confiable.
-- [ ] Se definio `LOGIN_RATE_LIMIT_MAX` apropiado para el trafico esperado.
-- [ ] Se ejecutaron `npm run prisma:generate:postgres` y `npm run prisma:migrate:deploy:postgres`.
-- [ ] Se ejecuto `npm run build` y se revisaron los logs de arranque.
+## A. Requisitos obligatorios
 
-## Seguridad
+- [ ] PostgreSQL real, respaldado y sin SQLite en produccion.
+- [ ] HTTPS activo, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE` revisado y `TRUST_PROXY` configurado solo detras de proxy confiable.
+- [ ] `SESSION_SECRET` fuerte, aleatorio y fuera del repositorio.
+- [ ] `FRONTEND_ORIGINS` contiene solo dominios HTTPS reales, sin comodines.
+- [ ] Uploads en almacenamiento persistente y backups/restauracion probados.
+- [ ] Administrador real creado; usuarios demo eliminados o sus credenciales cambiadas.
+- [ ] Seed demo no se ejecuto en produccion.
+- [ ] `npm run prisma:migrate:deploy:postgres` aplicado y `staging:check` equivalente aprobado.
+- [ ] Auditoria, rate limit de login y Helmet validados.
+- [ ] No existen `.env`, SQLite, backups, uploads o logs en Git.
 
-- [ ] HTTPS esta activo de extremo a extremo.
-- [ ] Helmet esta habilitado; se revisaron sus headers en staging.
-- [ ] Login esta limitado por IP (15 minutos; exitos no consumen el limite). Para multiples instancias, reemplazar el almacenamiento en memoria de `express-rate-limit` por Redis u otro store compartido.
-- [ ] Las mutaciones con cookie verifican `Origin` contra `FRONTEND_ORIGINS`; esto es la proteccion CSRF actual junto con SameSite. No hay token CSRF separado todavia.
-- [ ] No se registran contrasenas, `passwordHash`, cookies, tokens de sesion ni contenido completo de imports.
-- [ ] `passwordHash`, tokens de sesion, `.env`, SQLite y uploads no aparecen en respuestas ni en Git.
-- [ ] `server/uploads` usa almacenamiento persistente fuera de Git.
+## B. Pruebas funcionales
 
-## Cuentas y permisos
+- [ ] Login, logout, sesion persistente y usuario inactivo.
+- [ ] Usuarios internos y clientes autorizados.
+- [ ] Catalogo, imagenes protegidas, productos y ofertas.
+- [ ] Carrito, checkout, pedidos, stock y folios.
+- [ ] Pedidos administrativos, reportes CSV/PDF e importacion transaccional.
+- [ ] Auditoria y modo oscuro/responsive basico.
+- [ ] Restauracion de backup de PostgreSQL y uploads en ambiente aislado.
 
-- [ ] Crear un admin real.
-- [ ] Desactivar o cambiar credenciales demo; no ejecutar seed demo en produccion.
-- [ ] Revisar usuarios internos en `#/admin/usuarios`.
-- [ ] Revisar clientes autorizados en `#/admin/clientes`.
-- [ ] Revisar la matriz en `ROLES_AND_PERMISSIONS.md`.
-- [ ] Probar login con admin, cliente autorizado, cliente no autorizado e inactivo.
-- [ ] Probar que un usuario inactivo no puede iniciar sesion.
-- [ ] Probar que cliente no autorizado no puede crear pedido.
-- [ ] Probar que solo ADMIN puede crear cuentas internas.
-- [ ] Probar creacion, cambio de rol, restablecimiento de contrasena y desactivacion de ADMIN/SALES/SUPERVISOR.
-- [ ] Probar que no se puede desactivar la propia cuenta ADMIN ni quitar el ultimo ADMIN activo.
+## C. Pendientes antes de produccion real
 
-## Datos y operacion
-
-- [ ] La tabla `Session` esta accesible y se limpia periodicamente.
-- [ ] Probar PostgreSQL en staging con una base limpia.
-- [ ] Programar y probar backups y restauracion de PostgreSQL y uploads.
-- [ ] Validar catalogo, ofertas, carrito, checkout, pedidos, reportes CSV/PDF, auditoria e importacion en staging.
-- [ ] Confirmar que precios, descuentos, creditos y totales usan centavos enteros y los serializers/reportes los presentan correctamente.
+- [ ] Decidir si `forcePasswordChange` es obligatorio e implementarlo si aplica.
+- [ ] Definir recuperacion de contrasena, retencion de auditoria y monitoreo/alertas.
+- [ ] Confirmar almacenamiento externo de imagenes si el hosting no conserva disco.
+- [ ] Definir store compartido para rate limiting si se ejecutaran multiples instancias.
+- [ ] Documentar responsable, ventana de despliegue y plan de reversa.

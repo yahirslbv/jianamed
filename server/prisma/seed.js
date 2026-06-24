@@ -258,6 +258,7 @@ const products = [
 async function main() {
   const clientPasswordHash = await bcrypt.hash('demo123', 12);
   const adminPasswordHash = await bcrypt.hash('admin123', 12);
+  const internalPasswordHash = await bcrypt.hash('internal123', 12);
   const client = await prisma.user.upsert({
     where: { email: 'cliente@demo.com' },
     update: { name: 'Cliente Demo', passwordHash: clientPasswordHash, role: 'CLIENT', isActive: true },
@@ -277,6 +278,16 @@ async function main() {
       passwordHash: adminPasswordHash,
       role: 'ADMIN',
     },
+  });
+  await prisma.user.upsert({
+    where: { email: 'ventas@demo.com' },
+    update: { name: 'Ventas Demo', passwordHash: internalPasswordHash, role: 'SALES', isActive: true },
+    create: { name: 'Ventas Demo', email: 'ventas@demo.com', passwordHash: internalPasswordHash, role: 'SALES' },
+  });
+  await prisma.user.upsert({
+    where: { email: 'supervisor@demo.com' },
+    update: { name: 'Supervisor Demo', passwordHash: internalPasswordHash, role: 'SUPERVISOR', isActive: true },
+    create: { name: 'Supervisor Demo', email: 'supervisor@demo.com', passwordHash: internalPasswordHash, role: 'SUPERVISOR' },
   });
 
   const customer = await prisma.customer.upsert({
@@ -512,7 +523,7 @@ async function main() {
     create: { year: 2026, nextValue: 2 },
   });
 
-  console.log('Seed completado: clientes autorizado, pendiente e inactivo; 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
+  console.log('Seed completado: admin, ventas, supervisor y clientes demo; 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
 }
 
 main()

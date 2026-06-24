@@ -66,6 +66,7 @@ if (cookieSameSite === 'none' && !cookieSecure) {
 
 const frontendOrigins = parseOrigins(process.env.FRONTEND_ORIGINS || 'http://127.0.0.1:5173,http://localhost:5173');
 const trustProxy = readBoolean('TRUST_PROXY', false);
+const stagingLocal = readBoolean('STAGING_LOCAL', false);
 
 export const config = {
   nodeEnv,
@@ -75,6 +76,7 @@ export const config = {
   cookieSecure,
   cookieSameSite,
   trustProxy,
+  stagingLocal,
   loginRateLimitMax: readPositiveInteger('LOGIN_RATE_LIMIT_MAX', 10),
 };
 
@@ -86,11 +88,13 @@ export function validateRuntimeEnvironment() {
   if (!/^postgres(?:ql)?:\/\//i.test(config.databaseUrl)) {
     fail('DATABASE_URL debe apuntar a PostgreSQL en produccion, nunca a SQLite.');
   }
-  if (!config.cookieSecure) fail('COOKIE_SECURE debe ser true en produccion.');
-  if (sessionSecret.length < 32 || /replace-with|change-me|secret$/i.test(sessionSecret)) {
+  if (!config.cookieSecure && !config.stagingLocal) {
+    fail('COOKIE_SECURE debe ser true en produccion, excepto staging local marcado con STAGING_LOCAL=true.');
+  }
+  if (sessionSecret.length < 32 || /replace-with|change-(?:me|this)|secret$/i.test(sessionSecret)) {
     fail('SESSION_SECRET debe ser largo, aleatorio y no usar un valor de ejemplo en produccion.');
   }
-  if (config.frontendOrigins.some((origin) => !origin.startsWith('https://'))) {
+  if (!config.stagingLocal && config.frontendOrigins.some((origin) => !origin.startsWith('https://'))) {
     fail('FRONTEND_ORIGINS debe usar solo HTTPS en produccion.');
   }
 }

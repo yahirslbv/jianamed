@@ -1,36 +1,47 @@
-# Backups y restauración
+# Backups y restauracion
 
-Respalda la base de datos, `server/uploads`, las migraciones versionadas y el almacén seguro de variables de entorno. Nunca subas `.env`, `server/prisma/dev.db`, `server/uploads`, `backups/` ni logs a Git.
+Nunca guardes `.env`, bases, backups, uploads o logs en Git. Haz backup antes de cada migracion o importacion masiva; como minimo, realiza un backup diario y ensaya restauracion trimestralmente.
 
 ## PostgreSQL
 
-Un backup diario y otro antes de cada migración o importación masiva es el mínimo recomendado.
+Genera un dump custom para restauraciones controladas:
 
 ```powershell
 pg_dump --format=custom --no-owner --file "C:\backups\tictocpharma-$(Get-Date -Format yyyy-MM-dd-HHmm).dump" "$env:DATABASE_URL"
 ```
 
-Restaura primero en una base vacía de prueba:
+Restaura primero en una base vacia de prueba:
 
 ```powershell
 pg_restore --dbname "postgresql://usuario:password@localhost:5432/tictocpharma_restore?schema=public" --no-owner "C:\backups\tictocpharma-2026-06-23-0100.dump"
 ```
 
-No agregues `--clean` a una restauración sin una ventana aprobada y un backup recién verificado. Después de restaurar, valida conteos, login, pedido de prueba, reporte y acceso a una imagen protegida.
+Para un backup SQL plano, usa `pg_dump --format=plain` y restaura con:
+
+```powershell
+psql "postgresql://usuario:password@localhost:5432/tictocpharma_restore?schema=public" -f "C:\backups\tictocpharma.sql"
+```
+
+No agregues `--clean` sin una ventana aprobada y un backup reciente verificado. Despues de restaurar, valida conteos, login, pedido de prueba, reportes e imagen protegida.
+
+## Uploads
+
+Mantiene una copia consistente de `server/uploads` junto con la base:
+
+```powershell
+Compress-Archive -Path server\uploads\* -DestinationPath "C:\backups\uploads-$(Get-Date -Format yyyy-MM-dd-HHmm).zip"
+```
+
+En sistemas Unix puede usarse `tar -czf uploads-YYYY-MM-DD.tar.gz server/uploads`. En produccion usa volumen persistente u object storage con retencion independiente; el disco efimero de un contenedor no es suficiente.
 
 ## SQLite local
 
 Para desarrollo: `npm run db:backup:local`.
 
-Para reemplazar la copia local de forma deliberada: `npm run db:restore:local -- --from <archivo.db> --confirm`. El comando está bloqueado en producción y exige confirmación explícita.
+Para restaurar deliberadamente: `npm run db:restore:local -- --from <archivo.db> --confirm`. El comando esta bloqueado en produccion y exige confirmacion explicita.
 
-## Uploads
+## Registro de restauraciones
 
-Haz una copia consistente de `server/uploads` junto con la base. En producción usa volumen persistente u object storage con retención y respaldo independientes; el disco efímero de un contenedor no es suficiente.
-
-## Rutina de restauración
-
-- Ensaya restauración al menos trimestralmente y antes de una actualización mayor.
-- Registra fecha, backup usado, responsable y resultado.
-- Comprueba que el backup se pueda abrir, no solo que el comando termine sin error.
-- Conserva una política de retención acorde con requisitos legales y contractuales.
+- Guarda fecha, backup usado, responsable y resultado.
+- Verifica que el archivo se puede restaurar, no solo que el comando finaliza.
+- Define retencion acorde con requisitos legales y contractuales.
