@@ -1,9 +1,9 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import prisma from './db.js';
+import { normalizeRole } from './constants.js';
 
 const SESSION_COOKIE = 'ttp_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
-const sessions = new Map();
 
 function getCookieOptions() {
   return {
@@ -15,50 +15,72 @@ function getCookieOptions() {
   };
 }
 
-function getSession(sessionId) {
-  const session = sessions.get(sessionId);
+function hashSessionToken(token) {
+  return createHash('sha256')
+    .update(`${token}:${process.env.SESSION_SECRET || ''}`)
+    .digest('hex');
+}
 
-  if (!session || session.expiresAt < Date.now()) {
-    sessions.delete(sessionId);
-    return null;
+function getRequestMetadata(req) {
+  return {
+    userAgent: req.get('user-agent')?.slice(0, 500) || null,
+    ipAddress: req.ip?.slice(0, 100) || null,
+  };
+}
+
+export async function createSession(req, res, userId) {
+  const token = randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  await prisma.session.create({
+    data: {
+      userId,
+      sessionTokenHash: hashSessionToken(token),
+      expiresAt,
+      ...getRequestMetadata(req),
+    },
+  });
+  res.cookie(SESSION_COOKIE, token, getCookieOptions());
+}
+
+export async function clearSession(req, res) {
+  const token = req.cookies?.[SESSION_COOKIE];
+  if (token) {
+    await prisma.session.updateMany({
+      where: { sessionTokenHash: hashSessionToken(token), revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
-
-  return session;
-}
-
-export function createSession(res, userId) {
-  const sessionId = randomUUID();
-  sessions.set(sessionId, { userId, expiresAt: Date.now() + SESSION_DURATION_MS });
-  res.cookie(SESSION_COOKIE, sessionId, getCookieOptions());
-}
-
-export function clearSession(req, res) {
-  const sessionId = req.cookies?.[SESSION_COOKIE];
-  if (sessionId) sessions.delete(sessionId);
-
   const { maxAge: _maxAge, ...clearOptions } = getCookieOptions();
   res.clearCookie(SESSION_COOKIE, clearOptions);
 }
 
+export function purgeExpiredSessions(client = prisma) {
+  return client.session.deleteMany({
+    where: { OR: [{ expiresAt: { lt: new Date() } }, { revokedAt: { not: null } }] },
+  });
+}
+
 export async function requireAuth(req, res, next) {
   try {
-    const session = getSession(req.cookies?.[SESSION_COOKIE]);
+    const token = req.cookies?.[SESSION_COOKIE];
+    if (!token) return res.status(401).json({ message: 'Sesion requerida.' });
 
-    if (!session) {
-      return res.status(401).json({ message: 'Sesión requerida.' });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { customer: true },
+    const session = await prisma.session.findFirst({
+      where: {
+        sessionTokenHash: hashSessionToken(token),
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: { user: { include: { customer: true } } },
     });
-
+    const user = session?.user;
     if (!user || !user.isActive) {
-      clearSession(req, res);
-      return res.status(401).json({ message: 'Sesión no válida.' });
+      await clearSession(req, res);
+      return res.status(401).json({ message: 'Sesion no valida.' });
     }
 
-    req.user = user;
+    // PostgreSQL stores enum values in uppercase; the existing API/UI contract stays lowercase.
+    req.user = { ...user, role: normalizeRole(user.role) };
     return next();
   } catch (error) {
     return next(error);
@@ -68,9 +90,8 @@ export async function requireAuth(req, res, next) {
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'No tienes permisos para esta acción.' });
+      return res.status(403).json({ message: 'No tienes permisos para esta accion.' });
     }
-
     return next();
   };
 }

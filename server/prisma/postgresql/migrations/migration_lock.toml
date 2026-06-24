@@ -1,0 +1,2 @@
+# Do not reuse SQLite migrations here: Prisma migration locks are provider-specific.
+provider = "postgresql"

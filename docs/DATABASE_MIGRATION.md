@@ -1,39 +1,31 @@
-# Migración de base de datos
+# Migración SQLite a PostgreSQL
 
-## Estado actual
+## Alcance y seguridad
 
-El desarrollo local usa SQLite mediante `server/prisma/schema.prisma` y `server/prisma/dev.db`. Los importes se almacenan como enteros en centavos para evitar errores de punto flotante y conservar compatibilidad con SQLite.
+El historial SQLite existente no debe aplicarse sobre PostgreSQL. El destino usa `server/prisma/postgresql/migrations`, que inicia una base PostgreSQL limpia con enums, índices, restricciones y columnas monetarias en centavos.
 
-Para producción se recomienda PostgreSQL. No se cambia el proveedor actual automáticamente: así el equipo puede seguir desarrollando sin instalar un servicio adicional ni mezclar datos locales con los de producción.
+No ejecutes `prisma migrate dev` en producción. No uses `prisma db push` para sustituir migraciones. Antes de cualquier conversión, conserva una copia verificable de SQLite y de `server/uploads`.
 
-## Desarrollo local
+## Migración de una instalación de desarrollo
 
-1. Copia la configuración de entorno requerida y define `DATABASE_URL="file:./dev.db"` dentro de `server/prisma/.env`.
-2. Ejecuta `npm install`.
-3. Ejecuta `npm run prisma:generate`.
-4. Ejecuta `npm run prisma:migrate`.
-5. Ejecuta `npm run prisma:seed`.
-6. Ejecuta `npm run dev`.
+1. Detén escrituras y crea el respaldo local: `npm run db:backup:local`.
+2. Crea una base PostgreSQL vacía; no reutilices una base de otra aplicación.
+3. Define `DATABASE_URL` con la URL PostgreSQL segura.
+4. Ejecuta `npm run prisma:generate:postgres`.
+5. Ejecuta `npm run prisma:migrate:deploy:postgres`.
+6. Para validar una instalación PostgreSQL vacía, ejecuta `npm run prisma:seed:postgres` y prueba login, catálogo, pedido, sesión y reportes.
 
-## Preparar PostgreSQL
+Para datos reales, realiza una conversión ensayada en un clon del respaldo. Exporta las entidades en el orden `User`, `Customer`, `Laboratory`, `Category`, `Product`, `Offer`, `InventoryLot`, `Order`, `OrderItem`, `AuditLog`; conserva IDs y fechas, transforma roles a mayúsculas (`CLIENT`, `ADMIN`, `SALES`, `SUPERVISOR`) y verifica que todos los valores monetarios estén en centavos enteros. Migra `Session` solo si se acepta invalidar sesiones; normalmente es más seguro empezar sesiones nuevas.
 
-1. Crea una base de datos vacía y un usuario con permisos limitados.
-2. Guarda la URL únicamente en el entorno de despliegue, por ejemplo:
+El importador CSV de productos no es un sustituto de esa conversión histórica: sirve para catálogo validado y crea/actualiza productos dentro de una transacción.
 
-   `DATABASE_URL="postgresql://usuario:password@localhost:5432/tictocpharma?schema=public"`
+## Validación antes del corte
 
-3. En una rama o configuración específica para producción, cambia el `provider` de Prisma a `postgresql` y revisa/genera las migraciones para esa base. Los campos monetarios permanecen como `Int` en centavos; no requieren tipos Decimal nativos.
-4. Ejecuta `npm run prisma:generate` y `npm run prisma:migrate:deploy` en el entorno destino.
-5. Migra los datos con respaldo y una prueba previa. Nunca apuntes un `migrate dev` de SQLite a producción.
+- Conteo de registros por entidad entre origen y destino.
+- SKU, correo, folio y lotes únicos sin colisiones.
+- Sin precios, créditos, descuentos, stock o cantidades negativos.
+- Para cada pedido: `totalCents = subtotalCents - discountTotalCents` y cada snapshot de artículo es consistente.
+- Prueba de login de administrador, cliente autorizado, cliente no autorizado e inactivo.
+- Prueba de restauración de backup PostgreSQL y de lectura de uploads.
 
-PostgreSQL es el objetivo principal. MySQL es viable con el mismo modelo de centavos, pero debe tener su propia revisión de migraciones y respaldo antes de adoptarlo.
-
-## Antes de producción
-
-- No subas `.env`, `dev.db` ni `server/uploads/` al repositorio.
-- Haz backup verificable antes de cualquier migración.
-- Las sesiones actuales están en memoria: muévelas a una base persistente o Redis.
-- Los uploads locales sirven para desarrollo; usa almacenamiento persistente con backups en producción.
-- Configura logs, CORS, `COOKIE_SECURE`, `COOKIE_SAME_SITE` y `FRONTEND_ORIGINS` para el dominio real.
-- Programa backups, prueba restauraciones y limita el acceso de la cuenta de base de datos.
-- Solicitar al cliente una imagen oficial del logo en PNG/SVG de buena calidad, preferentemente fondo transparente.
+Solo tras estas verificaciones se actualiza `DATABASE_URL` en producción y se reinician las instancias. Mantén SQLite como respaldo de solo lectura hasta aprobar el corte.

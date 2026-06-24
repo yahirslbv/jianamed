@@ -12,10 +12,15 @@ import auditRoutes from './routes/audit.js';
 import customerRoutes from './routes/customers.js';
 import productImportRoutes from './routes/productImport.js';
 import { isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
-import { requireAuth } from './auth.js';
+import { purgeExpiredSessions, requireAuth } from './auth.js';
+import { purgeExpiredPreviews } from './services/productImport.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET es obligatorio en producción.');
+}
+if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
 const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://127.0.0.1:5173,http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -88,6 +93,18 @@ app.use((error, _req, res, _next) => {
 const server = app.listen(port, () => {
   console.log(`Tic Toc Pharma API disponible en http://127.0.0.1:${port}`);
 });
+
+// Best-effort hygiene: persistent sessions survive restarts, but expired/revoked rows do not.
+function runPersistenceCleanup() {
+  Promise.all([purgeExpiredSessions(), purgeExpiredPreviews(prisma)])
+    .catch((error) => console.error('No se pudo completar la limpieza de persistencia:', error));
+}
+
+runPersistenceCleanup();
+const sessionCleanupTimer = setInterval(() => {
+  runPersistenceCleanup();
+}, 60 * 60 * 1000);
+sessionCleanupTimer.unref();
 
 async function shutdown() {
   await prisma.$disconnect();

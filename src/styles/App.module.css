@@ -2873,6 +2873,11 @@ button:disabled {
   gap: 6px;
 }
 
+/* Field captions in form sections need a clear visual hierarchy over their values. */
+.formSection .wizardGrid > label {
+  color: var(--primary);
+}
+
 .advancedFilters input,
 .advancedFilters select,
 .wizardGrid input,

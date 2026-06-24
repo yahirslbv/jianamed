@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { createOrder } from '../services/orderService.js';
-import { formatCurrencyMXN } from '../utils/formatters.js';
+import { formatCurrencyMXN, multiplyMoney } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 function createCheckout(user) {
@@ -107,7 +107,7 @@ export default function OrderSummaryPage() {
                     )}
                     {formatCurrencyMXN(product.price)}
                   </span>
-                  <span>{formatCurrencyMXN(product.price * quantity)}</span>
+                  <span>{formatCurrencyMXN(multiplyMoney(product.price, quantity))}</span>
                 </div>
               ))}
             </div>

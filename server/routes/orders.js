@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { serializeOrder } from '../serializers.js';
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 import { calculateOrderTotals, calculateLineSubtotal } from '../utils/money.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 
@@ -39,6 +40,24 @@ function normalizeItems(items) {
 
 function buildOrderFolio(year, sequence) {
   return `PED-${year}-${String(sequence).padStart(4, '0')}`;
+}
+
+async function nextOrderFolio(tx, year) {
+  let sequence = await tx.orderFolioSequence.upsert({
+    where: { year },
+    create: { year, nextValue: 1 },
+    update: { nextValue: { increment: 1 } },
+  });
+
+  // Existing databases can contain orders created before OrderFolioSequence existed.
+  // Advance safely until the persistent counter is beyond that legacy range.
+  for (let attempts = 0; attempts < 100; attempts += 1) {
+    const folio = buildOrderFolio(year, sequence.nextValue);
+    const existing = await tx.order.findUnique({ where: { folio }, select: { id: true } });
+    if (!existing) return folio;
+    sequence = await tx.orderFolioSequence.update({ where: { year }, data: { nextValue: { increment: 1 } } });
+  }
+  throw new Error('No fue posible asignar un folio único al pedido.');
 }
 
 function cleanText(value, fallback = '') {
@@ -123,24 +142,21 @@ async function createOrder(req, res, next) {
         ...priceDetailsByProductId.get(item.productId),
         quantity: item.quantity,
       })));
-      const year = new Date().getFullYear();
-      const startOfYear = new Date(year, 0, 1);
-      const startOfNextYear = new Date(year + 1, 0, 1);
-      const sequence =
-        (await tx.order.count({
-          where: { createdAt: { gte: startOfYear, lt: startOfNextYear } },
-        })) + 1;
-
       for (const item of normalized.items) {
-        await tx.product.update({
-          where: { id: item.productId },
+        const decremented = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (decremented.count !== 1) {
+          throw new Error(`Stock insuficiente para ${productsById.get(item.productId).commercialName}.`);
+        }
       }
+
+      const folio = await nextOrderFolio(tx, new Date().getFullYear());
 
       return tx.order.create({
         data: {
-          folio: buildOrderFolio(year, sequence),
+          folio,
           userId: req.user.id,
           customerId: req.user.customer.id,
           ...checkout.data,
@@ -171,15 +187,7 @@ async function createOrder(req, res, next) {
       });
     });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'CREATE',
-        entity: 'Order',
-        entityId: order.id,
-        details: JSON.stringify({ folio: order.folio }),
-      },
-    });
+    await writeAuditLog({ userId: req.user.id, action: 'CREATE', entity: 'Order', entityId: order.id, details: { folio: order.folio } });
 
     return res.status(201).json({ order: serializeOrder(order) });
   } catch (error) {
@@ -262,15 +270,7 @@ router.patch('/orders/:id/cancel', requireAuth, requireRole('client'), async (re
       });
     }
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'CANCEL',
-        entity: 'Order',
-        entityId: result.order.id,
-        details: JSON.stringify({ folio: result.order.folio }),
-      },
-    });
+    await writeAuditLog({ userId: req.user.id, action: 'CANCEL', entity: 'Order', entityId: result.order.id, details: { folio: result.order.folio } });
 
     return res.json({ order: serializeOrder(result.order) });
   } catch (error) {
@@ -306,15 +306,7 @@ router.patch('/admin/orders/:id/status', requireAuth, requireRole('admin'), asyn
       data: { status },
       include: orderInclude,
     });
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'STATUS_CHANGE',
-        entity: 'Order',
-        entityId: order.id,
-        details: JSON.stringify({ status }),
-      },
-    });
+    await writeAuditLog({ userId: req.user.id, action: 'STATUS_CHANGE', entity: 'Order', entityId: order.id, details: { status } });
 
     return res.json({ order: serializeOrder(order) });
   } catch (error) {

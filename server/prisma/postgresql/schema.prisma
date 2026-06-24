@@ -3,8 +3,57 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
+  SALES
+  SUPERVISOR
+}
+
+enum OrderStatus {
+  PENDING_REVIEW
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  SUPPLIED
+  CANCELLED
+}
+
+enum ProductType {
+  MEDICINE
+  GENERIC
+  OTC
+  RX
+  HEALING_MATERIAL
+  SUPPLEMENT
+  PERFUMERY
+  NATURISM
+  MEDICAL_SUPPLY
+}
+
+enum HealthFraction {
+  FRACTION_I
+  FRACTION_II
+  FRACTION_III
+  FRACTION_IV
+  FRACTION_V
+  FRACTION_VI
+  NOT_APPLICABLE
+}
+
+enum OfferDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum CreditStatus {
+  DISABLED
+  ACTIVE
+  SUSPENDED
 }
 
 model User {
@@ -12,8 +61,7 @@ model User {
   name          String
   email         String        @unique
   passwordHash  String
-  // SQLite keeps enum values as text. The PostgreSQL production schema uses UserRole.
-  role          String        @default("CLIENT")
+  role          UserRole      @default(CLIENT)
   isActive      Boolean       @default(true)
   customer      Customer?
   orders        Order[]
@@ -25,8 +73,8 @@ model User {
 }
 
 model Customer {
-  id               String   @id @default(cuid())
-  userId           String   @unique
+  id               String       @id @default(cuid())
+  userId           String       @unique
   businessName     String
   commercialName   String?
   rfc              String?
@@ -37,17 +85,15 @@ model Customer {
   state            String
   postalCode       String
   sanitaryLicense  String?
-  isAuthorized     Boolean  @default(true)
-  // Virtual credit is prepared for a later stage and does not affect checkout yet.
-  creditEnabled    Boolean  @default(false)
-  creditLimitCents Int      @default(0)
-  creditUsedCents  Int      @default(0)
-  creditStatus     String   @default("DISABLED")
-  // Customers and users are deactivated instead of deleted. Restrict protects order history.
-  user             User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  isAuthorized     Boolean      @default(true)
+  creditEnabled    Boolean      @default(false)
+  creditLimitCents Int          @default(0)
+  creditUsedCents  Int          @default(0)
+  creditStatus     CreditStatus @default(DISABLED)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Restrict)
   orders           Order[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([rfc])
   @@index([isAuthorized])
@@ -89,11 +135,11 @@ model Product {
   concentration                String
   presentation                 String
   sanitaryRegistration         String?
-  healthFraction               String         @default("NOT_APPLICABLE")
+  healthFraction               HealthFraction @default(NOT_APPLICABLE)
   requiresPrescription         Boolean        @default(false)
   requiresRetainedPrescription Boolean        @default(false)
   isControlled                 Boolean        @default(false)
-  productType                  String
+  productType                  ProductType
   priceCents                   Int
   stock                        Int            @default(0)
   imageUrl                     String?
@@ -117,24 +163,24 @@ model Product {
 }
 
 model Offer {
-  id                    String      @id @default(cuid())
+  id                    String            @id @default(cuid())
   title                 String
   description           String?
-  discountType          String
+  discountType          OfferDiscountType
   discountValueCents    Int?
   discountPercentageBps Int?
   startsAt              DateTime
   endsAt                DateTime
-  isActive              Boolean     @default(true)
+  isActive              Boolean           @default(true)
   productId             String?
   laboratoryId          String?
   categoryId            String?
-  productType           String?
-  product               Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
-  laboratory            Laboratory? @relation(fields: [laboratoryId], references: [id], onDelete: SetNull)
-  category              Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  productType           ProductType?
+  product               Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+  laboratory            Laboratory?       @relation(fields: [laboratoryId], references: [id], onDelete: SetNull)
+  category              Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([isActive, startsAt, endsAt])
   @@index([productId])
@@ -164,7 +210,7 @@ model Order {
   customerId          String
   clientName          String?
   clientEmail         String?
-  status              String      @default("PENDING_REVIEW")
+  status              OrderStatus @default(PENDING_REVIEW)
   subtotalCents       Int
   discountTotalCents  Int         @default(0)
   totalCents          Int

@@ -13,7 +13,7 @@ import {
   updateProduct,
   updateProductStatus,
 } from '../services/productService.js';
-import { formatCurrencyMXN } from '../utils/formatters.js';
+import { formatCurrencyMXN, normalizeMoneyInput, parseCurrencyInput } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 const emptyProduct = {
@@ -248,7 +248,7 @@ export default function AdminProductsPage() {
       setError('Completa los campos requeridos antes de guardar.');
       return false;
     }
-    if (Number(form.price) < 0 || Number.parseInt(form.stock, 10) < 0) {
+    if (parseCurrencyInput(form.price) === null || Number.parseInt(form.stock, 10) < 0) {
       setError('Precio y stock deben ser valores válidos.');
       return false;
     }
@@ -262,7 +262,7 @@ export default function AdminProductsPage() {
     setIsSaving(true);
     setError('');
     try {
-      const payload = { ...form, price: Number(form.price), stock: Number.parseInt(form.stock, 10), imageFile };
+      const payload = { ...form, price: normalizeMoneyInput(form.price), stock: Number.parseInt(form.stock, 10), imageFile };
       const saved = selectedProduct ? await updateProduct(selectedProduct.id, payload) : await createProduct(payload);
       setProducts((current) => [saved, ...current.filter((product) => product.id !== saved.id)].sort((a, b) => a.name.localeCompare(b.name)));
       setPanel(null);

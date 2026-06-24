@@ -12,7 +12,7 @@ import {
   updateOfferStatus,
 } from '../services/offerService.js';
 import { getProducts, productTypeOptions } from '../services/productService.js';
-import { formatCurrencyMXN, formatDiscount } from '../utils/formatters.js';
+import { formatCurrencyMXN, formatDiscount, normalizeMoneyInput, parseCurrencyInput } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 const defaultDate = () => new Date().toISOString().slice(0, 16);
@@ -190,8 +190,8 @@ export default function AdminOffersPage() {
       setError('Indica el nombre de la oferta.');
       return false;
     }
-    const discountValue = Number(form.discountValue);
-    if (!Number.isFinite(discountValue) || discountValue < 0 || (form.discountType === 'PERCENTAGE' && discountValue > 100)) {
+    const discountValueCents = parseCurrencyInput(form.discountValue);
+    if (discountValueCents === null || (form.discountType === 'PERCENTAGE' && discountValueCents > 10000)) {
       setError(form.discountType === 'PERCENTAGE'
         ? 'El porcentaje de descuento debe estar entre 0 y 100.'
         : 'El descuento fijo debe ser un monto en MXN igual o mayor a 0.');
@@ -207,7 +207,7 @@ export default function AdminOffersPage() {
     }
     if (form.discountType === 'FIXED_AMOUNT' && form.scopeType === 'productId') {
       const product = products.find((item) => item.id === form.scopeValue);
-      if (product && discountValue > Number(product.originalPrice ?? product.price)) {
+      if (product && discountValueCents > (parseCurrencyInput(product.originalPrice ?? product.price) ?? 0)) {
         setError(`El descuento fijo no puede ser mayor al precio base de ${product.name} (${formatCurrencyMXN(product.originalPrice ?? product.price)}).`);
         return false;
       }
@@ -225,7 +225,7 @@ export default function AdminOffersPage() {
       title: form.title.trim(),
       description: form.description.trim(),
       discountType: form.discountType,
-      discountValue: Number(form.discountValue),
+      discountValue: normalizeMoneyInput(form.discountValue),
       startsAt: form.startsAt,
       endsAt: form.endsAt,
       isActive: form.isActive,

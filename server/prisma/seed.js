@@ -260,22 +260,22 @@ async function main() {
   const adminPasswordHash = await bcrypt.hash('admin123', 12);
   const client = await prisma.user.upsert({
     where: { email: 'cliente@demo.com' },
-    update: { name: 'Cliente Demo', passwordHash: clientPasswordHash, role: 'client', isActive: true },
+    update: { name: 'Cliente Demo', passwordHash: clientPasswordHash, role: 'CLIENT', isActive: true },
     create: {
       name: 'Cliente Demo',
       email: 'cliente@demo.com',
       passwordHash: clientPasswordHash,
-      role: 'client',
+      role: 'CLIENT',
     },
   });
   await prisma.user.upsert({
     where: { email: 'admin@demo.com' },
-    update: { name: 'Admin Demo', passwordHash: adminPasswordHash, role: 'admin', isActive: true },
+    update: { name: 'Admin Demo', passwordHash: adminPasswordHash, role: 'ADMIN', isActive: true },
     create: {
       name: 'Admin Demo',
       email: 'admin@demo.com',
       passwordHash: adminPasswordHash,
-      role: 'admin',
+      role: 'ADMIN',
     },
   });
 
@@ -317,13 +317,13 @@ async function main() {
 
   const pendingClient = await prisma.user.upsert({
     where: { email: 'pendiente@demo.com' },
-    update: { name: 'Cliente Pendiente', passwordHash: clientPasswordHash, role: 'client', isActive: true },
-    create: { name: 'Cliente Pendiente', email: 'pendiente@demo.com', passwordHash: clientPasswordHash, role: 'client' },
+    update: { name: 'Cliente Pendiente', passwordHash: clientPasswordHash, role: 'CLIENT', isActive: true },
+    create: { name: 'Cliente Pendiente', email: 'pendiente@demo.com', passwordHash: clientPasswordHash, role: 'CLIENT' },
   });
   const inactiveClient = await prisma.user.upsert({
     where: { email: 'inactivo@demo.com' },
-    update: { name: 'Cliente Inactivo', passwordHash: clientPasswordHash, role: 'client', isActive: false },
-    create: { name: 'Cliente Inactivo', email: 'inactivo@demo.com', passwordHash: clientPasswordHash, role: 'client', isActive: false },
+    update: { name: 'Cliente Inactivo', passwordHash: clientPasswordHash, role: 'CLIENT', isActive: false },
+    create: { name: 'Cliente Inactivo', email: 'inactivo@demo.com', passwordHash: clientPasswordHash, role: 'CLIENT', isActive: false },
   });
   await prisma.customer.upsert({
     where: { userId: pendingClient.id },
@@ -505,6 +505,12 @@ async function main() {
       },
     });
   }
+
+  await prisma.orderFolioSequence.upsert({
+    where: { year: 2026 },
+    update: {},
+    create: { year: 2026, nextValue: 2 },
+  });
 
   console.log('Seed completado: clientes autorizado, pendiente e inactivo; 3 laboratorios, 5 categorias, 12 productos, 3 ofertas y 2 pedidos.');
 }

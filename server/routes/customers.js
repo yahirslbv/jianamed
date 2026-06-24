@@ -4,6 +4,7 @@ import prisma from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { serializeCustomer } from '../serializers.js';
 import { parseMoneyInput } from '../utils/money.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 const customerInclude = { user: { select: { id: true, name: true, email: true, isActive: true } } };
@@ -37,9 +38,7 @@ function customerPayload(body) {
 }
 
 async function audit(userId, action, customer, details = {}) {
-  await prisma.auditLog.create({
-    data: { userId, action, entity: 'Customer', entityId: customer.id, details: JSON.stringify(details) },
-  });
+  await writeAuditLog({ userId, action, entity: 'Customer', entityId: customer.id, details });
 }
 
 router.get('/admin/customers', requireAuth, requireRole('admin'), async (_req, res, next) => {
@@ -65,7 +64,7 @@ router.post('/admin/customers', requireAuth, requireRole('admin'), async (req, r
     if (password.length < 8) return res.status(400).json({ message: 'La contraseña inicial debe tener al menos 8 caracteres.' });
     const passwordHash = await bcrypt.hash(password, 12);
     const customer = await prisma.customer.create({
-      data: { ...payload.data.customer, user: { create: { ...payload.data.user, passwordHash, role: 'client' } } },
+      data: { ...payload.data.customer, user: { create: { ...payload.data.user, passwordHash, role: 'CLIENT' } } },
       include: customerInclude,
     });
     await audit(req.user.id, 'CREATE', customer, { email: customer.user.email, isAuthorized: customer.isAuthorized });

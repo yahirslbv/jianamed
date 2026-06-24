@@ -10,5 +10,6 @@ full-dev.err.log
 server/prisma/.env
 server/prisma/dev.db
 server/prisma/dev.db-journal
+backups/
 server/uploads/products/*
 !server/uploads/products/.gitkeep

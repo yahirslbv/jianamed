@@ -1,4 +1,8 @@
-export const ROLES = ['client', 'admin'];
+export const ROLES = ['CLIENT', 'ADMIN', 'SALES', 'SUPERVISOR'];
+
+export function normalizeRole(role) {
+  return String(role || '').toLowerCase();
+}
 
 export const HEALTH_FRACTIONS = [
   'FRACTION_I',

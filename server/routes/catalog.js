@@ -6,6 +6,7 @@ import { serializeCategory, serializeLaboratory, serializeProduct } from '../ser
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 import { getProductImageUrl, productImageUpload } from '../uploads.js';
 import { parseMoneyInput } from '../utils/money.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 
@@ -86,15 +87,7 @@ function getProductPayload(body, uploadedImageUrl = null) {
 }
 
 async function createAuditLog(userId, action, entity, entityId, details) {
-  await prisma.auditLog.create({
-    data: {
-      userId,
-      action,
-      entity,
-      entityId,
-      details: details ? JSON.stringify(details) : null,
-    },
-  });
+  await writeAuditLog({ userId, action, entity, entityId, details });
 }
 
 router.get('/products', requireAuth, async (req, res, next) => {

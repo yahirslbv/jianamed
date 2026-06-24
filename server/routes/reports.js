@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../auth.js';
-import prisma from '../db.js';
 import { REPORT_TYPES, createCsv, getReport, writePdf } from '../services/reports.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 
@@ -10,21 +10,19 @@ function getFileDate() {
 }
 
 async function logExport(req, type, format, report) {
-  await prisma.auditLog.create({
-    data: {
-      userId: req.user.id,
-      action: format === 'csv' ? 'EXPORT_CSV' : 'EXPORT_PDF',
-      entity: 'Report',
-      entityId: type,
-      details: JSON.stringify({
-        reportType: type,
-        filters: report.filters,
-        recordCount: report.rows.length,
-        format,
-        createdAt: new Date().toISOString(),
-        ip: req.ip,
-        userAgent: req.get('user-agent') || '',
-      }),
+  await writeAuditLog({
+    userId: req.user.id,
+    action: format === 'csv' ? 'EXPORT_CSV' : 'EXPORT_PDF',
+    entity: 'Report',
+    entityId: type,
+    details: {
+      reportType: type,
+      filters: report.filters,
+      recordCount: report.rows.length,
+      format,
+      createdAt: new Date().toISOString(),
+      ip: req.ip,
+      userAgent: req.get('user-agent') || '',
     },
   });
 }
@@ -38,7 +36,7 @@ function validateType(type, res) {
 router.get('/admin/reports/:type/export.csv', requireAuth, requireRole('admin'), async (req, res, next) => {
   try {
     if (!validateType(req.params.type, res)) return;
-    const report = await getReport(req.params.type, req.query);
+    const report = await getReport(req.params.type, req.query, 'csv');
     await logExport(req, req.params.type, 'csv', report);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="reporte-${req.params.type}-${getFileDate()}.csv"`);

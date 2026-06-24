@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { serializeOffer } from '../serializers.js';
 import { getActiveOffers, offerInclude } from '../services/offers.js';
 import { parseMoneyInput, parsePercentageInput } from '../utils/money.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 const scopeFields = ['productId', 'laboratoryId', 'categoryId', 'productType'];
@@ -63,14 +64,12 @@ function getOfferPayload(body) {
 }
 
 async function createAuditLog(userId, action, offer) {
-  await prisma.auditLog.create({
-    data: {
-      userId,
-      action,
-      entity: 'Offer',
-      entityId: offer.id,
-      details: JSON.stringify({ title: offer.title, isActive: offer.isActive }),
-    },
+  await writeAuditLog({
+    userId,
+    action,
+    entity: 'Offer',
+    entityId: offer.id,
+    details: { title: offer.title, isActive: offer.isActive },
   });
 }
 

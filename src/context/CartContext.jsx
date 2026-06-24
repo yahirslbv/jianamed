@@ -9,14 +9,6 @@ function normalizeQuantity(quantity) {
   return Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 1;
 }
 
-function getOriginalPrice(product) {
-  return Number(product.originalPrice ?? product.price ?? 0);
-}
-
-function getFinalPrice(product) {
-  return Number(product.price ?? 0);
-}
-
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
     try {

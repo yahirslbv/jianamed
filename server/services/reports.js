@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import prisma from '../db.js';
 import { getActiveOffers, getOfferApplication, offerInclude } from './offers.js';
-import { moneyToNumber } from '../utils/money.js';
+import { moneyToNumber, moneyToString, parseMoneyInput } from '../utils/money.js';
 
 export const REPORT_TYPES = ['orders', 'products', 'inventory', 'offers', 'customers'];
 
@@ -72,6 +72,12 @@ function matchesRange(value, minValue, maxValue) {
   return (min === null || value >= min) && (max === null || value <= max);
 }
 
+function matchesMoneyRange(cents, minValue, maxValue) {
+  const min = minValue === undefined || minValue === '' ? null : parseMoneyInput(minValue);
+  const max = maxValue === undefined || maxValue === '' ? null : parseMoneyInput(maxValue);
+  return (min === null || cents >= min) && (max === null || cents <= max);
+}
+
 function matchesDateRange(value, startDate, endDate) {
   const timestamp = new Date(value).getTime();
   const start = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null;
@@ -94,8 +100,8 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 2,
 });
 
-function toMoney(cents) {
-  return currencyFormatter.format(moneyToNumber(cents));
+function toMoney(cents, format = 'display') {
+  return format === 'csv' ? moneyToString(cents) : currencyFormatter.format(moneyToNumber(cents));
 }
 
 function getAppliedFilters(filters) {
@@ -104,7 +110,7 @@ function getAppliedFilters(filters) {
   );
 }
 
-async function getOrderRows(filters) {
+async function getOrderRows(filters, moneyFormat) {
   const orders = await prisma.order.findMany({
     include: {
       user: { select: { name: true, email: true } },
@@ -126,7 +132,7 @@ async function getOrderRows(filters) {
         matchesText(clientName, filters.client) &&
         matchesText(clientEmail, filters.email) &&
         matchesText(order.folio, filters.folio) &&
-        matchesRange(moneyToNumber(order.totalCents), filters.minAmount, filters.maxAmount) &&
+        matchesMoneyRange(order.totalCents, filters.minAmount, filters.maxAmount) &&
         matchesBoolean(order.discountTotalCents > 0, filters.hasDiscount)
       );
     })
@@ -136,9 +142,9 @@ async function getOrderRows(filters) {
       clientName: order.clientName || order.customer?.businessName || order.user?.name || '',
       clientEmail: order.clientEmail || order.user?.email || '',
       status: order.status,
-      subtotal: toMoney(order.subtotalCents),
-      discountTotal: toMoney(order.discountTotalCents),
-      total: toMoney(order.totalCents),
+      subtotal: toMoney(order.subtotalCents, moneyFormat),
+      discountTotal: toMoney(order.discountTotalCents, moneyFormat),
+      total: toMoney(order.totalCents, moneyFormat),
       observations: order.observations || '',
       deliveryAddress: [order.deliveryAddress, order.deliveryCity, order.deliveryState, order.deliveryPostalCode].filter(Boolean).join(', '),
       responsibleName: order.responsibleName || '',
@@ -169,7 +175,7 @@ function filterProductRecords(records, filters) {
       matchesBoolean(Boolean(offerApplication), filters.hasOffer) &&
       matchesBoolean(lowStock, filters.lowStock) &&
       matchesBoolean(product.stock === 0, filters.outOfStock) &&
-      matchesRange(moneyToNumber(product.priceCents), filters.minPrice, filters.maxPrice) &&
+      matchesMoneyRange(product.priceCents, filters.minPrice, filters.maxPrice) &&
       matchesBoolean(product.requiresPrescription, filters.requiresPrescription) &&
       matchesBoolean(product.requiresRetainedPrescription, filters.requiresRetainedPrescription) &&
       matchesBoolean(product.isControlled, filters.isControlled) &&
@@ -179,7 +185,7 @@ function filterProductRecords(records, filters) {
   });
 }
 
-async function getProductRows(filters) {
+async function getProductRows(filters, moneyFormat) {
   const records = filterProductRecords(await getProductRecords(), filters);
   return records.map(({ product, offerApplication }) => ({
     sku: product.sku,
@@ -194,7 +200,7 @@ async function getProductRows(filters) {
     requiresRetainedPrescription: toYesNo(product.requiresRetainedPrescription),
     isControlled: toYesNo(product.isControlled),
     sanitaryRegistration: product.sanitaryRegistration || '',
-    price: toMoney(product.priceCents),
+    price: toMoney(product.priceCents, moneyFormat),
     stock: product.stock,
     isActive: toYesNo(product.isActive),
     hasImage: toYesNo(Boolean(product.imageUrl)),
@@ -204,7 +210,7 @@ async function getProductRows(filters) {
   }));
 }
 
-async function getInventoryRows(filters) {
+async function getInventoryRows(filters, moneyFormat) {
   const records = filterProductRecords(await getProductRecords(), filters);
   return records.map(({ product }) => ({
     sku: product.sku,
@@ -213,13 +219,13 @@ async function getInventoryRows(filters) {
     category: product.category.name,
     stock: product.stock,
     stockStatus: product.stock === 0 ? 'Sin stock' : product.stock <= 30 ? 'Stock bajo' : 'Disponible',
-    price: toMoney(product.priceCents),
-    inventoryValue: toMoney(product.priceCents * product.stock),
+    price: toMoney(product.priceCents, moneyFormat),
+    inventoryValue: toMoney(product.priceCents * product.stock, moneyFormat),
     isActive: toYesNo(product.isActive),
   }));
 }
 
-async function getOfferRows(filters) {
+async function getOfferRows(filters, moneyFormat) {
   const offers = await prisma.offer.findMany({ include: offerInclude, orderBy: { createdAt: 'desc' } });
   const now = new Date();
   return offers
@@ -240,7 +246,7 @@ async function getOfferRows(filters) {
       discountType: offer.discountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto fijo (MXN)',
       discountValue: offer.discountType === 'PERCENTAGE'
         ? `${Number(offer.discountPercentageBps || 0) / 100}%`
-        : toMoney(offer.discountValueCents),
+        : toMoney(offer.discountValueCents, moneyFormat),
       product: offer.product?.commercialName || '',
       laboratory: offer.laboratory?.name || '',
       category: offer.category?.name || '',
@@ -254,7 +260,7 @@ async function getOfferRows(filters) {
 
 async function getCustomerRows(filters) {
   const users = await prisma.user.findMany({
-    where: { role: 'client' },
+    where: { role: 'CLIENT' },
     include: { customer: true },
     orderBy: { createdAt: 'desc' },
   });
@@ -290,7 +296,7 @@ async function getCustomerRows(filters) {
     });
 }
 
-export async function getReport(type, filters = {}) {
+export async function getReport(type, filters = {}, moneyFormat = 'display') {
   if (!REPORT_TYPES.includes(type)) {
     throw new Error('Tipo de reporte no valido.');
   }
@@ -301,7 +307,7 @@ export async function getReport(type, filters = {}) {
     inventory: getInventoryRows,
     offers: getOfferRows,
     customers: getCustomerRows,
-  }[type](filters));
+  }[type](filters, moneyFormat));
 
   return {
     type,

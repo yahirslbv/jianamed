@@ -3,6 +3,7 @@ import prisma from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { productCsvUpload } from '../uploads.js';
 import { PRODUCT_IMPORT_HEADERS, confirmPreview, createPreview } from '../services/productImport.js';
+import { writeAuditLog } from '../services/audit.js';
 
 const router = Router();
 const asBoolean = (value) => value === true || value === 'true';
@@ -21,7 +22,7 @@ router.post('/admin/products/import/preview', requireAuth, requireRole('admin'),
       mode: req.body.mode,
       createLaboratories: asBoolean(req.body.createLaboratories),
       createCategories: asBoolean(req.body.createCategories),
-    });
+    }, req.file.originalname);
     if (preview.error) return res.status(400).json({ message: preview.error });
     return res.json({ preview });
   } catch (error) { return next(error); }
@@ -31,9 +32,7 @@ router.post('/admin/products/import/confirm', requireAuth, requireRole('admin'),
   try {
     if (!req.body.importId) return res.status(400).json({ message: 'Falta el identificador de la vista previa.' });
     const result = await confirmPreview(prisma, req.body.importId, req.user.id);
-    await prisma.auditLog.create({
-      data: { userId: req.user.id, action: 'BULK_IMPORT', entity: 'Product', entityId: req.body.importId, details: JSON.stringify(result) },
-    });
+    await writeAuditLog({ userId: req.user.id, action: 'BULK_IMPORT', entity: 'Product', entityId: req.body.importId, details: result });
     return res.json({ result });
   } catch (error) {
     if (error.message?.includes('vista previa')) return res.status(400).json({ message: error.message });

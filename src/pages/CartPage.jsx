@@ -1,7 +1,7 @@
 import ProductVisual from '../components/ProductVisual.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { formatCurrencyMXN } from '../utils/formatters.js';
+import { formatCurrencyMXN, multiplyMoney } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
 export default function CartPage() {
@@ -70,7 +70,7 @@ export default function CartPage() {
                     onChange={(event) => updateQuantity(product.id, event.target.value)}
                   />
                 </label>
-                <strong className={styles.cartLineSubtotal}>Subtotal {formatCurrencyMXN(product.price * quantity)}</strong>
+                <strong className={styles.cartLineSubtotal}>Subtotal {formatCurrencyMXN(multiplyMoney(product.price, quantity))}</strong>
                 <button
                   className={styles.textButton}
                   type="button"

@@ -7,8 +7,8 @@ function parseScaledInteger(value, scale) {
 
   const [whole, fraction = ''] = text.split('.');
   const paddedFraction = `${fraction}00`.slice(0, 2);
-  const scaled = Number(whole) * scale + Number(paddedFraction);
-  return Number.isSafeInteger(scaled) ? scaled : null;
+  const scaled = BigInt(whole) * BigInt(scale) + BigInt(paddedFraction);
+  return scaled <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(scaled) : null;
 }
 
 export function parseMoneyInput(value) {
@@ -19,8 +19,23 @@ export function parsePercentageInput(value) {
   return parseScaledInteger(value, PERCENTAGE_SCALE);
 }
 
+// Monetary amounts are persisted as integer cents. This decimal string is safe for logs,
+// CSV exports and integrations that expect a two-decimal amount.
+export function toMoneyDecimal(value) {
+  const cents = typeof value === 'number' && Number.isSafeInteger(value)
+    ? ensureNonNegativeMoney(value)
+    : parseMoneyInput(value);
+  return cents === null ? null : moneyToString(cents);
+}
+
 export function moneyToNumber(cents) {
   return Number(cents || 0) / MONEY_SCALE;
+}
+
+export function moneyToString(cents) {
+  const safeCents = ensureNonNegativeMoney(cents);
+  const whole = Math.floor(safeCents / MONEY_SCALE);
+  return `${whole}.${String(safeCents % MONEY_SCALE).padStart(2, '0')}`;
 }
 
 export function formatMoneyMXN(cents) {
@@ -33,23 +48,56 @@ export function formatMoneyMXN(cents) {
 }
 
 export function addMoney(...amounts) {
-  return amounts.reduce((total, amount) => total + Number(amount || 0), 0);
+  const total = amounts.reduce((sum, amount) => sum + BigInt(ensureNonNegativeMoney(amount)), 0n);
+  if (total > BigInt(Number.MAX_SAFE_INTEGER)) throw new RangeError('El monto excede el límite permitido.');
+  return Number(total);
 }
 
 export function subtractMoney(amount, discount) {
-  return Math.max(0, Number(amount || 0) - Number(discount || 0));
+  return Math.max(0, ensureNonNegativeMoney(amount) - ensureNonNegativeMoney(discount));
 }
 
 export function multiplyMoney(cents, quantity) {
-  return Number(cents || 0) * Number(quantity || 0);
+  const safeQuantity = Number(quantity);
+  if (!Number.isSafeInteger(safeQuantity) || safeQuantity < 0) {
+    throw new RangeError('La cantidad debe ser un entero no negativo.');
+  }
+  const total = BigInt(ensureNonNegativeMoney(cents)) * BigInt(safeQuantity);
+  if (total > BigInt(Number.MAX_SAFE_INTEGER)) throw new RangeError('El monto excede el límite permitido.');
+  return Number(total);
+}
+
+export function ensureNonNegativeMoney(value) {
+  const amount = Number(value ?? 0);
+  if (!Number.isSafeInteger(amount) || amount < 0) {
+    throw new RangeError('El monto debe ser un entero no negativo en centavos.');
+  }
+  return amount;
+}
+
+export function calculatePercentageDiscount(priceCents, percentageBps) {
+  const price = ensureNonNegativeMoney(priceCents);
+  const percentage = Number(percentageBps ?? 0);
+  if (!Number.isSafeInteger(percentage) || percentage < 0 || percentage > 10000) {
+    throw new RangeError('El porcentaje debe estar entre 0 y 100.');
+  }
+  // Round once at the cent boundary; no binary floating-point arithmetic is involved.
+  return Math.min(price, Number((BigInt(price) * BigInt(percentage) + 5000n) / 10000n));
+}
+
+export function calculateFixedDiscount(priceCents, discountCents) {
+  return Math.min(ensureNonNegativeMoney(priceCents), ensureNonNegativeMoney(discountCents));
 }
 
 export function calculateDiscount(baseCents, offer) {
   if (!offer) return 0;
-  const rawDiscount = offer.discountType === 'PERCENTAGE'
-    ? Math.round((baseCents * Number(offer.discountPercentageBps || 0)) / 10000)
-    : Number(offer.discountValueCents || 0);
-  return Math.max(0, Math.min(Number(baseCents || 0), rawDiscount));
+  return offer.discountType === 'PERCENTAGE'
+    ? calculatePercentageDiscount(baseCents, offer.discountPercentageBps)
+    : calculateFixedDiscount(baseCents, offer.discountValueCents);
+}
+
+export function calculateFinalPrice(priceCents, offer) {
+  return subtractMoney(priceCents, calculateDiscount(priceCents, offer));
 }
 
 export function calculateLineSubtotal(unitPriceCents, quantity) {

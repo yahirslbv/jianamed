@@ -1,4 +1,5 @@
 import { initialOrderStatus } from '../data/orderStatuses.js';
+import { calculateOrderTotals, moneyFromCents, parseCurrencyInput } from '../utils/formatters.js';
 
 const ORDER_STORAGE_KEY = 'tic-toc-pharma-orders';
 const LAST_ORDER_KEY = 'tic-toc-pharma-last-order-id';
@@ -60,10 +61,10 @@ export function createFallbackOrder({ user, items, observations, checkout = {} }
     laboratoryName: product.laboratoryName,
     presentation: product.presentation,
     quantity,
-    unitPrice: product.price || 0,
-    subtotal: (product.price || 0) * quantity,
+    unitPrice: moneyFromCents(parseCurrencyInput(product.price) ?? 0),
+    subtotal: moneyFromCents((parseCurrencyInput(product.price) ?? 0) * quantity),
   }));
-  const subtotal = orderItems.reduce((total, item) => total + item.subtotal, 0);
+  const totals = calculateOrderTotals(items);
   const order = {
     id: createOrderId(),
     folio: createFolio(orders),
@@ -71,8 +72,9 @@ export function createFallbackOrder({ user, items, observations, checkout = {} }
     clientName: user.company || user.name,
     clientEmail: user.email,
     items: orderItems,
-    subtotal,
-    total: subtotal,
+    subtotal: totals.subtotal,
+    discountTotal: totals.discount,
+    total: totals.total,
     status: initialOrderStatus,
     observations: observations.trim(),
     checkout,
