@@ -7,6 +7,7 @@ export default function AccountPage() {
   const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { theme, themePreference, setThemePreference } = useTheme();
+  const roleLabel = { admin: 'Administración', sales: 'Ventas', supervisor: 'Supervisión', client: 'Cliente autorizado' }[user.role] || user.role;
 
   const handleLogout = async () => {
     await logout();
@@ -30,7 +31,7 @@ export default function AccountPage() {
           <dl className={styles.detailList}>
             <div><dt>Contacto</dt><dd>{user.name}</dd></div>
             <div><dt>Correo</dt><dd>{user.email}</dd></div>
-            <div><dt>Rol</dt><dd>{user.role === 'admin' ? 'Administración' : 'Cliente autorizado'}</dd></div>
+            <div><dt>Rol</dt><dd>{roleLabel}</dd></div>
             <div><dt>Estado</dt><dd>Sesión activa</dd></div>
           </dl>
           <button className={styles.logoutButton} type="button" onClick={handleLogout}>Cerrar sesión</button>
@@ -77,6 +78,7 @@ export default function AccountPage() {
               <a className={styles.secondarySmall} href="#/admin/ofertas">Ofertas</a>
               <a className={styles.secondarySmall} href="#/admin/reportes">Reportes</a>
               <a className={styles.secondarySmall} href="#/admin/auditoria">Auditoría</a>
+              <a className={styles.secondarySmall} href="#/admin/usuarios">Cuentas internas</a>
             </div>
           </article>
         )}

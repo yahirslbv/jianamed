@@ -31,6 +31,19 @@ export function serializeUser(user) {
   };
 }
 
+/** Public-safe representation for internal account management. */
+export function serializeInternalUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: String(user.role || '').toUpperCase(),
+    isActive: Boolean(user.isActive),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
 export function serializeCustomer(customer) {
   const user = customer.user || {};
   return {

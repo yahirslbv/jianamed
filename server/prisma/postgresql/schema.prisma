@@ -70,6 +70,8 @@ model User {
   importBatches ImportBatch[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([role, isActive])
 }
 
 model Customer {

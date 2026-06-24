@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import prisma from './db.js';
 import { normalizeRole } from './constants.js';
+import { config } from './env.js';
 
 const SESSION_COOKIE = 'ttp_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
@@ -8,16 +9,19 @@ const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
 function getCookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true',
-    sameSite: process.env.COOKIE_SAME_SITE || 'lax',
+    secure: config.cookieSecure,
+    sameSite: config.cookieSameSite,
     maxAge: SESSION_DURATION_MS,
     path: '/',
   };
 }
 
 function hashSessionToken(token) {
+  // Production startup rejects an absent secret. This fallback keeps legacy local
+  // development usable without weakening a production session configuration.
+  const sessionSecret = process.env.SESSION_SECRET || 'development-only-session-secret';
   return createHash('sha256')
-    .update(`${token}:${process.env.SESSION_SECRET || ''}`)
+    .update(`${token}:${sessionSecret}`)
     .digest('hex');
 }
 

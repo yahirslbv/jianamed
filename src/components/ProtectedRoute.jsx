@@ -41,8 +41,8 @@ export default function ProtectedRoute({ children, path, navigate, allowedRoles 
           <p className={styles.eyebrow}>Acceso denegado</p>
           <h1>No tienes permisos para esta sección</h1>
           <p>Esta ruta está reservada para roles autorizados dentro del portal.</p>
-          <a className={styles.primaryButton} href="#/catalogo">
-            Volver al catálogo
+          <a className={styles.primaryButton} href={user.role === 'client' || user.role === 'admin' ? '#/catalogo' : '#/cuenta'}>
+            Volver a mi cuenta
           </a>
         </div>
       </section>

@@ -25,7 +25,7 @@ export default function LoginPage({ redirectTo = '', navigate }) {
     setIsSubmitting(false);
 
     if (result.ok) {
-      navigate(redirectTo || (result.user?.role === 'client' ? '/inicio-cliente' : '/catalogo'));
+      navigate(redirectTo || (result.user?.role === 'client' ? '/inicio-cliente' : result.user?.role === 'admin' ? '/catalogo' : '/cuenta'));
       return;
     }
 

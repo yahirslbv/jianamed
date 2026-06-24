@@ -1,7 +1,13 @@
 export const ROLES = ['CLIENT', 'ADMIN', 'SALES', 'SUPERVISOR'];
+export const INTERNAL_ROLES = ['ADMIN', 'SALES', 'SUPERVISOR'];
 
 export function normalizeRole(role) {
   return String(role || '').toLowerCase();
+}
+
+export function normalizeInternalRole(role) {
+  const normalized = String(role || '').trim().toUpperCase();
+  return INTERNAL_ROLES.includes(normalized) ? normalized : null;
 }
 
 export const HEALTH_FRACTIONS = [

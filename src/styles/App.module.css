@@ -4071,6 +4071,16 @@ button:disabled {
   font-weight: 800;
 }
 
+.passwordField {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+}
+
+.passwordField > button {
+  justify-self: start;
+}
+
 .metricCardActive {
   background: color-mix(in srgb, var(--color-secondary) 10%, var(--color-surface)) !important;
   border-color: var(--secondary) !important;

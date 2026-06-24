@@ -36,7 +36,7 @@ export default function Header() {
   const { getCartItemCount } = useCart();
   const { language, setLanguage, t } = useLanguage();
   const { themePreference, setThemePreference } = useTheme();
-  const navItems = isAuthenticated ? (user.role === 'admin' ? adminNavItems : clientNavItems) : publicNavItems;
+  const navItems = isAuthenticated ? (user.role === 'admin' ? adminNavItems : user.role === 'client' ? clientNavItems : []) : publicNavItems;
   const itemCount = getCartItemCount();
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      <a className={styles.brand} href={isAuthenticated ? '#/catalogo' : '#/'} aria-label="Tic Toc Pharma inicio">
+      <a className={styles.brand} href={isAuthenticated ? (user.role === 'client' || user.role === 'admin' ? '#/catalogo' : '#/cuenta') : '#/'} aria-label="Tic Toc Pharma inicio">
         <LogoMark className={styles.brandMark} />
         <span>
           <strong>Tic Toc Pharma</strong>
@@ -135,6 +135,7 @@ export default function Header() {
                   <>
                     <a href="#/admin/ofertas" role="menuitem" onClick={closeMenus}>Ofertas</a>
                     <a href="#/admin/clientes" role="menuitem" onClick={closeMenus}>Clientes</a>
+                    <a href="#/admin/usuarios" role="menuitem" onClick={closeMenus}>Cuentas internas</a>
                     <a href="#/admin/importar-productos" role="menuitem" onClick={closeMenus}>Importar productos</a>
                     <a href="#/admin/reportes" role="menuitem" onClick={closeMenus}>Reportes</a>
                     <a href="#/admin/auditoria" role="menuitem" onClick={closeMenus}>Auditoría</a>

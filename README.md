@@ -1,6 +1,6 @@
 # Tic Toc Pharma
 
-Catálogo B2B farmacéutico con React/Vite, Express y Prisma.
+Catalogo B2B farmaceutico con React/Vite, Express y Prisma. El desarrollo local usa SQLite; PostgreSQL es el unico destino recomendado para produccion.
 
 ## Desarrollo local
 
@@ -12,11 +12,20 @@ npm run prisma:seed
 npm run dev
 ```
 
-El desarrollo usa SQLite. Usuarios demo: `admin@demo.com / admin123`, `cliente@demo.com / demo123`, `pendiente@demo.com / demo123` e `inactivo@demo.com / demo123`. No uses estas credenciales fuera de desarrollo.
+Usuarios demo locales: `admin@demo.com / admin123`, `cliente@demo.com / demo123`, `pendiente@demo.com / demo123` e `inactivo@demo.com / demo123`. No uses estas credenciales fuera de desarrollo.
 
-## PostgreSQL y producción
+## Cuentas internas y clientes B2B
 
-PostgreSQL es el destino de producción. Define `DATABASE_URL=postgresql://usuario:password@localhost:5432/tictocpharma?schema=public`, después ejecuta:
+- `#/admin/clientes` administra clientes autorizados B2B. Al crearlos se genera un `User` con rol `CLIENT` y una ficha `Customer`.
+- `#/admin/usuarios` administra solamente cuentas internas: `ADMIN`, `SALES` y `SUPERVISOR`.
+- Solo ADMIN puede gestionar cuentas internas. SALES y SUPERVISOR se crean para la matriz futura y no reciben permisos administrativos automaticamente.
+- Las cuentas se desactivan con `isActive`; no se eliminan fisicamente. Las acciones de administracion se auditan.
+
+Consulta [ROLES_AND_PERMISSIONS.md](docs/ROLES_AND_PERMISSIONS.md) para la matriz actual y propuesta.
+
+## PostgreSQL y produccion
+
+Define una URL PostgreSQL segura en `DATABASE_URL`, configura `NODE_ENV=production`, `SESSION_SECRET`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE`, `FRONTEND_ORIGINS` HTTPS y `TRUST_PROXY` segun tu infraestructura. Despues ejecuta:
 
 ```powershell
 npm run prisma:generate:postgres
@@ -24,6 +33,8 @@ npm run prisma:migrate:deploy:postgres
 npm run build
 ```
 
-No ejecutes el seed demo en producción. Consulta [DATABASE.md](docs/DATABASE.md), [DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md), [BACKUPS.md](docs/BACKUPS.md) y [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) antes del despliegue.
+Para una base de prueba vacia puedes ejecutar `npm run prisma:seed:postgres`. Nunca ejecutes el seed demo sobre produccion.
 
-Nunca subas `.env`, la base `dev.db`, uploads, logs o backups al repositorio.
+Antes de publicar, revisa [DATABASE.md](docs/DATABASE.md), [DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md), [BACKUPS.md](docs/BACKUPS.md) y [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+
+No subas `.env`, bases SQLite, uploads, logs ni backups al repositorio.

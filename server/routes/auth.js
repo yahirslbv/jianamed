@@ -18,7 +18,7 @@ router.post('/login', async (req, res, next) => {
     if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
       await writeAuditLog({
         userId: user?.id || null,
-        action: 'LOGIN_FAILED',
+        action: 'LOGIN_FAILURE',
         entity: 'User',
         entityId: user?.id || 'unknown',
         details: { reason: user ? (user.isActive ? 'INVALID_CREDENTIALS' : 'INACTIVE_USER') : 'UNKNOWN_USER' },
