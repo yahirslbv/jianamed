@@ -6,16 +6,10 @@ import styles from '../styles/App.module.css';
 export default function LoginPage({ redirectTo = '', navigate }) {
   const { login } = useAuth();
   const { t } = useLanguage();
-  const [email, setEmail] = useState('cliente@demo.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const useDemoAccess = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -42,30 +36,6 @@ export default function LoginPage({ redirectTo = '', navigate }) {
             Ingresa con tu usuario autorizado para consultar catálogos, agregar productos al
             carrito y preparar solicitudes de pedido.
           </p>
-          <div className={styles.demoAccess}>
-            <strong>Cliente demo</strong>
-            <span>cliente@demo.com</span>
-            <span>demo123</span>
-            <button
-              className={styles.secondarySmall}
-              type="button"
-              onClick={() => useDemoAccess('cliente@demo.com', 'demo123')}
-            >
-              Usar cliente
-            </button>
-          </div>
-          <div className={styles.demoAccess}>
-            <strong>Admin demo</strong>
-            <span>admin@demo.com</span>
-            <span>admin123</span>
-            <button
-              className={styles.secondarySmall}
-              type="button"
-              onClick={() => useDemoAccess('admin@demo.com', 'admin123')}
-            >
-              Usar admin
-            </button>
-          </div>
         </div>
 
         <form className={styles.loginForm} onSubmit={handleSubmit}>

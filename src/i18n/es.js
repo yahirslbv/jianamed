@@ -9,7 +9,7 @@ export default {
   'nav.logout': 'Cerrar sesión',
   'nav.login': 'Iniciar sesión',
   'login.title': 'Iniciar sesión',
-  'login.email': 'Usuario o correo',
+  'login.email': 'Correo electrónico',
   'login.password': 'Contraseña',
   'login.submit': 'Entrar al catálogo',
   'catalog.title': 'Catálogo de distribución',

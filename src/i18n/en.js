@@ -9,7 +9,7 @@ export default {
   'nav.logout': 'Sign out',
   'nav.login': 'Sign in',
   'login.title': 'Sign in',
-  'login.email': 'Username or email',
+  'login.email': 'Email',
   'login.password': 'Password',
   'login.submit': 'Enter catalog',
   'catalog.title': 'Distribution catalog',

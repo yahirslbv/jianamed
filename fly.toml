@@ -18,7 +18,7 @@
 #   fly ssh console -C "node scripts/bootstrap-admin.js"
 
 app            = "tictocpharma"
-primary_region = "mia"   # Miami — menor latencia desde México
+primary_region = "dfw"   # Dallas — menor latencia desde México
 
 [build]
   # Dockerfile en la raíz del proyecto
@@ -33,6 +33,7 @@ primary_region = "mia"   # Miami — menor latencia desde México
   UPLOAD_DIR            = "/app/uploads/products"
   MAX_UPLOAD_MB         = "5"
   LOGIN_RATE_LIMIT_MAX  = "10"
+  STRIPE_TEST_MODE      = "true"   # Cambiar a false cuando se activen claves live
 
 # Migrations run in a one-off machine before the new version goes live.
 # DATABASE_URL is available here via the Fly.io secret.

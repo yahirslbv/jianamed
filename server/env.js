@@ -112,7 +112,7 @@ export function validateRuntimeEnvironment() {
   }
   if (config.isProduction) {
     if (!stripeKey) fail('STRIPE_SECRET_KEY es obligatorio en produccion.');
-    if (!stripeKey.startsWith('sk_live_')) fail('STRIPE_SECRET_KEY debe ser la clave LIVE en produccion (sk_live_...).');
+    if (!stripeKey.startsWith('sk_live_') && process.env.STRIPE_TEST_MODE !== 'true') fail('STRIPE_SECRET_KEY debe ser la clave LIVE en produccion (sk_live_...). Para pruebas establece STRIPE_TEST_MODE=true.');
     if (!webhookSecret) fail('STRIPE_WEBHOOK_SECRET es obligatorio en produccion.');
     if (!process.env.PUBLIC_APP_URL) fail('PUBLIC_APP_URL es obligatorio en produccion para generar URLs de pago correctas.');
   }
