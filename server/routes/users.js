@@ -6,6 +6,7 @@ import { INTERNAL_ROLES, normalizeInternalRole } from '../constants.js';
 import { canManageUsers } from '../permissions.js';
 import { serializeInternalUser } from '../serializers.js';
 import { writeAuditLog } from '../services/audit.js';
+import { sendWelcomeEmail } from '../services/email.js';
 
 const router = Router();
 const BCRYPT_ROUNDS = 12;
@@ -105,7 +106,7 @@ router.post('/admin/users', requireAuth, requireRole('admin'), requireUserManage
     const isActive = typeof req.body.isActive === 'boolean' ? req.body.isActive : true;
 
     const user = await prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({ data: { ...payload.data, isActive, passwordHash } });
+      const created = await tx.user.create({ data: { ...payload.data, isActive, passwordHash, forcePasswordChange: true } });
       await writeAuditLog({
         userId: req.user.id,
         action: 'CREATE_USER',
@@ -116,6 +117,7 @@ router.post('/admin/users', requireAuth, requireRole('admin'), requireUserManage
       return created;
     });
 
+    sendWelcomeEmail({ name: user.name, email: user.email, temporaryPassword: passwordResult.password }).catch(() => {});
     return res.status(201).json({ user: serializeInternalUser(user) });
   } catch (error) {
     return next(error);
@@ -224,7 +226,10 @@ router.patch('/admin/users/:id/password', requireAuth, requireRole('admin'), req
         error.status = 404;
         throw error;
       }
-      const updated = await tx.user.update({ where: { id: current.id }, data: { passwordHash } });
+      const updated = await tx.user.update({
+        where: { id: current.id },
+        data: { passwordHash, forcePasswordChange: true },
+      });
       await tx.session.updateMany({
         where: { userId: current.id, revokedAt: null },
         data: { revokedAt: new Date() },

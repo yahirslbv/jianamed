@@ -104,6 +104,27 @@ export const config = {
 /** Call only from the HTTP server or a deployment validation script. */
 export function validateRuntimeEnvironment() {
   const sessionSecret = String(process.env.SESSION_SECRET || '');
+  // Validate Stripe keys in any environment where they are set
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (stripeKey && !stripeKey.startsWith('sk_')) {
+    fail('STRIPE_SECRET_KEY no tiene el formato esperado (debe comenzar con sk_).');
+  }
+  if (config.isProduction) {
+    if (!stripeKey) fail('STRIPE_SECRET_KEY es obligatorio en produccion.');
+    if (!stripeKey.startsWith('sk_live_')) fail('STRIPE_SECRET_KEY debe ser la clave LIVE en produccion (sk_live_...).');
+    if (!webhookSecret) fail('STRIPE_WEBHOOK_SECRET es obligatorio en produccion.');
+    if (!process.env.PUBLIC_APP_URL) fail('PUBLIC_APP_URL es obligatorio en produccion para generar URLs de pago correctas.');
+  }
+  // Validate email configuration
+  const resendKey = process.env.RESEND_API_KEY;
+  if (config.isProduction && !resendKey) {
+    fail('RESEND_API_KEY es obligatorio en produccion para enviar emails transaccionales.');
+  }
+  if (resendKey && !resendKey.startsWith('re_')) {
+    fail('RESEND_API_KEY no tiene el formato esperado (debe comenzar con re_).');
+  }
+
   if (!config.isProduction) return;
 
   if (!sessionSecret) fail('SESSION_SECRET es obligatorio para iniciar la API en produccion.');

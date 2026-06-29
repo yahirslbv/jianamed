@@ -17,7 +17,10 @@ import productImportRoutes from './routes/productImport.js';
 import { checkProductUploadDirectory, isSafeProductImageFilename, productUploadDirectory } from './uploads.js';
 import { purgeExpiredSessions, requireAuth } from './auth.js';
 import { purgeExpiredPreviews } from './services/productImport.js';
+import { purgeExpiredPendingCheckouts } from './services/payments.js';
 import { config, staticFrontendDirectory, validateRuntimeEnvironment } from './env.js';
+import paymentRoutes from './routes/payments.js';
+import { requestLogger, logger } from './services/logger.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -33,6 +36,17 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   message: { message: 'Demasiados intentos. Intenta de nuevo mas tarde.' },
+});
+
+// Global API rate limit — generous ceiling to stop runaway clients,
+// not a throttle on normal use. Webhooks and static assets are exempt.
+const globalApiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  skip: (req) => req.path.startsWith('/api/payments/webhook'), // exempt Stripe webhooks
+  message: { message: 'Demasiadas solicitudes. Intenta de nuevo en un momento.' },
 });
 
 function requestOrigin(req) {
@@ -79,9 +93,15 @@ app.use(
     credentials: true,
   }),
 );
+// Stripe webhooks require the raw (unparsed) body for signature verification.
+// This middleware MUST come before express.json() so it captures the stream first.
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(enforceTrustedOrigin);
+app.use('/api', globalApiLimiter);
+app.use(requestLogger);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tic-toc-pharma-api' });
@@ -126,6 +146,7 @@ app.use('/api', auditRoutes);
 app.use('/api', customerRoutes);
 app.use('/api', userRoutes);
 app.use('/api', productImportRoutes);
+app.use('/api', paymentRoutes);
 
 if (config.serveStaticFrontend) {
   app.use(express.static(staticFrontendDirectory, { index: false, maxAge: '1h' }));
@@ -156,18 +177,27 @@ app.use((error, req, res, _next) => {
 
   const status = Number.isInteger(error.status) ? error.status : 500;
   // Never log request bodies, credentials, cookies, session tokens, or uploaded content.
-  console.error('API request failed', { requestId: req.requestId, name: error.name, code: error.code, status });
+  logger.error('API request failed', { requestId: req.requestId, name: error.name, code: error.code, status });
   return res.status(status).json({ message: status >= 500 ? 'Error interno del servidor.' : error.message });
 });
 
 const server = app.listen(port, () => {
-  console.log(`Tic Toc Pharma API disponible en http://127.0.0.1:${port}`);
+  logger.info(`Tic Toc Pharma API disponible en http://127.0.0.1:${port}`);
 });
 
 // Best-effort hygiene: persistent sessions survive restarts, but expired/revoked rows do not.
 function runPersistenceCleanup() {
-  Promise.all([purgeExpiredSessions(), purgeExpiredPreviews(prisma)])
-    .catch((error) => console.error('No se pudo completar la limpieza de persistencia.', { name: error.name, code: error.code }));
+  const purgeExpiredPasswordResetTokens = () =>
+    prisma.passwordResetToken.deleteMany({
+      where: { expiresAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } }, // 24 h grace
+    });
+
+  Promise.all([
+    purgeExpiredSessions(),
+    purgeExpiredPreviews(prisma),
+    purgeExpiredPendingCheckouts(prisma),
+    purgeExpiredPasswordResetTokens(),
+  ]).catch((error) => logger.error('No se pudo completar la limpieza de persistencia.', { name: error.name, code: error.code }));
 }
 
 runPersistenceCleanup();

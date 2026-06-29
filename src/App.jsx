@@ -23,6 +23,9 @@ import AdminAuditPage from './pages/AdminAuditPage.jsx';
 import AdminCustomersPage from './pages/AdminCustomersPage.jsx';
 import AdminProductImportPage from './pages/AdminProductImportPage.jsx';
 import AdminUsersPage from './pages/AdminUsersPage.jsx';
+import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import { useHashRoute } from './hooks/useHashRoute.js';
 import { useTheme } from './context/ThemeContext.jsx';
 import styles from './styles/App.module.css';
@@ -58,7 +61,12 @@ export default function App() {
     '/resumen': { element: <OrderSummaryPage />, roles: ['client'] },
     '/checkout': { element: <OrderSummaryPage />, roles: ['client'] },
     '/pedido-confirmado': {
-      element: <OrderConfirmationPage orderId={route.query.get('id') || ''} />,
+      element: (
+        <OrderConfirmationPage
+          orderId={route.query.get('id') || ''}
+          sessionId={route.query.get('session_id') || ''}
+        />
+      ),
       roles: ['client'],
     },
     '/mis-pedidos': { element: <MyOrdersPage />, roles: ['client'] },
@@ -71,6 +79,8 @@ export default function App() {
     '/admin/usuarios': { element: <AdminUsersPage />, roles: ['admin'] },
     '/admin/importar-productos': { element: <AdminProductImportPage />, roles: ['admin'] },
     '/cuenta': { element: <AccountPage />, roles: ['client', 'admin', 'sales', 'supervisor'] },
+    // Accessible to all authenticated roles, including when forcePasswordChange is true.
+    '/cambiar-contrasena': { element: <ChangePasswordPage />, roles: ['client', 'admin', 'sales', 'supervisor'] },
   };
 
   let content;
@@ -85,6 +95,10 @@ export default function App() {
     content = <ContactSection />;
   } else if (route.path === '/login') {
     content = <LoginPage redirectTo={redirectTo} navigate={navigate} />;
+  } else if (route.path === '/olvide-mi-contrasena') {
+    content = <ForgotPasswordPage />;
+  } else if (route.path === '/restablecer-contrasena') {
+    content = <ResetPasswordPage token={route.query.get('token') || ''} />;
   } else if (privatePages[route.path]) {
     const privatePage = privatePages[route.path];
     content = (

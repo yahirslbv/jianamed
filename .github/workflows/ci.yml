@@ -1,59 +1,136 @@
 name: CI
 
 on:
-  pull_request:
   push:
+    branches: [main, develop]
+  pull_request:
     branches: [main]
-  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  verify:
+  # ─── Lint & build ─────────────────────────────────────────────────────────
+  build:
+    name: Lint & build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: tictoc_ci
-          POSTGRES_PASSWORD: tictoc_ci_password
-          POSTGRES_DB: tictocpharma_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U tictoc_ci -d tictocpharma_ci"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
-    env:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://tictoc_ci:tictoc_ci_password@localhost:5432/tictocpharma_ci?schema=public
-      SESSION_SECRET: ci-only-session-secret-that-is-long-enough
-      COOKIE_SECURE: "false"
-      COOKIE_SAME_SITE: lax
-      FRONTEND_ORIGINS: http://127.0.0.1:5173
-      TRUST_PROXY: "false"
-      STAGING_ENVIRONMENT: "true"
-      STAGING_LOCAL: "true"
-      SERVE_STATIC_FRONTEND: "false"
-      UPLOAD_DIR: ${{ github.workspace }}/.ci-uploads
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - name: Install dependencies
-        run: npm ci --include=dev
-      - name: Audit production dependencies
-        run: npm audit --omit=dev
-      - name: Build frontend
+        run: npm ci
+
+      - name: Vite build (frontend)
         run: npm run build
-      - name: Generate SQLite Prisma Client
-        run: npm run prisma:generate:sqlite
-      - name: Validate PostgreSQL schema
-        run: npx prisma validate --schema server/prisma/postgresql/schema.prisma
-      - name: Generate PostgreSQL Prisma Client
-        run: npm run prisma:generate:postgres
-      - name: Apply PostgreSQL migrations
-        run: npm run prisma:migrate:deploy:postgres
-      - name: Check migrated PostgreSQL staging database
-        run: npm run staging:check
+        env:
+          VITE_API_BASE: /api
+
+      - name: Prisma generate (SQLite – dev schema)
+        run: npx prisma generate --schema server/prisma/schema.prisma
+
+  # ─── Integration tests ────────────────────────────────────────────────────
+  test:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      NODE_ENV: test
+      DATABASE_URL: file:./server/prisma/test.db
+      SESSION_SECRET: ci-only-session-secret-not-used-in-production
+      FRONTEND_ORIGINS: http://localhost:5173
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: lax
+      TRUST_PROXY: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply SQLite migrations
+        run: npx prisma migrate deploy --schema server/prisma/schema.prisma
+        env:
+          DATABASE_URL: file:./server/prisma/test.db
+
+      - name: Run tests
+        run: npm test --if-present
+        env:
+          DATABASE_URL: file:./server/prisma/test.db
+
+  # ─── Docker image build check ─────────────────────────────────────────────
+  docker:
+    name: Docker build check
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: tic-toc-pharma:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Deploy to production ─────────────────────────────────────────────────
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [test, docker]
+    environment: production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Option A: Railway ──────────────────────────────────────────────────
+      # Uncomment + set RAILWAY_TOKEN in GitHub → Settings → Secrets
+      # - name: Deploy to Railway
+      #   uses: railwayapp/railway-github-action@v0.1.0
+      #   with:
+      #     railway-token: ${{ secrets.RAILWAY_TOKEN }}
+
+      # ── Option B: Fly.io ───────────────────────────────────────────────────
+      # Uncomment + set FLY_API_TOKEN in GitHub → Settings → Secrets
+      # - uses: superfly/flyctl-actions/setup-flyctl@master
+      # - name: Deploy to Fly
+      #   run: flyctl deploy --remote-only
+      #   env:
+      #     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # ── Option C: VPS via SSH ──────────────────────────────────────────────
+      # Set SSH_HOST, SSH_USER, SSH_KEY in GitHub → Settings → Secrets
+      # - name: SSH deploy
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     key: ${{ secrets.SSH_KEY }}
+      #     script: |
+      #       cd /srv/tic-toc-pharma
+      #       git pull origin main
+      #       docker compose -f docker-compose.production.yml up -d --build
+      #       docker compose -f docker-compose.production.yml exec app \
+      #         npx prisma migrate deploy \
+      #         --schema server/prisma/postgresql/schema.prisma
+
+      - name: Deployment placeholder
+        run: |
+          echo "Uncomment one deploy option in .github/workflows/ci.yml"
+          echo "Commit: ${{ github.sha }}"

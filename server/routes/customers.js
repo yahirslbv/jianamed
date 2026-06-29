@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { serializeCustomer } from '../serializers.js';
 import { parseMoneyInput } from '../utils/money.js';
 import { writeAuditLog } from '../services/audit.js';
+import { sendWelcomeEmail } from '../services/email.js';
 
 const router = Router();
 const customerInclude = { user: { select: { id: true, name: true, email: true, isActive: true } } };
@@ -64,10 +65,14 @@ router.post('/admin/customers', requireAuth, requireRole('admin'), async (req, r
     if (password.length < 8) return res.status(400).json({ message: 'La contraseña inicial debe tener al menos 8 caracteres.' });
     const passwordHash = await bcrypt.hash(password, 12);
     const customer = await prisma.customer.create({
-      data: { ...payload.data.customer, user: { create: { ...payload.data.user, passwordHash, role: 'CLIENT' } } },
+      data: {
+        ...payload.data.customer,
+        user: { create: { ...payload.data.user, passwordHash, role: 'CLIENT', forcePasswordChange: true } },
+      },
       include: customerInclude,
     });
     await audit(req.user.id, 'CREATE', customer, { email: customer.user.email, isAuthorized: customer.isAuthorized });
+    sendWelcomeEmail({ name: customer.user.name, email: customer.user.email, temporaryPassword: password }).catch(() => {});
     return res.status(201).json({ customer: serializeCustomer(customer) });
   } catch (error) { return next(error); }
 });
@@ -79,7 +84,10 @@ router.put('/admin/customers/:id', requireAuth, requireRole('admin'), async (req
     const password = String(req.body.password || '');
     if (password && password.length < 8) return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres.' });
     const userData = { ...payload.data.user };
-    if (password) userData.passwordHash = await bcrypt.hash(password, 12);
+    if (password) {
+      userData.passwordHash = await bcrypt.hash(password, 12);
+      userData.forcePasswordChange = true; // admin reset → user must change on next login
+    }
     const customer = await prisma.customer.update({
       where: { id: req.params.id }, data: { ...payload.data.customer, user: { update: userData } }, include: customerInclude,
     });

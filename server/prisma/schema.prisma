@@ -8,22 +8,38 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String
-  email         String        @unique
-  passwordHash  String
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  passwordHash        String
   // SQLite keeps enum values as text. The PostgreSQL production schema uses UserRole.
-  role          String        @default("CLIENT")
-  isActive      Boolean       @default(true)
-  customer      Customer?
-  orders        Order[]
-  auditLogs     AuditLog[]
-  sessions      Session[]
-  importBatches ImportBatch[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  role                String               @default("CLIENT")
+  isActive            Boolean              @default(true)
+  forcePasswordChange Boolean              @default(false)
+  customer            Customer?
+  orders              Order[]
+  auditLogs           AuditLog[]
+  sessions            Session[]
+  importBatches       ImportBatch[]
+  passwordResetTokens PasswordResetToken[]
+  pendingCheckouts    PendingCheckout[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([role, isActive])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Customer {
@@ -180,6 +196,11 @@ model Order {
   responsibleName     String?
   responsiblePhone    String?
   observations        String?
+  // Payment tracking — populated once Stripe confirms the charge
+  paymentStatus       String      @default("PENDING_PAYMENT")
+  stripeSessionId     String?     @unique
+  paidAt              DateTime?
+  paymentMethod       String?
   user                User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   customer            Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items               OrderItem[]
@@ -267,4 +288,21 @@ model OrderFolioSequence {
   year      Int      @id
   nextValue Int      @default(0)
   updatedAt DateTime @updatedAt
+}
+
+// Temporary store: cart + checkout data while the client completes Stripe Checkout.
+// Created when the Stripe session is opened; deleted when the webhook confirms payment.
+model PendingCheckout {
+  id              String   @id @default(cuid())
+  userId          String
+  stripeSessionId String   @unique
+  cartJson        String   // JSON: [{productId, quantity}]
+  checkoutJson    String   // JSON: delivery + billing fields
+  observations    String?
+  expiresAt       DateTime // matches Stripe session expiry (~30 min)
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeSessionId])
+  @@index([expiresAt])
 }

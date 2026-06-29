@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { createOrder } from '../services/orderService.js';
+import { createCheckoutSession } from '../services/paymentService.js';
 import { formatCurrencyMXN, multiplyMoney } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
@@ -41,11 +41,13 @@ export default function OrderSummaryPage() {
     setError('');
 
     try {
-      const order = await createOrder({ user, items, observations, checkout });
+      // Creates a Stripe Checkout Session and redirects to Stripe's hosted payment page.
+      // The order is created in the DB only after payment is confirmed via webhook.
+      const { url } = await createCheckoutSession({ items, checkout, observations });
       clearCart();
-      window.location.hash = `/pedido-confirmado?id=${order.id}`;
+      window.location.href = url;
     } catch (requestError) {
-      setError(requestError.message || 'No fue posible crear la solicitud.');
+      setError(requestError.message || 'No fue posible iniciar el proceso de pago.');
     } finally {
       setIsSubmitting(false);
     }
@@ -184,7 +186,7 @@ export default function OrderSummaryPage() {
               disabled={isSubmitting}
               onClick={handleConfirmOrder}
             >
-              {isSubmitting ? 'Enviando solicitud...' : 'Confirmar solicitud de pedido'}
+              {isSubmitting ? 'Redirigiendo a pago...' : 'Pagar pedido'}
             </button>
             {error && (
               <p className={styles.formError} role="alert">
@@ -192,7 +194,7 @@ export default function OrderSummaryPage() {
               </p>
             )}
             <p className={styles.catalogNotice}>
-              La solicitud sera revisada por un agente antes de confirmar disponibilidad, condiciones comerciales y surtido.
+              Serás redirigido a la página segura de pago de Stripe. Tu pedido se confirmará automáticamente al completar el pago.
             </p>
           </aside>
         </div>

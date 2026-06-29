@@ -100,6 +100,9 @@ export default function LoginPage({ redirectTo = '', navigate }) {
           <p className={styles.loginHelp}>
             ¿No estás registrado? Comunícate con un agente de ventas para validar tu acceso.
           </p>
+          <p className={styles.loginHelp}>
+            <a href="#/olvide-mi-contrasena">¿Olvidaste tu contraseña?</a>
+          </p>
         </form>
       </div>
     </section>

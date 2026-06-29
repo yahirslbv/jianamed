@@ -69,6 +69,20 @@ export function AuthProvider({ children }) {
       user,
       isAuthenticated: Boolean(user),
       isLoading,
+      // Allows a page to push a fresh user object into context (e.g. after password change).
+      // Accepts either a pre-fetched user object or calls the API if none is passed.
+      refreshUser: async (freshUser) => {
+        if (freshUser) {
+          setUser(freshUser);
+        } else {
+          try {
+            const response = await getCurrentUser();
+            setUser(response.user);
+          } catch {
+            // Keep existing user if refresh fails
+          }
+        }
+      },
       login: async ({ email, password }) => {
         try {
           const response = await loginWithApi({ email, password });

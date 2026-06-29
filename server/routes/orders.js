@@ -6,6 +6,8 @@ import { serializeOrder } from '../serializers.js';
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 import { calculateOrderTotals, calculateLineSubtotal } from '../utils/money.js';
 import { writeAuditLog } from '../services/audit.js';
+import { sendOrderConfirmation, sendOrderStatusUpdate } from '../services/email.js';
+import { normalizeItems, getCheckoutSnapshot, nextOrderFolio } from '../utils/orderHelpers.js';
 
 const router = Router();
 
@@ -15,82 +17,6 @@ const orderInclude = {
   items: { orderBy: { id: 'asc' } },
 };
 const CLIENT_CANCELLABLE_STATUS = 'PENDING_REVIEW';
-
-function normalizeItems(items) {
-  if (!Array.isArray(items) || items.length === 0) {
-    return { error: 'El pedido debe incluir al menos un producto.' };
-  }
-
-  const quantities = new Map();
-  for (const item of items) {
-    const productId = item.productId;
-    const quantity = Number.parseInt(item.quantity, 10);
-
-    if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-      return { error: 'Cada producto debe tener una cantidad válida.' };
-    }
-
-    quantities.set(productId, (quantities.get(productId) || 0) + quantity);
-  }
-
-  return {
-    items: Array.from(quantities, ([productId, quantity]) => ({ productId, quantity })),
-  };
-}
-
-function buildOrderFolio(year, sequence) {
-  return `PED-${year}-${String(sequence).padStart(4, '0')}`;
-}
-
-async function nextOrderFolio(tx, year) {
-  let sequence = await tx.orderFolioSequence.upsert({
-    where: { year },
-    create: { year, nextValue: 1 },
-    update: { nextValue: { increment: 1 } },
-  });
-
-  // Existing databases can contain orders created before OrderFolioSequence existed.
-  // Advance safely until the persistent counter is beyond that legacy range.
-  for (let attempts = 0; attempts < 100; attempts += 1) {
-    const folio = buildOrderFolio(year, sequence.nextValue);
-    const existing = await tx.order.findUnique({ where: { folio }, select: { id: true } });
-    if (!existing) return folio;
-    sequence = await tx.orderFolioSequence.update({ where: { year }, data: { nextValue: { increment: 1 } } });
-  }
-  throw new Error('No fue posible asignar un folio único al pedido.');
-}
-
-function cleanText(value, fallback = '') {
-  return value?.toString().trim() || fallback;
-}
-
-function getCheckoutSnapshot(checkout = {}, user) {
-  const customer = user.customer;
-  const snapshot = {
-    clientName: cleanText(checkout.clientName, customer.businessName || user.name),
-    clientEmail: cleanText(checkout.clientEmail, user.email),
-    deliveryAddress: cleanText(checkout.deliveryAddress, customer.address),
-    deliveryCity: cleanText(checkout.deliveryCity, customer.city),
-    deliveryState: cleanText(checkout.deliveryState, customer.state),
-    deliveryPostalCode: cleanText(checkout.deliveryPostalCode, customer.postalCode),
-    billingBusinessName: cleanText(checkout.billingBusinessName, customer.businessName),
-    billingRfc: cleanText(checkout.billingRfc, customer.rfc || ''),
-    billingAddress: cleanText(checkout.billingAddress, customer.address),
-    responsibleName: cleanText(checkout.responsibleName, customer.contactName),
-    responsiblePhone: cleanText(checkout.responsiblePhone, customer.phone),
-  };
-  const requiredFields = [
-    'deliveryAddress',
-    'deliveryCity',
-    'deliveryState',
-    'deliveryPostalCode',
-    'responsibleName',
-    'responsiblePhone',
-  ];
-  const missingField = requiredFields.find((field) => !snapshot[field]);
-
-  return missingField ? { error: `El campo ${missingField} es obligatorio.` } : { data: snapshot };
-}
 
 async function createOrder(req, res, next) {
   try {
@@ -189,7 +115,9 @@ async function createOrder(req, res, next) {
 
     await writeAuditLog({ userId: req.user.id, action: 'CREATE', entity: 'Order', entityId: order.id, details: { folio: order.folio } });
 
-    return res.status(201).json({ order: serializeOrder(order) });
+    const serialized = serializeOrder(order);
+    sendOrderConfirmation(serialized).catch(() => {}); // fire-and-forget
+    return res.status(201).json({ order: serialized });
   } catch (error) {
     if (error.message?.startsWith('Stock insuficiente') || error.message?.includes('no está disponible')) {
       return res.status(400).json({ message: error.message });
@@ -301,6 +229,13 @@ router.patch('/admin/orders/:id/status', requireAuth, requireRole('admin'), asyn
       return res.status(400).json({ message: 'El estado no es válido.' });
     }
 
+    // Capture previous status before updating so the email can show the transition
+    const previous = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      select: { status: true },
+    });
+    if (!previous) return res.status(404).json({ message: 'Pedido no encontrado.' });
+
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status },
@@ -308,7 +243,9 @@ router.patch('/admin/orders/:id/status', requireAuth, requireRole('admin'), asyn
     });
     await writeAuditLog({ userId: req.user.id, action: 'STATUS_CHANGE', entity: 'Order', entityId: order.id, details: { status } });
 
-    return res.json({ order: serializeOrder(order) });
+    const serialized = serializeOrder(order);
+    sendOrderStatusUpdate(serialized, previous.status).catch(() => {}); // fire-and-forget
+    return res.json({ order: serialized });
   } catch (error) {
     return next(error);
   }

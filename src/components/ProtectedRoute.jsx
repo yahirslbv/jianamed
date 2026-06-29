@@ -8,8 +8,14 @@ export default function ProtectedRoute({ children, path, navigate, allowedRoles 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate(`/login?redirect=${encodeURIComponent(path)}`);
+      return;
     }
-  }, [isAuthenticated, isLoading, navigate, path]);
+    // If the admin set a temporary password, force a change before anything else.
+    // The /cambiar-contrasena page itself is exempt to avoid an infinite redirect.
+    if (!isLoading && isAuthenticated && user?.forcePasswordChange && path !== '/cambiar-contrasena') {
+      navigate('/cambiar-contrasena');
+    }
+  }, [isAuthenticated, isLoading, navigate, path, user?.forcePasswordChange]);
 
   if (isLoading) {
     return (
@@ -29,6 +35,18 @@ export default function ProtectedRoute({ children, path, navigate, allowedRoles 
           <p className={styles.eyebrow}>Acceso requerido</p>
           <h1>Inicia sesión para consultar esta sección</h1>
           <p>El catálogo y el carrito están disponibles únicamente para usuarios autorizados.</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Show a neutral gate while the redirect to /cambiar-contrasena takes effect
+  if (user?.forcePasswordChange && path !== '/cambiar-contrasena') {
+    return (
+      <section className={styles.section}>
+        <div className={styles.authGate}>
+          <p className={styles.eyebrow}>Acción requerida</p>
+          <h1>Debes establecer tu contraseña antes de continuar</h1>
         </div>
       </section>
     );

@@ -1,37 +1,45 @@
 import { useEffect, useState } from 'react';
 import { getLastOrderId, getOrderById } from '../services/orderService.js';
+import { pollOrderBySessionId } from '../services/paymentService.js';
 import styles from '../styles/App.module.css';
 
-export default function OrderConfirmationPage({ orderId }) {
+export default function OrderConfirmationPage({ orderId, sessionId }) {
   const resolvedOrderId = orderId || getLastOrderId();
   const [order, setOrder] = useState(null);
-  const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId));
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId || sessionId));
 
   useEffect(() => {
     let isMounted = true;
 
-    if (!resolvedOrderId) {
-      setIsLoading(false);
-      return () => {
-        isMounted = false;
-      };
+    async function load() {
+      try {
+        let loadedOrder = null;
+
+        if (sessionId) {
+          // Stripe just redirected back — poll until the webhook has created the order
+          loadedOrder = await pollOrderBySessionId(sessionId, { maxAttempts: 6, delayMs: 1500 });
+        } else if (resolvedOrderId) {
+          loadedOrder = await getOrderById(resolvedOrderId);
+        }
+
+        if (isMounted) setOrder(loadedOrder);
+      } catch {
+        if (isMounted) setOrder(null);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     }
 
-    getOrderById(resolvedOrderId)
-      .then((loadedOrder) => {
-        if (isMounted) setOrder(loadedOrder);
-      })
-      .catch(() => {
-        if (isMounted) setOrder(null);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
+    if (sessionId || resolvedOrderId) {
+      load();
+    } else {
+      setIsLoading(false);
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [resolvedOrderId]);
+  }, [resolvedOrderId, sessionId]);
 
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
@@ -49,11 +57,25 @@ export default function OrderConfirmationPage({ orderId }) {
               </div>
               <div>
                 <dt>Estado</dt>
-                <dd>{order.status}</dd>
+                <dd>{order.statusLabel || order.status}</dd>
               </div>
+              {order.paymentStatus === 'PAID' && (
+                <div>
+                  <dt>Pago</dt>
+                  <dd>✓ Pago recibido</dd>
+                </div>
+              )}
+              {order.total !== undefined && (
+                <div>
+                  <dt>Total pagado</dt>
+                  <dd>
+                    {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(order.total)}
+                  </dd>
+                </div>
+              )}
             </dl>
             <p>
-              Un agente de ventas revisará la solicitud antes de continuar con el proceso de compra.
+              Tu pago fue procesado correctamente. Un agente de ventas validará el surtido y te notificará cuando tu pedido esté en camino.
             </p>
           </>
         ) : (

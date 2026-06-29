@@ -1,30 +1,64 @@
-# Build the Vite client once; it is only served by Express when
-# SERVE_STATIC_FRONTEND=true at runtime.
-FROM node:22-alpine AS dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1 — builder
+# Installs ALL deps (including dev), compiles native modules (bcrypt),
+# generates Prisma client for PostgreSQL, builds Vite SPA, then prunes dev deps.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
 WORKDIR /app
+
+# Build tools required by bcrypt native addon (node-gyp)
+RUN apk add --no-cache python3 make g++
+
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM dependencies AS frontend-build
-COPY . ./
-RUN npm run build
+COPY . .
 
-FROM dependencies AS runtime-dependencies
-COPY server/prisma/postgresql ./server/prisma/postgresql
+# Generate Prisma client targeting PostgreSQL
 RUN npx prisma generate --schema server/prisma/postgresql/schema.prisma
 
-FROM node:22-alpine AS runtime
+# Build Vite SPA (output → /app/dist)
+RUN npm run build
+
+# Drop dev dependencies — keeps the runner image lean (~40 % smaller)
+RUN npm prune --omit=dev
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2 — runner
+# Minimal production image: only runtime deps + compiled artifacts.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
-COPY --from=runtime-dependencies /app/node_modules ./node_modules
-COPY server ./server
-COPY scripts ./scripts
-COPY --from=frontend-build /app/dist ./dist
+# dumb-init: lightweight PID 1 that correctly forwards SIGTERM/SIGINT to Node
+RUN apk add --no-cache dumb-init
 
-# A provider must mount /app/uploads/products as a persistent volume.
-RUN mkdir -p /app/uploads/products && chown -R node:node /app
-USER node
+# Non-root user — reduces blast radius if a dependency is compromised
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser  --system --uid 1001 appuser
+
+# ── Application files ─────────────────────────────────────────────────────────
+COPY --from=builder --chown=appuser:nodejs /app/node_modules   ./node_modules
+COPY --from=builder --chown=appuser:nodejs /app/server         ./server
+COPY --from=builder --chown=appuser:nodejs /app/dist           ./dist
+COPY --from=builder --chown=appuser:nodejs /app/scripts        ./scripts
+COPY --from=builder --chown=appuser:nodejs /app/package.json   ./package.json
+COPY --chown=appuser:nodejs docker-entrypoint.sh               ./docker-entrypoint.sh
+
+# Persistent upload directory — Fly.io volume is mounted here at runtime.
+# The directory must exist so the server can start even before the first upload.
+RUN mkdir -p /app/uploads/products && \
+    chown -R appuser:nodejs /app/uploads && \
+    chmod +x /app/docker-entrypoint.sh
+
+USER appuser
 EXPOSE 4000
+
+# ── Defaults (overridden by Fly.io secrets / env vars) ───────────────────────
+ENV NODE_ENV=production
+ENV SERVE_STATIC_FRONTEND=true
+ENV UPLOAD_DIR=/app/uploads/products
+
+# dumb-init wraps the entrypoint so SIGTERM reaches Node, not sh
+ENTRYPOINT ["dumb-init", "./docker-entrypoint.sh"]
 CMD ["node", "server/index.js"]

@@ -7,6 +7,7 @@ export function serializeUser(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    forcePasswordChange: Boolean(user.forcePasswordChange),
     company: user.customer?.businessName || user.name,
     customer: user.customer
       ? {
@@ -195,6 +196,9 @@ export function serializeOrder(order) {
       responsibleName: order.responsibleName || '',
       responsiblePhone: order.responsiblePhone || '',
     },
+    paymentStatus: order.paymentStatus || 'PENDING_PAYMENT',
+    paidAt: order.paidAt || null,
+    paymentMethod: order.paymentMethod || null,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     items: order.items.map((item) => ({

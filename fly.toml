@@ -1,0 +1,66 @@
+# Fly.io deployment — Tic Toc Pharma
+# Docs: https://fly.io/docs/reference/configuration/
+#
+# Before first deploy:
+#   fly auth login
+#   fly apps create tictocpharma          # or choose a different name
+#   fly postgres create                   # create managed Postgres cluster
+#   fly postgres attach <pg-app-name>     # auto-injects DATABASE_URL secret
+#   fly vol create tictocpharma_uploads --size 1 --region mia
+#   fly secrets set SESSION_SECRET="$(openssl rand -hex 32)" \
+#       FRONTEND_ORIGINS="https://tictocpharma.fly.dev" \
+#       PUBLIC_APP_URL="https://tictocpharma.fly.dev" \
+#       RESEND_API_KEY="re_..." \
+#       EMAIL_FROM="Tic Toc Pharma <pedidos@tudominio.com>" \
+#       STRIPE_SECRET_KEY="sk_live_..." \
+#       STRIPE_WEBHOOK_SECRET="whsec_..."
+#   fly deploy
+#   fly ssh console -C "node scripts/bootstrap-admin.js"
+
+app            = "tictocpharma"
+primary_region = "mia"   # Miami — menor latencia desde México
+
+[build]
+  # Dockerfile en la raíz del proyecto
+
+[env]
+  NODE_ENV              = "production"
+  PORT                  = "4000"
+  SERVE_STATIC_FRONTEND = "true"
+  TRUST_PROXY           = "true"
+  COOKIE_SECURE         = "true"
+  COOKIE_SAME_SITE      = "lax"
+  UPLOAD_DIR            = "/app/uploads/products"
+  MAX_UPLOAD_MB         = "5"
+  LOGIN_RATE_LIMIT_MAX  = "10"
+
+# Migrations run in a one-off machine before the new version goes live.
+# DATABASE_URL is available here via the Fly.io secret.
+[deploy]
+  release_command = "node node_modules/.bin/prisma migrate deploy --schema /app/server/prisma/postgresql/schema.prisma"
+  strategy        = "rolling"
+
+# Persistent volume for product images.
+# Created once with: fly vol create tictocpharma_uploads --size 1 --region mia
+[[mounts]]
+  source      = "tictocpharma_uploads"
+  destination = "/app/uploads/products"
+
+[http_service]
+  internal_port       = 4000
+  force_https         = true
+  auto_stop_machines  = false   # B2B: mantener activo, sin cold starts
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "25s"
+    interval     = "30s"
+    method       = "GET"
+    path         = "/api/ready"
+    timeout      = "5s"
+
+[[vm]]
+  memory   = "512mb"   # bcrypt + Prisma + pino necesitan margen
+  cpu_kind = "shared"
+  cpus     = 1

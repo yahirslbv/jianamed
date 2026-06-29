@@ -3185,6 +3185,7 @@ button:disabled {
 }
 
 .wizardGrid {
+  align-items: start;
   display: grid;
   gap: 13px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
