@@ -19,6 +19,9 @@ jobs:
   validate:
     name: Validate
     runs-on: ubuntu-latest
+    env:
+      # prisma validate needs DATABASE_URL even for static schema checks
+      DATABASE_URL: "file:./ci-placeholder.db"
     steps:
       - uses: actions/checkout@v4
 
@@ -32,12 +35,14 @@ jobs:
 
       - name: Check JS syntax (server)
         run: |
-          find server -name "*.js" -not -path "*/node_modules/*" |             xargs -I{} node --check {}
+          find server -name "*.js" -not -path "*/node_modules/*" | xargs -I{} node --check {}
 
       - name: Validate SQLite schema
         run: npx prisma validate --schema server/prisma/schema.prisma
 
       - name: Validate PostgreSQL schema
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
         run: npx prisma validate --schema server/prisma/postgresql/schema.prisma
 
   deploy:

@@ -2,6 +2,15 @@ node_modules/
 dist/
 .vite/
 *.log
+# Archivos temporales de deploy/scripts
+_push-*.bat
+_fix-*.bat
+_commit-*.bat
+_push-*.txt
+_fix-*.txt
+_commit-*.txt
+_npm-log.txt
+_git-log.txt
 server/.env
 /.env
 /.env.production
