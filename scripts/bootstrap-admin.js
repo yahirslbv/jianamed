@@ -10,7 +10,7 @@ function ask(question) {
 
 function askPassword() {
   if (!stdin.isTTY || !stdout.isTTY) {
-    throw new Error('bootstrap:admin requiere una terminal interactiva; no pases contrasenas por argumentos o variables.');
+    throw new Error('bootstrap:admin requiere una terminal interactiva; no pases contraseñas por argumentos o variables.');
   }
   return new Promise((resolve, reject) => {
     let value = '';
@@ -34,7 +34,7 @@ function askPassword() {
       stdin.setRawMode(false);
       stdin.pause();
     };
-    stdout.write('Contrasena (no se mostrara): ');
+    stdout.write('Contraseña (no se mostrará): ');
     stdin.setRawMode(true);
     stdin.resume();
     stdin.on('data', onData);
@@ -43,16 +43,16 @@ function askPassword() {
 
 function validateInput({ name, email, password }) {
   if (name.length < 2 || name.length > 120) throw new Error('El nombre debe tener entre 2 y 120 caracteres.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('El correo no es valido.');
-  if (password.length < 12) throw new Error('La contrasena debe tener al menos 12 caracteres.');
-  if (Buffer.byteLength(password, 'utf8') > 72) throw new Error('La contrasena supera el limite de 72 bytes UTF-8 de bcrypt.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('El correo no es válido.');
+  if (password.length < 12) throw new Error('La contraseña debe tener al menos 12 caracteres.');
+  if (Buffer.byteLength(password, 'utf8') > 72) throw new Error('La contraseña supera el límite de 72 bytes UTF-8 de bcrypt.');
 }
 
 async function main() {
   await loadPreproductionEnvironment();
   if (!isPostgresUrl()) throw new Error('DATABASE_URL debe apuntar a PostgreSQL; bootstrap:admin no usa SQLite.');
   if ((process.env.NODE_ENV === 'production' || process.env.BOOTSTRAP_PRODUCTION === 'true') && !isPostgresUrl()) {
-    throw new Error('SQLite esta bloqueado para el bootstrap de produccion.');
+    throw new Error('SQLite está bloqueado para el bootstrap de producción.');
   }
 
   const name = (await ask('Nombre del administrador: ')).trim();
@@ -73,7 +73,7 @@ async function main() {
       ? 'Ya existe un ADMIN activo. Escribe CREAR ADMIN ADICIONAL para continuar: '
       : 'Escribe CREAR ADMIN para crear el primer administrador: ');
     const expectedConfirmation = activeAdmins ? 'CREAR ADMIN ADICIONAL' : 'CREAR ADMIN';
-    if (confirmation.trim() !== expectedConfirmation) throw new Error('Confirmacion no valida; no se hicieron cambios.');
+    if (confirmation.trim() !== expectedConfirmation) throw new Error('Confirmación no válida; no se hicieron cambios.');
 
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.$transaction(async (tx) => {

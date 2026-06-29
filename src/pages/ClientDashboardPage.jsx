@@ -75,7 +75,7 @@ export default function ClientDashboardPage() {
 
       <div className={styles.dashboardQuickGrid}>
         <a className={styles.dashboardAction} href="#/catalogo">
-          <strong>Catalogo</strong>
+          <strong>Catálogo</strong>
           <span>Productos y disponibilidad</span>
         </a>
         <a className={styles.dashboardAction} href="#/ofertas">
@@ -96,13 +96,13 @@ export default function ClientDashboardPage() {
         <section className={styles.dashboardPanel}>
           <div className={styles.dashboardPanelHeader}>
             <div>
-              <p className={styles.eyebrow}>Categorias</p>
-              <h2>Explora por linea</h2>
+              <p className={styles.eyebrow}>Categorías</p>
+              <h2>Explora por línea</h2>
             </div>
-            <a href="#/catalogo">Ver catalogo</a>
+            <a href="#/catalogo">Ver catálogo</a>
           </div>
           {isLoading ? (
-            <p className={styles.dashboardMuted}>Cargando categorias...</p>
+            <p className={styles.dashboardMuted}>Cargando categorías...</p>
           ) : (
             <div className={styles.dashboardCategoryList}>
               {categories.map((category) => (
@@ -140,7 +140,7 @@ export default function ClientDashboardPage() {
               ))}
             </div>
           ) : (
-            <p className={styles.dashboardMuted}>Aun no tienes solicitudes registradas.</p>
+            <p className={styles.dashboardMuted}>Aún no tienes solicitudes registradas.</p>
           )}
         </section>
       </div>
@@ -168,7 +168,7 @@ export default function ClientDashboardPage() {
       <section className={styles.dashboardSection}>
         <div className={styles.dashboardPanelHeader}>
           <div>
-            <p className={styles.eyebrow}>Catalogo destacado</p>
+            <p className={styles.eyebrow}>Catálogo destacado</p>
             <h2>Productos con disponibilidad</h2>
           </div>
           <a href="#/catalogo">Explorar</a>
@@ -187,7 +187,7 @@ export default function ClientDashboardPage() {
       </section>
 
       <p className={styles.dashboardNotice}>
-        Las solicitudes B2B estan sujetas a revision de disponibilidad, requisitos regulatorios y condiciones comerciales por un agente de ventas.
+        Las solicitudes B2B están sujetas a revisión de disponibilidad, requisitos regulatorios y condiciones comerciales por un agente de ventas.
       </p>
     </section>
   );

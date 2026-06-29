@@ -11,14 +11,14 @@ const reportDefinitions = {
     columns: [
       ['folio', 'Folio'], ['createdAt', 'Fecha'], ['clientName', 'Cliente'], ['clientEmail', 'Correo'],
       ['status', 'Estado'], ['subtotal', 'Subtotal'], ['discountTotal', 'Descuento total'], ['total', 'Total'],
-      ['observations', 'Observaciones'], ['deliveryAddress', 'Direccion de entrega'], ['responsibleName', 'Responsable'], ['updatedAt', 'Actualizado'],
+      ['observations', 'Observaciones'], ['deliveryAddress', 'Dirección de entrega'], ['responsibleName', 'Responsable'], ['updatedAt', 'Actualizado'],
     ],
   },
   products: {
     title: 'Reporte de productos',
     columns: [
-      ['sku', 'SKU'], ['commercialName', 'Nombre comercial'], ['genericName', 'Denominacion generica'], ['activeIngredient', 'Principio activo'],
-      ['laboratory', 'Laboratorio'], ['category', 'Categoria'], ['productType', 'Tipo'], ['healthFraction', 'Fraccion sanitaria'],
+      ['sku', 'SKU'], ['commercialName', 'Nombre comercial'], ['genericName', 'Denominación genérica'], ['activeIngredient', 'Principio activo'],
+      ['laboratory', 'Laboratorio'], ['category', 'Categoría'], ['productType', 'Tipo'], ['healthFraction', 'Fracción sanitaria'],
       ['requiresPrescription', 'Requiere receta'], ['requiresRetainedPrescription', 'Receta retenida'], ['isControlled', 'Controlado'], ['sanitaryRegistration', 'Registro sanitario'],
       ['price', 'Precio'], ['stock', 'Stock'], ['isActive', 'Activo'], ['hasImage', 'Tiene imagen'], ['hasActiveOffer', 'Tiene oferta'], ['createdAt', 'Creado'], ['updatedAt', 'Actualizado'],
     ],
@@ -26,22 +26,22 @@ const reportDefinitions = {
   inventory: {
     title: 'Reporte de inventario',
     columns: [
-      ['sku', 'SKU'], ['product', 'Producto'], ['laboratory', 'Laboratorio'], ['category', 'Categoria'], ['stock', 'Stock actual'],
+      ['sku', 'SKU'], ['product', 'Producto'], ['laboratory', 'Laboratorio'], ['category', 'Categoría'], ['stock', 'Stock actual'],
       ['stockStatus', 'Estado de stock'], ['price', 'Precio'], ['inventoryValue', 'Valor estimado'], ['isActive', 'Activo'],
     ],
   },
   offers: {
     title: 'Reporte de ofertas',
     columns: [
-      ['title', 'Titulo'], ['discountType', 'Tipo de descuento'], ['discountValue', 'Valor'], ['product', 'Producto'],
-      ['laboratory', 'Laboratorio'], ['category', 'Categoria'], ['productType', 'Tipo de producto'], ['startsAt', 'Inicio'], ['endsAt', 'Fin'], ['isActive', 'Activa'], ['validity', 'Vigencia'],
+      ['title', 'Título'], ['discountType', 'Tipo de descuento'], ['discountValue', 'Valor'], ['product', 'Producto'],
+      ['laboratory', 'Laboratorio'], ['category', 'Categoría'], ['productType', 'Tipo de producto'], ['startsAt', 'Inicio'], ['endsAt', 'Fin'], ['isActive', 'Activa'], ['validity', 'Vigencia'],
     ],
   },
   customers: {
     title: 'Reporte de clientes',
     columns: [
-      ['name', 'Nombre'], ['email', 'Correo'], ['role', 'Rol'], ['businessName', 'Razon social'], ['commercialName', 'Nombre comercial'],
-      ['rfc', 'RFC'], ['phone', 'Telefono'], ['city', 'Ciudad'], ['state', 'Estado'], ['sanitaryLicense', 'Licencia sanitaria'], ['isAuthorized', 'Autorizado'], ['isActive', 'Activo'], ['createdAt', 'Creado'],
+      ['name', 'Nombre'], ['email', 'Correo'], ['role', 'Rol'], ['businessName', 'Razón social'], ['commercialName', 'Nombre comercial'],
+      ['rfc', 'RFC'], ['phone', 'Teléfono'], ['city', 'Ciudad'], ['state', 'Estado'], ['sanitaryLicense', 'Licencia sanitaria'], ['isAuthorized', 'Autorizado'], ['isActive', 'Activo'], ['createdAt', 'Creado'],
     ],
   },
 };
@@ -86,7 +86,7 @@ function matchesDateRange(value, startDate, endDate) {
 }
 
 function toYesNo(value) {
-  return value ? 'Si' : 'No';
+  return value ? 'Sí' : 'No';
 }
 
 function toDate(value) {
@@ -298,7 +298,7 @@ async function getCustomerRows(filters) {
 
 export async function getReport(type, filters = {}, moneyFormat = 'display') {
   if (!REPORT_TYPES.includes(type)) {
-    throw new Error('Tipo de reporte no valido.');
+    throw new Error('Tipo de reporte no válido.');
   }
 
   const rows = await ({

@@ -135,7 +135,7 @@ export default function OrderSummaryPage() {
                 <input type="email" value={checkout.clientEmail} onChange={(event) => updateCheckout('clientEmail', event.target.value)} required />
               </label>
               <label className={styles.checkoutFullWidth}>
-                Direccion de entrega
+                Dirección de entrega
                 <input value={checkout.deliveryAddress} onChange={(event) => updateCheckout('deliveryAddress', event.target.value)} required />
               </label>
               <label>
@@ -147,7 +147,7 @@ export default function OrderSummaryPage() {
                 <input value={checkout.deliveryState} onChange={(event) => updateCheckout('deliveryState', event.target.value)} required />
               </label>
               <label>
-                Codigo postal
+                Código postal
                 <input value={checkout.deliveryPostalCode} onChange={(event) => updateCheckout('deliveryPostalCode', event.target.value)} required />
               </label>
               <label>
@@ -155,11 +155,11 @@ export default function OrderSummaryPage() {
                 <input value={checkout.responsibleName} onChange={(event) => updateCheckout('responsibleName', event.target.value)} required />
               </label>
               <label>
-                Telefono responsable
+                Teléfono responsable
                 <input type="tel" value={checkout.responsiblePhone} onChange={(event) => updateCheckout('responsiblePhone', event.target.value)} required />
               </label>
               <label className={styles.checkoutFullWidth}>
-                Razon social
+                Razón social
                 <input value={checkout.billingBusinessName} onChange={(event) => updateCheckout('billingBusinessName', event.target.value)} />
               </label>
               <label>
@@ -167,7 +167,7 @@ export default function OrderSummaryPage() {
                 <input value={checkout.billingRfc} onChange={(event) => updateCheckout('billingRfc', event.target.value)} />
               </label>
               <label>
-                Direccion fiscal
+                Dirección fiscal
                 <input value={checkout.billingAddress} onChange={(event) => updateCheckout('billingAddress', event.target.value)} />
               </label>
             </div>

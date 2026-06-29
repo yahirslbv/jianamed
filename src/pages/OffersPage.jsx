@@ -48,7 +48,7 @@ export default function OffersPage() {
           <p>Los precios se actualizan en el carrito y se validan al enviar la solicitud.</p>
         </div>
         <a className={styles.secondaryButton} href="#/catalogo">
-          Explorar catalogo
+          Explorar catálogo
         </a>
       </div>
 
@@ -66,9 +66,9 @@ export default function OffersPage() {
       ) : offers.length === 0 ? (
         <div className={styles.emptyState}>
           <h2>No hay ofertas vigentes</h2>
-          <p>Consulta el catalogo para revisar los productos disponibles.</p>
+          <p>Consulta el catálogo para revisar los productos disponibles.</p>
           <a className={styles.primaryButton} href="#/catalogo">
-            Ir al catalogo
+            Ir al catálogo
           </a>
         </div>
       ) : (
@@ -78,7 +78,7 @@ export default function OffersPage() {
               <span className={styles.offerTag}>Oferta</span>
               <strong className={styles.offerValue}>{getDiscountLabel(offer)}</strong>
               <h2>{offer.title}</h2>
-              <p>{offer.description || 'Condicion comercial sujeta a validacion final.'}</p>
+              <p>{offer.description || 'Condición comercial sujeta a validación final.'}</p>
               <dl>
                 <div>
                   <dt>Aplica a</dt>

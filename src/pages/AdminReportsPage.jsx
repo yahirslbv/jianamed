@@ -15,7 +15,7 @@ const reportOptions = [
 
 const yesNoOptions = [
   { value: '', label: 'Todos' },
-  { value: 'true', label: 'Si' },
+  { value: 'true', label: 'Sí' },
   { value: 'false', label: 'No' },
 ];
 
@@ -106,8 +106,8 @@ export default function AdminReportsPage() {
       <TextField label="Cliente" value={filters.client} onChange={(value) => updateFilter('client', value)} />
       <TextField label="Correo" value={filters.email} onChange={(value) => updateFilter('email', value)} />
       <TextField label="Folio" value={filters.folio} onChange={(value) => updateFilter('folio', value)} />
-      <TextField label="Monto minimo" type="number" value={filters.minAmount} onChange={(value) => updateFilter('minAmount', value)} />
-      <TextField label="Monto maximo" type="number" value={filters.maxAmount} onChange={(value) => updateFilter('maxAmount', value)} />
+      <TextField label="Monto mínimo" type="number" value={filters.minAmount} onChange={(value) => updateFilter('minAmount', value)} />
+      <TextField label="Monto máximo" type="number" value={filters.maxAmount} onChange={(value) => updateFilter('maxAmount', value)} />
       <SelectField label="Con descuento" value={filters.hasDiscount} onChange={(value) => updateFilter('hasDiscount', value)} options={yesNoOptions} />
       <SelectField label="Solo cancelados" value={filters.cancelled} onChange={(value) => updateFilter('cancelled', value)} options={yesNoOptions} />
       <SelectField label="Solo pendientes" value={filters.pending} onChange={(value) => updateFilter('pending', value)} options={yesNoOptions} />
@@ -115,23 +115,23 @@ export default function AdminReportsPage() {
     </>;
     if (type === 'products') return <>
       <SelectField label="Laboratorio" value={filters.laboratoryId} onChange={(value) => updateFilter('laboratoryId', value)} options={scopeOptions.laboratories} />
-      <SelectField label="Categoria" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
+      <SelectField label="Categoría" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
       <SelectField label="Tipo" value={filters.productType} onChange={(value) => updateFilter('productType', value)} options={scopeOptions.types} />
-      <SelectField label="Fraccion sanitaria" value={filters.healthFraction} onChange={(value) => updateFilter('healthFraction', value)} options={scopeOptions.fractions} />
+      <SelectField label="Fracción sanitaria" value={filters.healthFraction} onChange={(value) => updateFilter('healthFraction', value)} options={scopeOptions.fractions} />
       <SelectField label="Activo" value={filters.isActive} onChange={(value) => updateFilter('isActive', value)} options={yesNoOptions} />
       <SelectField label="Tiene imagen" value={filters.hasImage} onChange={(value) => updateFilter('hasImage', value)} options={yesNoOptions} />
       <SelectField label="Tiene oferta" value={filters.hasOffer} onChange={(value) => updateFilter('hasOffer', value)} options={yesNoOptions} />
       <SelectField label="Stock bajo" value={filters.lowStock} onChange={(value) => updateFilter('lowStock', value)} options={yesNoOptions} />
       <SelectField label="Sin stock" value={filters.outOfStock} onChange={(value) => updateFilter('outOfStock', value)} options={yesNoOptions} />
-      <TextField label="Precio minimo" type="number" value={filters.minPrice} onChange={(value) => updateFilter('minPrice', value)} />
-      <TextField label="Precio maximo" type="number" value={filters.maxPrice} onChange={(value) => updateFilter('maxPrice', value)} />
+      <TextField label="Precio mínimo" type="number" value={filters.minPrice} onChange={(value) => updateFilter('minPrice', value)} />
+      <TextField label="Precio máximo" type="number" value={filters.maxPrice} onChange={(value) => updateFilter('maxPrice', value)} />
       <SelectField label="Requiere receta" value={filters.requiresPrescription} onChange={(value) => updateFilter('requiresPrescription', value)} options={yesNoOptions} />
       <SelectField label="Receta retenida" value={filters.requiresRetainedPrescription} onChange={(value) => updateFilter('requiresRetainedPrescription', value)} options={yesNoOptions} />
       <SelectField label="Controlado" value={filters.isControlled} onChange={(value) => updateFilter('isControlled', value)} options={yesNoOptions} />
     </>;
     if (type === 'inventory') return <>
       <SelectField label="Laboratorio" value={filters.laboratoryId} onChange={(value) => updateFilter('laboratoryId', value)} options={scopeOptions.laboratories} />
-      <SelectField label="Categoria" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
+      <SelectField label="Categoría" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
       <SelectField label="Stock bajo" value={filters.lowStock} onChange={(value) => updateFilter('lowStock', value)} options={yesNoOptions} />
       <SelectField label="Sin stock" value={filters.outOfStock} onChange={(value) => updateFilter('outOfStock', value)} options={yesNoOptions} />
       <TextField label="Stock mayor a" type="number" value={filters.stockGreaterThan} onChange={(value) => updateFilter('stockGreaterThan', value)} />
@@ -143,7 +143,7 @@ export default function AdminReportsPage() {
       <SelectField label="Vigencia" value={filters.validity} onChange={(value) => updateFilter('validity', value)} options={[{ value: '', label: 'Todas' }, { value: 'CURRENT', label: 'Vigente' }, { value: 'EXPIRED', label: 'Expirada' }, { value: 'SCHEDULED', label: 'Programada' }]} />
       <SelectField label="Producto" value={filters.productId} onChange={(value) => updateFilter('productId', value)} options={scopeOptions.products} />
       <SelectField label="Laboratorio" value={filters.laboratoryId} onChange={(value) => updateFilter('laboratoryId', value)} options={scopeOptions.laboratories} />
-      <SelectField label="Categoria" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
+      <SelectField label="Categoría" value={filters.categoryId} onChange={(value) => updateFilter('categoryId', value)} options={scopeOptions.categories} />
       <SelectField label="Descuento" value={filters.discountType} onChange={(value) => updateFilter('discountType', value)} options={[{ value: '', label: 'Todos' }, { value: 'PERCENTAGE', label: 'Porcentaje' }, { value: 'FIXED_AMOUNT', label: 'Monto fijo' }]} />
       <TextField label="Fecha desde" type="date" value={filters.dateFrom} onChange={(value) => updateFilter('dateFrom', value)} />
       <TextField label="Fecha hasta" type="date" value={filters.dateTo} onChange={(value) => updateFilter('dateTo', value)} />
@@ -160,7 +160,7 @@ export default function AdminReportsPage() {
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
       <div className={styles.privateHeader}>
-        <div><p className={styles.eyebrow}>Administracion</p><h1>Reportes e informes</h1><p>Consulta, filtra y exporta informacion operativa. Cada exportacion queda registrada.</p></div>
+        <div><p className={styles.eyebrow}>Administración</p><h1>Reportes e informes</h1><p>Consulta, filtra y exporta información operativa. Cada exportación queda registrada.</p></div>
       </div>
       <div className={styles.reportWorkspace}>
         <aside className={styles.reportFilters}>
@@ -171,8 +171,8 @@ export default function AdminReportsPage() {
         <div className={styles.reportResults}>
           <div className={styles.reportToolbar}><div><strong>{preview?.total ?? 0} registros</strong><p>{preview?.title || 'Vista previa del reporte'}</p></div><div className={styles.reportActions}><button className={styles.secondarySmall} type="button" onClick={() => handleExport('csv')} disabled={Boolean(isExporting)}>{isExporting === 'csv' ? 'Exportando...' : 'Exportar CSV'}</button><button className={styles.primarySmall} type="button" onClick={() => handleExport('pdf')} disabled={Boolean(isExporting)}>{isExporting === 'pdf' ? 'Exportando...' : 'Exportar PDF'}</button></div></div>
           {error ? <div className={styles.emptyState}><h2>No fue posible generar el reporte</h2><p>{error}</p></div> : isLoading ? <div className={styles.emptyState}><h2>Generando vista previa</h2><p>Estamos aplicando los filtros seleccionados.</p></div> : !preview?.rows.length ? <div className={styles.emptyState}><h2>No hay resultados</h2><p>Prueba con otros filtros para generar el informe.</p></div> : <div className={styles.tableWrapper}><table className={styles.reportTable}><thead><tr>{preview.columns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{preview.rows.slice(0, 12).map((row, index) => <tr key={index}>{preview.columns.map((column) => <td key={column.key}>{row[column.key]}</td>)}</tr>)}</tbody></table></div>}
-          {preview?.rows.length > 12 && <p className={styles.reportFootnote}>Vista previa limitada a 12 registros. La exportacion incluye todos los resultados filtrados.</p>}
-          <p className={styles.catalogNotice}>Las exportaciones se registran para control interno y no incluyen contrasenas, hashes ni sesiones.</p>
+          {preview?.rows.length > 12 && <p className={styles.reportFootnote}>Vista previa limitada a 12 registros. La exportación incluye todos los resultados filtrados.</p>}
+          <p className={styles.catalogNotice}>Las exportaciones se registran para control interno y no incluyen contraseñas, hashes ni sesiones.</p>
         </div>
       </div>
     </section>
