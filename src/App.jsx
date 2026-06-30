@@ -19,6 +19,7 @@ import AccountPage from './pages/AccountPage.jsx';
 import OffersPage from './pages/OffersPage.jsx';
 import ClientDashboardPage from './pages/ClientDashboardPage.jsx';
 import AdminReportsPage from './pages/AdminReportsPage.jsx';
+import AdminSalesProjectionPage from './pages/AdminSalesProjectionPage.jsx';
 import AdminAuditPage from './pages/AdminAuditPage.jsx';
 import AdminCustomersPage from './pages/AdminCustomersPage.jsx';
 import AdminProductImportPage from './pages/AdminProductImportPage.jsx';
@@ -78,6 +79,7 @@ export default function App() {
     '/admin/clientes': { element: <AdminCustomersPage />, roles: ['admin'] },
     '/admin/usuarios': { element: <AdminUsersPage />, roles: ['admin'] },
     '/admin/importar-productos': { element: <AdminProductImportPage />, roles: ['admin'] },
+    '/admin/proyeccion-ventas': { element: <AdminSalesProjectionPage />, roles: ['admin'] },
     '/cuenta': { element: <AccountPage />, roles: ['client', 'admin', 'sales', 'supervisor'] },
     // Accessible to all authenticated roles, including when forcePasswordChange is true.
     '/cambiar-contrasena': { element: <ChangePasswordPage />, roles: ['client', 'admin', 'sales', 'supervisor'] },

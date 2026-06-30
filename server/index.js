@@ -20,6 +20,7 @@ import { purgeExpiredPreviews } from './services/productImport.js';
 import { purgeExpiredPendingCheckouts } from './services/payments.js';
 import { config, staticFrontendDirectory, validateRuntimeEnvironment } from './env.js';
 import paymentRoutes from './routes/payments.js';
+import salesPeriodRoutes from './routes/salesPeriods.js';
 import { requestLogger, logger } from './services/logger.js';
 
 const app = express();
@@ -147,6 +148,7 @@ app.use('/api', customerRoutes);
 app.use('/api', userRoutes);
 app.use('/api', productImportRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', salesPeriodRoutes);
 
 if (config.serveStaticFrontend) {
   app.use(express.static(staticFrontendDirectory, { index: false, maxAge: '1h' }));

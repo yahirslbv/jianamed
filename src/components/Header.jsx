@@ -138,6 +138,7 @@ export default function Header() {
                     <a href="#/admin/usuarios" role="menuitem" onClick={closeMenus}>Cuentas internas</a>
                     <a href="#/admin/importar-productos" role="menuitem" onClick={closeMenus}>Importar productos</a>
                     <a href="#/admin/reportes" role="menuitem" onClick={closeMenus}>Reportes</a>
+                    <a href="#/admin/proyeccion-ventas" role="menuitem" onClick={closeMenus}>Proyección de ventas</a>
                     <a href="#/admin/auditoria" role="menuitem" onClick={closeMenus}>Auditoría</a>
                   </>
                 )}

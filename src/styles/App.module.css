@@ -4573,3 +4573,104 @@ button:disabled {
     grid-template-columns: minmax(0, 1.25fr) minmax(100px, 0.75fr);
   }
 }
+
+/* ─── Sales Projection Page ─────────────────────────────────────────────────── */
+
+.salesTabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 auto 20px;
+  max-width: 1240px;
+}
+
+.salesTab,
+.salesTabActive {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 20px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.salesTabActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.salesTab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.salesSectionTitle {
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+.salesCurrentSection,
+.salesHistorySection {
+  margin: 0 auto 28px;
+  max-width: 1240px;
+}
+
+.salesMetricGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.salesMetricGrid article {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 5px;
+  padding: 18px;
+}
+
+.salesMetricGrid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.salesMetricGrid strong {
+  color: var(--primary);
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.salesMetricGrid small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.trendUp {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.trendDown {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.salesMuted {
+  color: var(--muted);
+}
+
+@media (max-width: 680px) {
+  .salesMetricGrid {
+    grid-template-columns: 1fr;
+  }
+}

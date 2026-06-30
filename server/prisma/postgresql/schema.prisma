@@ -63,6 +63,13 @@ enum PaymentStatus {
   EXPIRED
 }
 
+enum PeriodType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ANNUAL
+}
+
 model User {
   id            String        @id @default(cuid())
   name          String
@@ -359,4 +366,25 @@ model PendingCheckout {
 
   @@index([stripeSessionId])
   @@index([expiresAt])
+}
+
+model SalesPeriod {
+  id                    String     @id @default(cuid())
+  periodType            PeriodType
+  label                 String
+  startDate             DateTime
+  endDate               DateTime
+  revenueCents          Int        @default(0)
+  orderCount            Int        @default(0)
+  unitsSold             Int        @default(0)
+  projectedRevenueCents Int        @default(0)
+  projectedOrderCount   Int        @default(0)
+  projectedUnitsSold    Int        @default(0)
+  isComplete            Boolean    @default(false)
+  computedAt            DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@unique([periodType, startDate])
+  @@index([periodType, startDate])
 }
