@@ -25,6 +25,8 @@ import AdminCustomersPage from './pages/AdminCustomersPage.jsx';
 import AdminProductImportPage from './pages/AdminProductImportPage.jsx';
 import AdminUsersPage from './pages/AdminUsersPage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+import PrivacyPage from './pages/PrivacyPage.jsx';
+import TermsPage from './pages/TermsPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import { useHashRoute } from './hooks/useHashRoute.js';
@@ -97,6 +99,10 @@ export default function App() {
     content = <ContactSection />;
   } else if (route.path === '/login') {
     content = <LoginPage redirectTo={redirectTo} navigate={navigate} />;
+  } else if (route.path === '/privacidad') {
+    content = <PrivacyPage />;
+  } else if (route.path === '/terminos') {
+    content = <TermsPage />;
   } else if (route.path === '/olvide-mi-contrasena') {
     content = <ForgotPasswordPage />;
   } else if (route.path === '/restablecer-contrasena') {

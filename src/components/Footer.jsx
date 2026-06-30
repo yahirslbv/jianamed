@@ -20,8 +20,8 @@ export default function Footer() {
       </nav>
 
       <div className={styles.footerLinks}>
-        <a href="#/contacto">Aviso de privacidad</a>
-        <a href="#/contacto">Términos y condiciones</a>
+        <a href="#/privacidad">Aviso de privacidad</a>
+        <a href="#/terminos">Términos y condiciones</a>
         <a href="#/contacto">Farmacovigilancia</a>
       </div>
 

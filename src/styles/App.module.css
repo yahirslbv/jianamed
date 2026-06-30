@@ -4674,3 +4674,50 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Legal pages (Privacy & Terms) ─────────────────────────────────────────── */
+
+.legalPage {
+  margin: 0 auto;
+  max-width: 780px;
+  padding: 0 0 48px;
+}
+
+.legalPage h1 {
+  margin: 8px 0 6px;
+}
+
+.legalPage h2 {
+  border-top: 1px solid var(--line);
+  font-size: 1.05rem;
+  margin: 32px 0 10px;
+  padding-top: 24px;
+}
+
+.legalPage p,
+.legalPage li {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 10px;
+}
+
+.legalPage ul,
+.legalPage ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.legalPage li {
+  margin: 0 0 5px;
+}
+
+.legalPage a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.legalMeta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 28px !important;
+}
