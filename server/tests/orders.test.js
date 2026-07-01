@@ -209,6 +209,107 @@ describe('Admin status enforcement', () => {
   });
 });
 
+describe('PATCH /admin/orders/:id/items — quantity adjustment', () => {
+  let orderId;
+  let itemA;
+  let itemB;
+  let secondProduct;
+  let stockAfterReserve;
+
+  before(async () => {
+    secondProduct = await createTestProduct(prisma, {
+      laboratoryId: product.laboratoryId, categoryId: product.categoryId, sku: `${PREFIX}-SKU-002`, priceCents: 10000, stock: 200,
+    });
+    const res = await server.req('POST', '/orders', {
+      items: [
+        { productId: product.id, quantity: 4 },
+        { productId: secondProduct.id, quantity: 2 },
+      ],
+      checkout,
+    }, clientCookie);
+    assert.equal(res.status, 201, JSON.stringify(res.data));
+    orderId = res.data.order.id;
+    itemA = res.data.order.items.find((i) => i.productId === product.id);
+    itemB = res.data.order.items.find((i) => i.productId === secondProduct.id);
+    const reserved = await prisma.product.findUnique({ where: { id: product.id } });
+    stockAfterReserve = reserved.stock;
+  });
+
+  it('admin reduces a line quantity and totals recalculate', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemA.id, quantity: 1 }],
+    }, adminCookie);
+    assert.equal(res.status, 200, JSON.stringify(res.data));
+    const updatedA = res.data.order.items.find((i) => i.id === itemA.id);
+    assert.equal(updatedA.quantity, 1);
+    assert.equal(updatedA.subtotal, itemA.unitPrice);
+    // total = product x1 + secondProduct x2
+    assert.equal(res.data.order.total, itemA.unitPrice * 1 + itemB.unitPrice * 2);
+  });
+
+  it('does not return reduced units to product stock', async () => {
+    const prod = await prisma.product.findUnique({ where: { id: product.id } });
+    assert.equal(prod.stock, stockAfterReserve, 'reduction must not inflate product stock');
+  });
+
+  it('rejects increasing a quantity beyond the current value', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemB.id, quantity: 99 }],
+    }, adminCookie);
+    assert.equal(res.status, 400);
+  });
+
+  it('rejects a negative quantity', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemB.id, quantity: -1 }],
+    }, adminCookie);
+    assert.equal(res.status, 400);
+  });
+
+  it('removes a line when its quantity is set to 0', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemB.id, quantity: 0 }],
+    }, adminCookie);
+    assert.equal(res.status, 200, JSON.stringify(res.data));
+    assert.ok(!res.data.order.items.some((i) => i.id === itemB.id), 'removed line should be gone');
+    assert.equal(res.data.order.total, itemA.unitPrice * 1);
+  });
+
+  it('refuses to empty the order entirely', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemA.id, quantity: 0 }],
+    }, adminCookie);
+    assert.equal(res.status, 400);
+  });
+
+  it('rejects an item id that does not belong to the order', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: 'nonexistent-item', quantity: 1 }],
+    }, adminCookie);
+    assert.equal(res.status, 400);
+  });
+
+  it('rejects an empty items array', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, { items: [] }, adminCookie);
+    assert.equal(res.status, 400);
+  });
+
+  it('rejects a non-admin caller', async () => {
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemA.id, quantity: 1 }],
+    }, clientCookie);
+    assert.equal(res.status, 403);
+  });
+
+  it('cannot adjust a supplied order', async () => {
+    await server.req('PATCH', `/admin/orders/${orderId}/status`, { status: 'SUPPLIED' }, adminCookie);
+    const res = await server.req('PATCH', `/admin/orders/${orderId}/items`, {
+      items: [{ id: itemA.id, quantity: 1 }],
+    }, adminCookie);
+    assert.equal(res.status, 409);
+  });
+});
+
 describe('GET /orders', () => {
   it('client lists their own orders and not other users orders', async () => {
     // Create an order for the OTHER client

@@ -2205,6 +2205,62 @@ button:disabled {
   margin-bottom: 12px;
 }
 
+.orderItemsEditor {
+  border-top: 1px dashed var(--line);
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.orderItemsEditor h3 {
+  margin: 0;
+}
+
+.orderItemsEditorHint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.orderItemsEditorList {
+  display: grid;
+  gap: 8px;
+}
+
+.orderItemsEditorRow {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.orderItemsEditorRow span {
+  display: grid;
+  gap: 2px;
+}
+
+.orderItemsEditorRow small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.orderItemsEditorRow input {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 38px;
+  padding: 7px 9px;
+  text-align: right;
+  width: 96px;
+}
+
+.orderItemsEditor button {
+  justify-self: start;
+}
+
 .adminProductWorkspace {
   align-items: start;
   display: grid;
@@ -3738,7 +3794,10 @@ button:disabled {
   box-shadow: var(--shadow);
   display: grid;
   gap: 4px;
+  max-height: min(420px, calc(100dvh - 72px));
   min-width: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px;
   position: absolute;
   right: 0;
@@ -4720,4 +4779,237 @@ button:disabled {
   color: var(--muted);
   font-size: 0.85rem;
   margin: 0 0 28px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEJORAS MÓVIL — polish y usabilidad para pantallas pequeñas
+   Complementa los bloques @media existentes sin sobreescribirlos.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Botones de acción en tablas: touch-friendly desde el inicio ─────────── */
+.actionButtonView,
+.actionButtonEdit,
+.actionButtonDeactivate,
+.actionButtonActivate,
+.actionButtonDanger {
+  min-height: 38px;
+}
+
+/* ─── Tabla scroll – indicador visual de desplazamiento horizontal ─────────── */
+.tableWrapper {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  position: relative;
+}
+
+/* ─── @media 640px: mejoras adicionales (sin duplicar lo ya existente) ─────── */
+@media (max-width: 640px) {
+  /* Tablas: de borde a borde de pantalla con sombra de scroll al lado derecho */
+  .tableWrapper {
+    border-left: 0;
+    border-radius: 0;
+    border-right: 0;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+
+  .tableWrapper::after {
+    background: linear-gradient(to left, rgba(20, 35, 70, 0.1) 0%, transparent 100%);
+    content: '';
+    height: 100%;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 28px;
+    z-index: 1;
+  }
+
+  /* Botones de acción: tamaño táctil mínimo y layout horizontal */
+  .actionButtonsGroup {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .actionButtonView,
+  .actionButtonEdit,
+  .actionButtonDeactivate,
+  .actionButtonActivate,
+  .actionButtonDanger {
+    flex: 1 1 auto;
+    min-height: 44px;
+    width: auto;
+  }
+
+  /* Filtros del catálogo: recuadro más compacto con separador */
+  .filters {
+    padding: 14px 16px;
+  }
+
+  /* Dashboard hero: menos padding vertical en móvil */
+  .dashboardHero {
+    padding-bottom: 20px;
+    padding-top: 20px;
+  }
+
+  /* Sección pública: reducir padding vertical en móvil */
+  .section {
+    padding-top: clamp(36px, 8vw, 56px);
+    padding-bottom: clamp(36px, 8vw, 56px);
+  }
+
+  /* Panel de resumen del carrito: padding compacto */
+  .summaryPanel {
+    padding: 14px 16px;
+  }
+
+  /* Etiqueta eyebrow en cabeceras privadas */
+  .eyebrow {
+    font-size: 0.7rem;
+  }
+
+  /* Cabecera de página privada (h1 + párrafo): menos margen inferior */
+  .privateHeader {
+    margin-bottom: 14px;
+  }
+
+  /* Cabecera de páginas admin: menor espacio entre titulo y botones */
+  .adminPageHeader {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  /* Admin toolbar inputs: altura táctil completa */
+  .adminToolbar input,
+  .adminSearch input {
+    min-height: 46px;
+  }
+
+  /* Tarjetas de pedido: espaciado ajustado */
+  .orderListCard,
+  .adminOrderCard {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  /* Detalle de pedido: separador de sección más compacto */
+  .orderDetailSectionHeader {
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+
+  /* Modal de producto: imagen más pequeña */
+  .productVisualLarge {
+    height: 220px;
+  }
+
+  /* Barra de progreso (stepper): pasos más juntos */
+  .stepper {
+    gap: 0;
+  }
+
+  /* Mejorar el grid de métricas a 2 columnas en móvil */
+  .salesMetricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Proyección de ventas – tabs que no se desborden */
+  .salesTabBar {
+    gap: 4px;
+  }
+
+  .salesTab,
+  .salesTabActive {
+    flex: 1 1 auto;
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    text-align: center;
+  }
+}
+
+/* ─── @media 480px: teléfonos compactos (< 480px) ─────────────────────────── */
+@media (max-width: 480px) {
+  /* Brand en header: reducir tamaño de fuente para evitar overflow */
+  .brand strong {
+    font-size: 0.92rem;
+  }
+
+  /* Secciones: menos padding lateral */
+  .section {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Modal central: padding mínimo */
+  .centerModalOverlay {
+    padding: 0;
+  }
+
+  .centerModal,
+  .centerModalDetail {
+    border-radius: 0;
+    height: 100dvh;
+    max-height: none;
+  }
+
+  .centerModalHeader,
+  .centerModalBody {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* Imagen de producto en modal: más pequeña */
+  .productVisualLarge {
+    height: 180px;
+  }
+
+  /* Hero público: espaciado reducido en teléfonos muy pequeños */
+  .hero {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Botones en acciones de tarjeta: ancho completo */
+  .heroActions,
+  .cardActions,
+  .adminHeaderActions {
+    gap: 8px;
+  }
+
+  /* Pasos del stepper: solo número, sin texto */
+  .stepper li strong {
+    display: none;
+  }
+
+  /* Carrito: imagen del producto más pequeña */
+  .cartItem .productVisual {
+    height: 120px;
+  }
+
+  /* Tabla de precios/filtros: compacto */
+  .priceRange {
+    gap: 8px;
+  }
+
+  /* Acciones del wizard: apiladas */
+  .wizardActions,
+  .singleFormActions {
+    flex-direction: column;
+  }
+
+  .wizardActions > *,
+  .singleFormActions > * {
+    width: 100%;
+  }
+
+  /* Etiquetas del menú de cuenta */
+  .accountMenuButton {
+    font-size: 0.88rem;
+  }
+
+  /* Texto pequeño en celdas de tabla */
+  .tableDescription {
+    font-size: 0.7rem;
+  }
 }

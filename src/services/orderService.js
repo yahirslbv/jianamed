@@ -1,12 +1,4 @@
-import { apiClient, shouldUseLocalFallback } from './apiClient.js';
-import {
-  createFallbackOrder,
-  cancelFallbackOrder,
-  getFallbackLastOrderId,
-  getFallbackOrderById,
-  getFallbackOrders,
-  updateFallbackOrderStatus,
-} from './orderFallbackService.js';
+import { apiClient } from './apiClient.js';
 
 const LAST_ORDER_KEY = 'tic-toc-pharma-last-order-id';
 
@@ -31,52 +23,40 @@ function normalizeOrder(order) {
 }
 
 export async function getOrders() {
-  try {
-    const response = await apiClient('/orders');
-    return response.orders.map(normalizeOrder);
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return getFallbackOrders();
-    throw error;
-  }
+  const response = await apiClient('/orders');
+  return response.orders.map(normalizeOrder);
 }
 
 export async function getOrderById(orderId) {
   if (!orderId) return null;
-
-  try {
-    const response = await apiClient(`/orders/${orderId}`);
-    return normalizeOrder(response.order);
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return getFallbackOrderById(orderId);
-    throw error;
-  }
+  const response = await apiClient(`/orders/${orderId}`);
+  return normalizeOrder(response.order);
 }
 
 export function getLastOrderId() {
   try {
-    return localStorage.getItem(LAST_ORDER_KEY) || getFallbackLastOrderId();
+    return localStorage.getItem(LAST_ORDER_KEY);
   } catch {
     return null;
   }
 }
 
-export async function createOrder({ user, items, observations, checkout }) {
+export async function createOrder({ items, observations, checkout }) {
+  const response = await apiClient('/orders', {
+    method: 'POST',
+    body: {
+      items: items.map(({ product, quantity }) => ({ productId: product.id, quantity })),
+      observations,
+      checkout,
+    },
+  });
+  const order = normalizeOrder(response.order);
   try {
-    const response = await apiClient('/orders', {
-      method: 'POST',
-      body: {
-        items: items.map(({ product, quantity }) => ({ productId: product.id, quantity })),
-        observations,
-        checkout,
-      },
-    });
-    const order = normalizeOrder(response.order);
     localStorage.setItem(LAST_ORDER_KEY, order.id);
-    return order;
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return createFallbackOrder({ user, items, observations, checkout });
-    throw error;
+  } catch {
+    // localStorage may be unavailable (private mode); the order is already persisted server-side.
   }
+  return order;
 }
 
 export function canCancelOrder(order) {
@@ -84,37 +64,33 @@ export function canCancelOrder(order) {
 }
 
 export async function cancelOrder(orderId) {
-  try {
-    const response = await apiClient(`/orders/${orderId}/cancel`, {
-      method: 'PATCH',
-    });
-    return normalizeOrder(response.order);
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return cancelFallbackOrder(orderId);
-    throw error;
-  }
+  const response = await apiClient(`/orders/${orderId}/cancel`, { method: 'PATCH' });
+  return normalizeOrder(response.order);
 }
 
 export async function getAdminOrders(status = '') {
-  try {
-    const query = status ? `?status=${encodeURIComponent(statusCodes[status] || status)}` : '';
-    const response = await apiClient(`/admin/orders${query}`);
-    return response.orders.map(normalizeOrder);
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return getFallbackOrders();
-    throw error;
-  }
+  const query = status ? `?status=${encodeURIComponent(statusCodes[status] || status)}` : '';
+  const response = await apiClient(`/admin/orders${query}`);
+  return response.orders.map(normalizeOrder);
 }
 
 export async function updateOrderStatus(orderId, status) {
-  try {
-    const response = await apiClient(`/admin/orders/${orderId}/status`, {
-      method: 'PATCH',
-      body: { status: statusCodes[status] || status },
-    });
-    return normalizeOrder(response.order);
-  } catch (error) {
-    if (shouldUseLocalFallback(error)) return updateFallbackOrderStatus(orderId, status);
-    throw error;
-  }
+  const response = await apiClient(`/admin/orders/${orderId}/status`, {
+    method: 'PATCH',
+    body: { status: statusCodes[status] || status },
+  });
+  return normalizeOrder(response.order);
+}
+
+/**
+ * Adjusts the quantities of an order's lines (admin only).
+ * @param {string} orderId
+ * @param {Array<{ id: string, quantity: number }>} items — line id + new quantity (0 removes the line)
+ */
+export async function updateOrderItems(orderId, items) {
+  const response = await apiClient(`/admin/orders/${orderId}/items`, {
+    method: 'PATCH',
+    body: { items: items.map(({ id, quantity }) => ({ id, quantity })) },
+  });
+  return normalizeOrder(response.order);
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { orderStatuses } from '../data/orderStatuses.js';
-import { getAdminOrders, updateOrderStatus } from '../services/orderService.js';
+import { getAdminOrders, updateOrderItems, updateOrderStatus } from '../services/orderService.js';
 import { formatCurrencyMXN } from '../utils/formatters.js';
 import { getOrderItemCount, getOrderStatusPresentation } from '../utils/orderPresentation.js';
 import styles from '../styles/App.module.css';
@@ -9,6 +9,64 @@ import styles from '../styles/App.module.css';
 const dateFormatter = new Intl.DateTimeFormat('es-MX', {
   day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
 });
+
+// Orders can only be adjusted while still open (mirrors ORDER_EDITABLE_STATUSES on the server).
+const EDITABLE_STATUSES = new Set(['Pendiente de revisión', 'En revisión', 'Aprobado']);
+
+function OrderItemsEditor({ order, onSave }) {
+  const [quantities, setQuantities] = useState(() =>
+    Object.fromEntries(order.items.map((item) => [item.id, item.quantity])),
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const setQuantity = (itemId, value, max) => {
+    const parsed = Math.max(0, Math.min(max, Number.parseInt(value, 10) || 0));
+    setQuantities((current) => ({ ...current, [itemId]: parsed }));
+  };
+
+  const hasChanges = order.items.some((item) => quantities[item.id] !== item.quantity);
+
+  const handleSave = async () => {
+    setError('');
+    setIsSaving(true);
+    try {
+      const items = order.items
+        .filter((item) => quantities[item.id] !== item.quantity)
+        .map((item) => ({ id: item.id, quantity: quantities[item.id] }));
+      await onSave(items);
+    } catch (requestError) {
+      setError(requestError.message || 'No fue posible ajustar el pedido.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.orderItemsEditor}>
+      <h3>Ajustar cantidades</h3>
+      <p className={styles.orderItemsEditorHint}>Reduce la cantidad de una partida cuando no haya existencias suficientes. Escribe 0 para quitarla del pedido. El total se recalcula automáticamente.</p>
+      {error && <p className={styles.formError} role="alert">{error}</p>}
+      <div className={styles.orderItemsEditorList}>
+        {order.items.map((item) => (
+          <label className={styles.orderItemsEditorRow} key={`edit-${item.id}`}>
+            <span><strong>{item.name}</strong><small>{item.sku} · cantidad actual: {item.quantity}</small></span>
+            <input
+              type="number"
+              min="0"
+              max={item.quantity}
+              value={quantities[item.id]}
+              onChange={(event) => setQuantity(item.id, event.target.value, item.quantity)}
+            />
+          </label>
+        ))}
+      </div>
+      <button className={styles.primaryButton} type="button" disabled={!hasChanges || isSaving} onClick={handleSave}>
+        {isSaving ? 'Guardando...' : 'Guardar cantidades'}
+      </button>
+    </div>
+  );
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -50,6 +108,12 @@ export default function AdminOrdersPage() {
     } catch (requestError) {
       setError(requestError.message);
     }
+  };
+
+  // Errors propagate to the editor so they appear next to the inputs being changed.
+  const handleAdjustItems = async (orderId, items) => {
+    const updatedOrder = await updateOrderItems(orderId, items);
+    setOrders((current) => current.map((order) => order.id === updatedOrder.id ? updatedOrder : order));
   };
 
   return (
@@ -98,6 +162,13 @@ export default function AdminOrdersPage() {
                       <section><h3>Entrega y contacto</h3><dl className={styles.detailList}><div><dt>Dirección</dt><dd>{deliveryAddress || 'No disponible'}</dd></div><div><dt>Responsable</dt><dd>{[checkout.responsibleName, checkout.responsiblePhone].filter(Boolean).join(' · ') || 'No disponible'}</dd></div><div><dt>Datos fiscales</dt><dd>{[checkout.billingBusinessName, checkout.billingRfc].filter(Boolean).join(' · ') || 'No disponible'}</dd></div></dl><h3>Observaciones</h3><p>{order.observations || 'Sin observaciones'}</p></section>
                     </div>
                     <dl className={styles.orderTotals}><div><dt>Subtotal</dt><dd>{formatCurrencyMXN(order.subtotal)}</dd></div><div><dt>Descuento</dt><dd className={styles.discountValue}>-{formatCurrencyMXN(order.discountTotal || 0)}</dd></div><div><dt>Total estimado</dt><dd>{formatCurrencyMXN(order.total)}</dd></div></dl>
+                    {EDITABLE_STATUSES.has(order.status) && (
+                      <OrderItemsEditor
+                        key={order.items.map((item) => `${item.id}:${item.quantity}`).join('|')}
+                        order={order}
+                        onSave={(items) => handleAdjustItems(order.id, items)}
+                      />
+                    )}
                   </details>
                 </article>;
               })}

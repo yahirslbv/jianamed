@@ -17,6 +17,8 @@ const orderInclude = {
   items: { orderBy: { id: 'asc' } },
 };
 const CLIENT_CANCELLABLE_STATUS = 'PENDING_REVIEW';
+// An order can only be adjusted while it is still open (before it is supplied or closed).
+const ORDER_EDITABLE_STATUSES = ['PENDING_REVIEW', 'IN_REVIEW', 'APPROVED'];
 
 async function createOrder(req, res, next) {
   try {
@@ -247,6 +249,90 @@ router.patch('/admin/orders/:id/status', requireAuth, requireRole('admin'), asyn
     sendOrderStatusUpdate(serialized, previous.status).catch(() => {}); // fire-and-forget
     return res.json({ order: serialized });
   } catch (error) {
+    return next(error);
+  }
+});
+
+// Adjust the quantities of an order's lines (e.g. when physical stock is short of
+// what the client requested). Quantities can only be reduced or set to 0 to drop a
+// line; totals are recalculated from the stored per-unit prices. Product stock is
+// intentionally left untouched: the missing units do not exist, so returning them to
+// inventory would create phantom stock — adjust the product's real stock separately.
+router.patch('/admin/orders/:id/items', requireAuth, requireRole('admin'), async (req, res, next) => {
+  try {
+    const updates = req.body.items;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ message: 'Debes indicar al menos una partida a modificar.' });
+    }
+
+    const parsedUpdates = [];
+    for (const update of updates) {
+      const quantity = Number.parseInt(update?.quantity, 10);
+      if (!update?.id || !Number.isInteger(quantity) || quantity < 0) {
+        return res.status(400).json({ message: 'Cada partida debe incluir un identificador y una cantidad válida (entero mayor o igual a 0).' });
+      }
+      parsedUpdates.push({ id: String(update.id), quantity });
+    }
+
+    const order = await prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
+      if (!current) throw Object.assign(new Error('Pedido no encontrado.'), { status: 404 });
+      if (!ORDER_EDITABLE_STATUSES.includes(current.status)) {
+        throw Object.assign(new Error('Solo puedes ajustar pedidos pendientes, en revisión o aprobados.'), { status: 409 });
+      }
+
+      const itemsById = new Map(current.items.map((item) => [item.id, item]));
+      for (const update of parsedUpdates) {
+        const item = itemsById.get(update.id);
+        if (!item) throw Object.assign(new Error('Una de las partidas no pertenece a este pedido.'), { status: 400 });
+        if (update.quantity > item.quantity) {
+          throw Object.assign(
+            new Error(`Solo puedes reducir la cantidad de ${item.productName} (máximo ${item.quantity}).`),
+            { status: 400 },
+          );
+        }
+      }
+
+      const newQuantityById = new Map(parsedUpdates.map((update) => [update.id, update.quantity]));
+      const remainingItems = [];
+      for (const item of current.items) {
+        const newQuantity = newQuantityById.has(item.id) ? newQuantityById.get(item.id) : item.quantity;
+        if (newQuantity === 0) {
+          await tx.orderItem.delete({ where: { id: item.id } });
+          continue;
+        }
+        if (newQuantity !== item.quantity) {
+          await tx.orderItem.update({
+            where: { id: item.id },
+            data: { quantity: newQuantity, subtotalCents: calculateLineSubtotal(item.unitPriceCents, newQuantity) },
+          });
+        }
+        remainingItems.push({ ...item, quantity: newQuantity });
+      }
+
+      if (remainingItems.length === 0) {
+        throw Object.assign(
+          new Error('El pedido debe conservar al menos una partida. Si no hay existencias, recházalo o cancélalo.'),
+          { status: 400 },
+        );
+      }
+
+      const totals = calculateOrderTotals(remainingItems.map((item) => ({
+        originalUnitPriceCents: item.originalUnitPriceCents || item.unitPriceCents,
+        discountAmountCents: item.discountAmountCents || 0,
+        quantity: item.quantity,
+      })));
+
+      return tx.order.update({ where: { id: current.id }, data: totals, include: orderInclude });
+    });
+
+    await writeAuditLog({ userId: req.user.id, action: 'ADJUST_ITEMS', entity: 'Order', entityId: order.id, details: { folio: order.folio } });
+
+    return res.json({ order: serializeOrder(order) });
+  } catch (error) {
+    if (Number.isInteger(error.status) && error.status < 500) {
+      return res.status(error.status).json({ message: error.message });
+    }
     return next(error);
   }
 });
