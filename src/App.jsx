@@ -64,12 +64,7 @@ export default function App() {
     '/resumen': { element: <OrderSummaryPage />, roles: ['client'] },
     '/checkout': { element: <OrderSummaryPage />, roles: ['client'] },
     '/pedido-confirmado': {
-      element: (
-        <OrderConfirmationPage
-          orderId={route.query.get('id') || ''}
-          sessionId={route.query.get('session_id') || ''}
-        />
-      ),
+      element: <OrderConfirmationPage orderId={route.query.get('id') || ''} />,
       roles: ['client'],
     },
     '/mis-pedidos': { element: <MyOrdersPage />, roles: ['client'] },

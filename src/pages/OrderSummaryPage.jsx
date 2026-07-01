@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { createCheckoutSession } from '../services/paymentService.js';
+import { createOrder } from '../services/orderService.js';
 import { formatCurrencyMXN, multiplyMoney } from '../utils/formatters.js';
 import styles from '../styles/App.module.css';
 
@@ -24,7 +24,7 @@ function createCheckout(user) {
 
 export default function OrderSummaryPage() {
   const { user } = useAuth();
-  const { items, getCartSubtotal, getCartDiscount, getCartTotal } = useCart();
+  const { items, clearCart, getCartSubtotal, getCartDiscount, getCartTotal } = useCart();
   const [observations, setObservations] = useState('');
   const [checkout, setCheckout] = useState(() => createCheckout(user));
   const [error, setError] = useState('');
@@ -41,12 +41,12 @@ export default function OrderSummaryPage() {
     setError('');
 
     try {
-      // Redirects to Stripe's hosted payment page. The cart is cleared only after the
-      // payment is confirmed (on the confirmation page), so a cancelled payment keeps it.
-      const { url } = await createCheckoutSession({ items, checkout, observations });
-      window.location.href = url;
+      const order = await createOrder({ user, items, checkout, observations });
+      clearCart();
+      window.location.href = `#/pedido-confirmado?id=${order.id}`;
     } catch (requestError) {
-      setError(requestError.message || 'No fue posible iniciar el pago. Intenta de nuevo.');
+      setError(requestError.message || 'No fue posible enviar la solicitud. Intenta de nuevo.');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -60,10 +60,10 @@ export default function OrderSummaryPage() {
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Resumen de pedido</p>
-          <h1>Confirmar y pagar</h1>
+          <h1>Confirmar solicitud</h1>
           <p>
-            Revisa los productos y completa tus datos de entrega. Al continuar, irás a una página
-            de pago segura para completar la compra con tarjeta.
+            Revisa los productos seleccionados y completa los datos de entrega. Un agente de ventas
+            contactará al cliente para coordinar el pago y la entrega.
           </p>
         </div>
         <a className={styles.secondaryButton} href={isEmpty ? '#/catalogo' : '#/carrito'}>
@@ -184,7 +184,7 @@ export default function OrderSummaryPage() {
               disabled={isSubmitting}
               onClick={handleConfirmOrder}
             >
-              {isSubmitting ? 'Redirigiendo al pago...' : 'Ir al pago seguro'}
+              {isSubmitting ? 'Enviando solicitud...' : 'Enviar solicitud de pedido'}
             </button>
             {error && (
               <p className={styles.formError} role="alert">
@@ -192,7 +192,7 @@ export default function OrderSummaryPage() {
               </p>
             )}
             <p className={styles.catalogNotice}>
-              Procesamos el pago de forma segura con Stripe. No almacenamos los datos de tu tarjeta. Tu pedido quedará registrado para que un agente coordine la entrega.
+              Al enviar la solicitud, un agente de ventas la revisará y se pondrá en contacto contigo para coordinar el pago y la fecha de entrega.
             </p>
           </aside>
         </div>

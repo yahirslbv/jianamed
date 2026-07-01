@@ -1,30 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useCart } from '../context/CartContext.jsx';
 import { getLastOrderId, getOrderById } from '../services/orderService.js';
-import { confirmCheckoutSession } from '../services/paymentService.js';
 import styles from '../styles/App.module.css';
 
-export default function OrderConfirmationPage({ orderId, sessionId }) {
-  const { clearCart } = useCart();
+export default function OrderConfirmationPage({ orderId }) {
   const resolvedOrderId = orderId || getLastOrderId();
   const [order, setOrder] = useState(null);
-  const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId || sessionId));
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId));
 
   useEffect(() => {
     let isMounted = true;
 
     async function load() {
       try {
-        let loadedOrder = null;
-
-        if (sessionId) {
-          // Stripe just redirected back — confirm the payment and fetch the created order.
-          loadedOrder = await confirmCheckoutSession(sessionId);
-          if (loadedOrder) clearCart();
-        } else if (resolvedOrderId) {
-          loadedOrder = await getOrderById(resolvedOrderId);
-        }
-
+        const loadedOrder = await getOrderById(resolvedOrderId);
         if (isMounted) setOrder(loadedOrder);
       } catch {
         if (isMounted) setOrder(null);
@@ -33,7 +21,7 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
       }
     }
 
-    if (sessionId || resolvedOrderId) {
+    if (resolvedOrderId) {
       load();
     } else {
       setIsLoading(false);
@@ -42,19 +30,15 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
     return () => {
       isMounted = false;
     };
-    // clearCart is stable from context; intentionally excluded to avoid re-running on render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedOrderId, sessionId]);
-
-  const isPaid = order?.paymentStatus === 'PAID';
+  }, [resolvedOrderId]);
 
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
       <div className={styles.confirmationPanel}>
-        <p className={styles.eyebrow}>{isPaid ? 'Pago confirmado' : 'Pedido registrado'}</p>
-        <h1>{isPaid ? '¡Gracias! Tu pago fue recibido' : 'Pedido registrado'}</h1>
+        <p className={styles.eyebrow}>Solicitud enviada</p>
+        <h1>Solicitud de pedido registrada</h1>
         {isLoading ? (
-          <p>{sessionId ? 'Confirmando tu pago...' : 'Consultando el pedido...'}</p>
+          <p>Consultando el pedido creado...</p>
         ) : order ? (
           <>
             <dl className={styles.detailList}>
@@ -66,15 +50,9 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
                 <dt>Estado</dt>
                 <dd>{order.statusLabel || order.status}</dd>
               </div>
-              {order.paymentStatus === 'PAID' && (
-                <div>
-                  <dt>Pago</dt>
-                  <dd>✓ Pago recibido</dd>
-                </div>
-              )}
               {order.total !== undefined && (
                 <div>
-                  <dt>Total pagado</dt>
+                  <dt>Total estimado</dt>
                   <dd>
                     {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(order.total)}
                   </dd>
@@ -82,9 +60,7 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
               )}
             </dl>
             <p>
-              {isPaid
-                ? 'Recibimos tu pago correctamente. Un agente de ventas validará el surtido y coordinará la entrega de tu pedido.'
-                : 'Tu pedido fue registrado. Un agente de ventas lo revisará y se pondrá en contacto contigo para coordinar el pago y la entrega.'}
+              Tu solicitud fue registrada correctamente. Un agente de ventas la revisará y se pondrá en contacto contigo para coordinar el pago y la entrega.
             </p>
           </>
         ) : (
