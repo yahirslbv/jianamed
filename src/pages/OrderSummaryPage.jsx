@@ -24,7 +24,7 @@ function createCheckout(user) {
 
 export default function OrderSummaryPage() {
   const { user } = useAuth();
-  const { items, clearCart, getCartSubtotal, getCartDiscount, getCartTotal } = useCart();
+  const { items, getCartSubtotal, getCartDiscount, getCartTotal } = useCart();
   const [observations, setObservations] = useState('');
   const [checkout, setCheckout] = useState(() => createCheckout(user));
   const [error, setError] = useState('');
@@ -41,14 +41,12 @@ export default function OrderSummaryPage() {
     setError('');
 
     try {
-      // Creates a Stripe Checkout Session and redirects to Stripe's hosted payment page.
-      // The order is created in the DB only after payment is confirmed via webhook.
+      // Redirects to Stripe's hosted payment page. The cart is cleared only after the
+      // payment is confirmed (on the confirmation page), so a cancelled payment keeps it.
       const { url } = await createCheckoutSession({ items, checkout, observations });
-      clearCart();
       window.location.href = url;
     } catch (requestError) {
-      setError(requestError.message || 'No fue posible iniciar el proceso de pago.');
-    } finally {
+      setError(requestError.message || 'No fue posible iniciar el pago. Intenta de nuevo.');
       setIsSubmitting(false);
     }
   };
@@ -62,10 +60,10 @@ export default function OrderSummaryPage() {
       <div className={styles.privateHeader}>
         <div>
           <p className={styles.eyebrow}>Resumen de pedido</p>
-          <h1>Confirmar solicitud</h1>
+          <h1>Confirmar y pagar</h1>
           <p>
-            Revisa los productos seleccionados. Un agente de ventas validará la solicitud antes de
-            continuar con el proceso de compra.
+            Revisa los productos y completa tus datos de entrega. Al continuar, irás a una página
+            de pago segura para completar la compra con tarjeta.
           </p>
         </div>
         <a className={styles.secondaryButton} href={isEmpty ? '#/catalogo' : '#/carrito'}>
@@ -186,7 +184,7 @@ export default function OrderSummaryPage() {
               disabled={isSubmitting}
               onClick={handleConfirmOrder}
             >
-              {isSubmitting ? 'Redirigiendo a pago...' : 'Pagar pedido'}
+              {isSubmitting ? 'Redirigiendo al pago...' : 'Ir al pago seguro'}
             </button>
             {error && (
               <p className={styles.formError} role="alert">
@@ -194,7 +192,7 @@ export default function OrderSummaryPage() {
               </p>
             )}
             <p className={styles.catalogNotice}>
-              Serás redirigido a la página segura de pago de Stripe. Tu pedido se confirmará automáticamente al completar el pago.
+              Procesamos el pago de forma segura con Stripe. No almacenamos los datos de tu tarjeta. Tu pedido quedará registrado para que un agente coordine la entrega.
             </p>
           </aside>
         </div>

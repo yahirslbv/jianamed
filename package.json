@@ -33,7 +33,7 @@
     "preprod:check": "node scripts/preprod-check.js",
     "bootstrap:admin": "node scripts/bootstrap-admin.js",
     "seed:safe": "node scripts/seed-safe.js",
-    "test": "node --import ./server/tests/setup.js --test --test-concurrency=1 server/tests/money.test.js server/tests/orderHelpers.test.js server/tests/auth.test.js server/tests/catalog.test.js server/tests/orders.test.js server/tests/salesPeriods.test.js server/tests/security.test.js"
+    "test": "node --import ./server/tests/setup.js --test --test-concurrency=1 server/tests/money.test.js server/tests/orderHelpers.test.js server/tests/auth.test.js server/tests/catalog.test.js server/tests/orders.test.js server/tests/payments.test.js server/tests/salesPeriods.test.js server/tests/security.test.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -53,6 +53,17 @@ export async function createCheckoutSession({ lineItems, customerEmail, pendingC
 }
 
 /**
+ * Retrieves a Checkout Session by id so the success page can confirm payment
+ * directly (no dependency on the webhook reaching a public URL during development).
+ * @param {string} sessionId
+ * @returns {Promise<import('stripe').Stripe.Checkout.Session>}
+ */
+export async function retrieveCheckoutSession(sessionId) {
+  const stripe = getStripeClient();
+  return stripe.checkout.sessions.retrieve(sessionId);
+}
+
+/**
  * Verifies and constructs a Stripe webhook event from raw request body.
  * @param {Buffer} rawBody
  * @param {string} signature  value of the 'stripe-signature' header

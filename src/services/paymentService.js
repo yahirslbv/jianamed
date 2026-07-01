@@ -16,20 +16,25 @@ export async function createCheckoutSession({ items, checkout, observations }) {
 }
 
 /**
- * Polls for an order created by the Stripe webhook, identified by sessionId.
- * Retries up to `maxAttempts` times with `delayMs` between each.
+ * Confirms a Stripe Checkout Session after the redirect back to the app and returns
+ * the resulting order. The server verifies the payment and creates the order on the
+ * spot (so it works in local development without the webhook). Retries while the
+ * payment is still settling (HTTP 409).
  */
-export async function pollOrderBySessionId(sessionId, { maxAttempts = 5, delayMs = 1500 } = {}) {
+export async function confirmCheckoutSession(sessionId, { maxAttempts = 4, delayMs = 1500 } = {}) {
+  let lastError;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
     try {
-      const response = await apiClient(`/orders/by-session/${encodeURIComponent(sessionId)}`);
-      if (response?.order) return response.order;
-    } catch {
-      // 404 means the webhook hasn't fired yet — keep polling
+      const response = await apiClient('/payments/confirm', { method: 'POST', body: { sessionId } });
+      return response.order;
+    } catch (error) {
+      lastError = error;
+      // 409 — payment not settled yet; keep retrying. Any other error is terminal.
+      if (error.status !== 409) throw error;
     }
   }
-  return null;
+  throw lastError;
 }

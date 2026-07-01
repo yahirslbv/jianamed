@@ -2,7 +2,7 @@ import { Router } from 'express';
 import prisma from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { config } from '../env.js';
-import { createCheckoutSession, constructWebhookEvent } from '../services/stripe.js';
+import { createCheckoutSession, retrieveCheckoutSession, constructWebhookEvent } from '../services/stripe.js';
 import { getActiveOffers, getOfferApplication } from '../services/offers.js';
 import { calculateOrderTotals, calculateLineSubtotal } from '../utils/money.js';
 import { writeAuditLog } from '../services/audit.js';
@@ -12,6 +12,15 @@ import { logger } from '../services/logger.js';
 import { normalizeItems, getCheckoutSnapshot, nextOrderFolio } from '../utils/orderHelpers.js';
 
 const router = Router();
+
+// Stripe redirects the browser back to the app after payment. Use the actual
+// frontend origin (so it works in dev where the SPA runs on :5173, not the API
+// port), but only if it is a trusted origin; otherwise fall back to PUBLIC_APP_URL.
+function resolveAppOrigin(req) {
+  const origin = req.get('origin');
+  if (origin && config.frontendOrigins.includes(origin)) return origin;
+  return process.env.PUBLIC_APP_URL || config.frontendOrigins[0];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/payments/checkout-session
@@ -76,7 +85,7 @@ router.post('/payments/checkout-session', requireAuth, requireRole('client'), as
       },
     });
 
-    const appUrl = process.env.PUBLIC_APP_URL || `http://127.0.0.1:${process.env.PORT || 4000}`;
+    const appUrl = resolveAppOrigin(req);
 
     const stripeSession = await createCheckoutSession({
       lineItems: priceDetails.map((item) => ({
@@ -150,7 +159,7 @@ router.post('/payments/webhook', async (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    await handleCheckoutCompleted(session).catch((error) => {
+    await finalizeCheckoutSession(session).catch((error) => {
       // Log but don't fail the webhook response — Stripe retries on non-2xx
       logger.error('Error processing checkout.session.completed', {
         sessionId: session.id,
@@ -170,18 +179,26 @@ router.post('/payments/webhook', async (req, res) => {
   return res.json({ received: true });
 });
 
-async function handleCheckoutCompleted(session) {
+// Creates the paid order from its PendingCheckout. Idempotent and safe to call from
+// both the Stripe webhook and the success-page confirm endpoint: if the order already
+// exists (or is created concurrently), the existing order is returned. Returns the
+// order, or null when there is no matching pending checkout.
+// Exported for testing (the webhook passes the Stripe event's session object directly).
+export async function finalizeCheckoutSession(session) {
+  const alreadyCreated = await prisma.order.findUnique({
+    where: { stripeSessionId: session.id },
+    include: orderInclude,
+  });
+  if (alreadyCreated) return alreadyCreated;
+
   const pending = await prisma.pendingCheckout.findUnique({
     where: { stripeSessionId: session.id },
     include: { user: { include: { customer: true } } },
   });
 
   if (!pending) {
-    // Already processed (Stripe may retry the webhook)
-    const existing = await prisma.order.findUnique({ where: { stripeSessionId: session.id } });
-    if (existing) return; // idempotent — nothing to do
     logger.error('PendingCheckout not found for Stripe session', { sessionId: session.id });
-    return;
+    return null;
   }
 
   const { user } = pending;
@@ -269,13 +286,15 @@ async function handleCheckoutCompleted(session) {
 
     await tx.pendingCheckout.delete({ where: { id: pending.id } });
 
+    // Must use the transaction client (tx); the global client would deadlock against
+    // this transaction's write lock on SQLite and time out (Prisma P2028).
     await writeAuditLog({
       userId: user.id,
       action: 'CREATE',
       entity: 'Order',
       entityId: order.id,
       details: { folio: order.folio, stripeSession: session.id, paymentStatus: 'PAID' },
-    });
+    }, tx);
 
     return order;
   });
@@ -284,6 +303,54 @@ async function handleCheckoutCompleted(session) {
   if (createdOrder) {
     sendOrderConfirmation(serializeOrder(createdOrder)).catch(() => {});
   }
+  return createdOrder;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/payments/confirm
+// Called by the success page after Stripe redirects back. Verifies the session is
+// paid and creates the order immediately, so it works in local development without
+// the webhook needing a public URL. The webhook remains the backup for production
+// (e.g. if the customer closes the tab before the redirect completes).
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/payments/confirm', requireAuth, requireRole('client'), async (req, res, next) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId || typeof sessionId !== 'string') {
+      return res.status(400).json({ message: 'Falta el identificador de la sesión de pago.' });
+    }
+
+    let order = await prisma.order.findUnique({ where: { stripeSessionId: sessionId }, include: orderInclude });
+
+    if (!order) {
+      let session;
+      try {
+        session = await retrieveCheckoutSession(sessionId);
+      } catch {
+        return res.status(404).json({ message: 'No se encontró la sesión de pago.' });
+      }
+      if (session.payment_status !== 'paid') {
+        return res.status(409).json({ message: 'El pago aún no se ha confirmado. Si ya lo realizaste, espera unos segundos e intenta de nuevo.' });
+      }
+      try {
+        order = await finalizeCheckoutSession(session);
+      } catch (error) {
+        // Lost a race with the webhook — the order now exists, fetch it.
+        if (error.code !== 'P2002') throw error;
+        order = await prisma.order.findUnique({ where: { stripeSessionId: sessionId }, include: orderInclude });
+      }
+      if (!order) return res.status(404).json({ message: 'No se encontró la información del pedido.' });
+    }
+
+    // Clients may only confirm/see their own order.
+    if (req.user.role !== 'admin' && order.userId !== req.user.id) {
+      return res.status(404).json({ message: 'Pedido no encontrado.' });
+    }
+
+    return res.json({ order: serializeOrder(order) });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 export default router;

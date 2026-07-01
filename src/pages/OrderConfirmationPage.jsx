@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useCart } from '../context/CartContext.jsx';
 import { getLastOrderId, getOrderById } from '../services/orderService.js';
-import { pollOrderBySessionId } from '../services/paymentService.js';
+import { confirmCheckoutSession } from '../services/paymentService.js';
 import styles from '../styles/App.module.css';
 
 export default function OrderConfirmationPage({ orderId, sessionId }) {
+  const { clearCart } = useCart();
   const resolvedOrderId = orderId || getLastOrderId();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(Boolean(resolvedOrderId || sessionId));
@@ -16,8 +18,9 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
         let loadedOrder = null;
 
         if (sessionId) {
-          // Stripe just redirected back — poll until the webhook has created the order
-          loadedOrder = await pollOrderBySessionId(sessionId, { maxAttempts: 6, delayMs: 1500 });
+          // Stripe just redirected back — confirm the payment and fetch the created order.
+          loadedOrder = await confirmCheckoutSession(sessionId);
+          if (loadedOrder) clearCart();
         } else if (resolvedOrderId) {
           loadedOrder = await getOrderById(resolvedOrderId);
         }
@@ -39,15 +42,19 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
     return () => {
       isMounted = false;
     };
+    // clearCart is stable from context; intentionally excluded to avoid re-running on render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedOrderId, sessionId]);
+
+  const isPaid = order?.paymentStatus === 'PAID';
 
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
       <div className={styles.confirmationPanel}>
-        <p className={styles.eyebrow}>Pedido creado</p>
-        <h1>Solicitud de pedido enviada correctamente</h1>
+        <p className={styles.eyebrow}>{isPaid ? 'Pago confirmado' : 'Pedido registrado'}</p>
+        <h1>{isPaid ? '¡Gracias! Tu pago fue recibido' : 'Pedido registrado'}</h1>
         {isLoading ? (
-          <p>Consultando el pedido creado...</p>
+          <p>{sessionId ? 'Confirmando tu pago...' : 'Consultando el pedido...'}</p>
         ) : order ? (
           <>
             <dl className={styles.detailList}>
@@ -75,7 +82,9 @@ export default function OrderConfirmationPage({ orderId, sessionId }) {
               )}
             </dl>
             <p>
-              Tu pago fue procesado correctamente. Un agente de ventas validará el surtido y te notificará cuando tu pedido esté en camino.
+              {isPaid
+                ? 'Recibimos tu pago correctamente. Un agente de ventas validará el surtido y coordinará la entrega de tu pedido.'
+                : 'Tu pedido fue registrado. Un agente de ventas lo revisará y se pondrá en contacto contigo para coordinar el pago y la entrega.'}
             </p>
           </>
         ) : (
