@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { resolvePostLoginRoute } from '../utils/routeAccess.js';
 import styles from '../styles/App.module.css';
 
 export default function LoginPage({ redirectTo = '', navigate }) {
@@ -19,7 +20,7 @@ export default function LoginPage({ redirectTo = '', navigate }) {
     setIsSubmitting(false);
 
     if (result.ok) {
-      navigate(redirectTo || (result.user?.role === 'client' ? '/inicio-cliente' : result.user?.role === 'admin' ? '/catalogo' : '/cuenta'));
+      navigate(resolvePostLoginRoute(result.user?.role, redirectTo));
       return;
     }
 

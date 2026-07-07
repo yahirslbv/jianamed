@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import DashboardCarousel from '../components/DashboardCarousel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -30,15 +31,13 @@ export default function ClientDashboardPage() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([getProducts(), getActiveOffers(), getOrders()])
-      .then(([loadedProducts, loadedOffers, loadedOrders]) => {
+    // Each panel loads with whatever data resolves; a failed request only empties its own section.
+    Promise.allSettled([getProducts(), getActiveOffers(), getOrders()])
+      .then(([productsResult, offersResult, ordersResult]) => {
         if (!isMounted) return;
-        setProducts(loadedProducts);
-        setOffers(loadedOffers);
-        setOrders(loadedOrders);
-      })
-      .catch(() => {
-        // Individual destination pages remain available if a dashboard request fails.
+        if (productsResult.status === 'fulfilled') setProducts(productsResult.value);
+        if (offersResult.status === 'fulfilled') setOffers(offersResult.value);
+        if (ordersResult.status === 'fulfilled') setOrders(ordersResult.value);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -53,12 +52,14 @@ export default function ClientDashboardPage() {
     () => Array.from(new Set(products.map((product) => product.category))).filter(Boolean).slice(0, 6),
     [products],
   );
-  const featuredProducts = useMemo(
-    () => products.filter((product) => product.offer).slice(0, 3).concat(
-      products.filter((product) => !product.offer).slice(0, Math.max(0, 3 - products.filter((product) => product.offer).length)),
-    ),
-    [products],
-  );
+  const featuredProducts = useMemo(() => {
+    const available = products.filter(
+      (product) => product.availabilityStatus !== 'out' && product.isActive !== false,
+    );
+    return available.filter((product) => product.offer)
+      .concat(available.filter((product) => !product.offer))
+      .slice(0, 12);
+  }, [products]);
 
   return (
     <section className={`${styles.section} ${styles.softSection}`}>
@@ -153,16 +154,19 @@ export default function ClientDashboardPage() {
           </div>
           <a href="#/ofertas">Ver ofertas</a>
         </div>
-        <div className={styles.dashboardOfferStrip}>
-          {offers.slice(0, 3).map((offer) => (
-            <article key={offer.id}>
-              <span className={styles.offerTag}>{getDiscountLabel(offer)}</span>
-              <strong>{offer.title}</strong>
-              <small>{offer.scope.label}</small>
-            </article>
-          ))}
-          {!isLoading && !offers.length && <p className={styles.dashboardMuted}>No hay ofertas vigentes.</p>}
-        </div>
+        {offers.length ? (
+          <DashboardCarousel label="Ofertas activas" trackClassName={styles.dashboardOfferStrip}>
+            {offers.map((offer) => (
+              <article key={offer.id}>
+                <span className={styles.offerTag}>{getDiscountLabel(offer)}</span>
+                <strong>{offer.title}</strong>
+                <small>{offer.scope.label}</small>
+              </article>
+            ))}
+          </DashboardCarousel>
+        ) : (
+          !isLoading && <p className={styles.dashboardMuted}>No hay ofertas vigentes.</p>
+        )}
       </section>
 
       <section className={styles.dashboardSection}>
@@ -173,17 +177,20 @@ export default function ClientDashboardPage() {
           </div>
           <a href="#/catalogo">Explorar</a>
         </div>
-        <div className={styles.dashboardProductStrip}>
-          {featuredProducts.map((product) => (
-            <a href="#/catalogo" key={product.id}>
-              <span>{product.offer ? 'Oferta activa' : product.category}</span>
-              <strong>{product.name}</strong>
-              <small className={styles.dashboardProductMeta}>{product.activeIngredient || product.presentation}</small>
-              <small className={styles.dashboardProductPrice}>{product.offer ? 'Precio con oferta ' : 'Precio unitario '}{formatCurrencyMXN(product.price)}</small>
-            </a>
-          ))}
-          {!isLoading && !featuredProducts.length && <p className={styles.dashboardMuted}>No hay productos disponibles.</p>}
-        </div>
+        {featuredProducts.length ? (
+          <DashboardCarousel label="Productos con disponibilidad" trackClassName={styles.dashboardProductStrip}>
+            {featuredProducts.map((product) => (
+              <a href="#/catalogo" key={product.id}>
+                <span>{product.offer ? 'Oferta activa' : product.availability || 'Disponible'}</span>
+                <strong>{product.name}</strong>
+                <small className={styles.dashboardProductMeta}>{product.activeIngredient || product.presentation}</small>
+                <small className={styles.dashboardProductPrice}>{product.offer ? 'Precio con oferta ' : 'Precio unitario '}{formatCurrencyMXN(product.price)}</small>
+              </a>
+            ))}
+          </DashboardCarousel>
+        ) : (
+          !isLoading && <p className={styles.dashboardMuted}>No hay productos disponibles.</p>
+        )}
       </section>
 
       <p className={styles.dashboardNotice}>

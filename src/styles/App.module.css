@@ -347,6 +347,11 @@
   background: var(--color-background-soft);
 }
 
+.app[data-theme='dark'] .carouselArrow {
+  background: var(--color-surface);
+  color: var(--text);
+}
+
 .app[data-theme='dark'] .navLink,
 .app[data-theme='dark'] .reportFilters label,
 .app[data-theme='dark'] .orderSidePanel label,
@@ -939,11 +944,56 @@
   max-width: 1240px;
 }
 
-.dashboardOfferStrip,
-.dashboardProductStrip {
-  display: grid;
+.carousel {
+  position: relative;
+}
+
+.carouselTrack {
+  display: flex;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselArrow {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(20, 35, 70, 0.18);
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  font-size: 1.35rem;
+  height: 38px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: opacity 0.2s ease;
+  width: 38px;
+  z-index: 2;
+}
+
+.carouselArrowPrev {
+  left: -10px;
+}
+
+.carouselArrowNext {
+  right: -10px;
+}
+
+.carouselArrow:disabled {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .dashboardOfferStrip article,
@@ -952,9 +1002,11 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   display: grid;
+  flex: 0 0 clamp(220px, 30%, 320px);
   gap: 8px;
   min-height: 120px;
   padding: 14px;
+  scroll-snap-align: start;
 }
 
 .dashboardOfferStrip strong,
@@ -3578,8 +3630,6 @@ button:disabled {
   .productGrid,
   .offerGrid,
   .dashboardQuickGrid,
-  .dashboardOfferStrip,
-  .dashboardProductStrip,
   .branchGrid,
   .newsGrid,
   .detailList,
@@ -3588,6 +3638,11 @@ button:disabled {
   .laboratoryGrid,
   .accountGrid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboardOfferStrip article,
+  .dashboardProductStrip a {
+    flex-basis: min(260px, 82vw);
   }
 
   .hero h1,

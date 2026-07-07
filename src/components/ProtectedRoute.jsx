@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { getRoleHome } from '../utils/routeAccess.js';
 import styles from '../styles/App.module.css';
 
 export default function ProtectedRoute({ children, path, navigate, allowedRoles }) {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const isRoleBlocked = Boolean(
+    !isLoading && isAuthenticated && allowedRoles?.length && user && !allowedRoles.includes(user.role),
+  );
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -14,8 +18,12 @@ export default function ProtectedRoute({ children, path, navigate, allowedRoles 
     // The /cambiar-contrasena page itself is exempt to avoid an infinite redirect.
     if (!isLoading && isAuthenticated && user?.forcePasswordChange && path !== '/cambiar-contrasena') {
       navigate('/cambiar-contrasena');
+      return;
     }
-  }, [isAuthenticated, isLoading, navigate, path, user?.forcePasswordChange]);
+    if (isRoleBlocked) {
+      navigate(getRoleHome(user.role));
+    }
+  }, [isAuthenticated, isLoading, navigate, path, user?.forcePasswordChange, user?.role, isRoleBlocked]);
 
   if (isLoading) {
     return (
@@ -52,16 +60,14 @@ export default function ProtectedRoute({ children, path, navigate, allowedRoles 
     );
   }
 
-  if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
+  // Neutral gate while the redirect to the role home takes effect
+  if (isRoleBlocked) {
     return (
       <section className={styles.section}>
         <div className={styles.authGate}>
-          <p className={styles.eyebrow}>Acceso denegado</p>
-          <h1>No tienes permisos para esta sección</h1>
-          <p>Esta ruta está reservada para roles autorizados dentro del portal.</p>
-          <a className={styles.primaryButton} href={user.role === 'client' || user.role === 'admin' ? '#/catalogo' : '#/cuenta'}>
-            Volver a mi cuenta
-          </a>
+          <p className={styles.eyebrow}>Redirigiendo</p>
+          <h1>Esta sección no está disponible para tu perfil</h1>
+          <p>Te estamos llevando a tu página de inicio.</p>
         </div>
       </section>
     );
