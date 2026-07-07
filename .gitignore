@@ -6,6 +6,9 @@ dist/
 _push-*.bat
 _fix-*.bat
 _commit-*.bat
+_gitignore-*.bat
+# Configuración local de herramientas (Claude Code)
+.claude/
 _push-*.txt
 _fix-*.txt
 _commit-*.txt
@@ -34,3 +37,5 @@ logs/
 *.db
 server/uploads/products/*
 !server/uploads/products/.gitkeep
+# Catálogo generado — subir por el panel de admin, no al repo
+catalogo-importacion.csv
