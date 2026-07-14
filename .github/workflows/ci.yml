@@ -1,3 +1,9 @@
+# CI/CD — Tic Toc Pharma
+# Pipeline único: en cada push a main se valida, se prueba y —solo si todo
+# pasa— se despliega a Fly.io. En pull requests corre todo menos el deploy.
+#
+# Secret requerido: FLY_API_TOKEN (fly tokens create deploy -x 999999h)
+
 name: CI
 
 on:
@@ -11,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── Lint & build ─────────────────────────────────────────────────────────
+  # ─── Lint, validación y build ─────────────────────────────────────────────
   build:
     name: Lint & build
     runs-on: ubuntu-latest
@@ -27,6 +33,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check JS syntax (server)
+        run: |
+          find server -name "*.js" -not -path "*/node_modules/*" | xargs -I{} node --check {}
+
+      - name: Validate SQLite schema
+        run: npx prisma validate --schema server/prisma/schema.prisma
+
+      - name: Validate PostgreSQL schema
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+        run: npx prisma validate --schema server/prisma/postgresql/schema.prisma
 
       - name: Vite build (frontend)
         run: npm run build
@@ -97,48 +115,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── Deploy to production ─────────────────────────────────────────────────
+  # ─── Deploy a producción (Fly.io) ─────────────────────────────────────────
+  # Solo corre en push a main y únicamente si las pruebas y el build de la
+  # imagen pasaron. Su grupo de concurrencia propio evita cancelar un deploy
+  # a mitad de rollout: los deploys se encolan en lugar de interrumpirse.
   deploy:
-    name: Deploy to production
+    name: Deploy to Fly.io
     runs-on: ubuntu-latest
     needs: [test, docker]
     environment: production
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
-      # ── Option A: Railway ──────────────────────────────────────────────────
-      # Uncomment + set RAILWAY_TOKEN in GitHub → Settings → Secrets
-      # - name: Deploy to Railway
-      #   uses: railwayapp/railway-github-action@v0.1.0
-      #   with:
-      #     railway-token: ${{ secrets.RAILWAY_TOKEN }}
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      # ── Option B: Fly.io ───────────────────────────────────────────────────
-      # Uncomment + set FLY_API_TOKEN in GitHub → Settings → Secrets
-      # - uses: superfly/flyctl-actions/setup-flyctl@master
-      # - name: Deploy to Fly
-      #   run: flyctl deploy --remote-only
-      #   env:
-      #     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      # ── Option C: VPS via SSH ──────────────────────────────────────────────
-      # Set SSH_HOST, SSH_USER, SSH_KEY in GitHub → Settings → Secrets
-      # - name: SSH deploy
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USER }}
-      #     key: ${{ secrets.SSH_KEY }}
-      #     script: |
-      #       cd /srv/tic-toc-pharma
-      #       git pull origin main
-      #       docker compose -f docker-compose.production.yml up -d --build
-      #       docker compose -f docker-compose.production.yml exec app \
-      #         npx prisma migrate deploy \
-      #         --schema server/prisma/postgresql/schema.prisma
-
-      - name: Deployment placeholder
-        run: |
-          echo "Uncomment one deploy option in .github/workflows/ci.yml"
-          echo "Commit: ${{ github.sha }}"
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
