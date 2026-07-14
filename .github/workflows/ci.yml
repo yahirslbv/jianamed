@@ -60,6 +60,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm ci no genera el cliente Prisma (el schema no está en la ruta por
+      # defecto), y migrate deploy tampoco lo hace: sin este paso, cada test
+      # muere al importar @prisma/client.
+      - name: Prisma generate (SQLite – dev schema)
+        run: npx prisma generate --schema server/prisma/schema.prisma
+
       - name: Apply SQLite migrations
         run: npx prisma migrate deploy --schema server/prisma/schema.prisma
         env:
