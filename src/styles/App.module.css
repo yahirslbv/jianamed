@@ -5068,3 +5068,212 @@ button:disabled {
     font-size: 0.7rem;
   }
 }
+
+/* ─── Gestión de ofertas: formulario guiado ────────────────────────────────── */
+
+.offerSectionHint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: -4px 0 10px;
+}
+
+.offerOptional {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.offerChipGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.offerChip {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.offerChip:hover {
+  border-color: var(--secondary);
+}
+
+.offerChipActive {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: #fff;
+}
+
+.offerRangeSummary {
+  color: var(--secondary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin: 8px 0 0;
+}
+
+.offerActiveToggle {
+  align-items: center;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.offerPreview {
+  background: var(--color-surface);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.offerPreview h3 {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.offerPreviewHint,
+.offerPreviewCount {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 0;
+}
+
+.offerPreviewPrice {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.offerPreviewPrice span {
+  font-weight: 700;
+}
+
+.offerPreviewPrice s {
+  color: var(--muted);
+}
+
+.offerPreviewPrice strong {
+  color: var(--secondary);
+  font-size: 1.15rem;
+}
+
+.offerPreviewWarn {
+  color: var(--warning);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ─── Buscador de productos (combobox) ─────────────────────────────────────── */
+
+.productPicker {
+  position: relative;
+}
+
+.productPicker input {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 40px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.productPickerList {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 0.18);
+  list-style: none;
+  margin: 4px 0 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 30;
+}
+
+.productPickerOption {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.productPickerOption span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.productPickerOption small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.productPickerOptionActive {
+  background: color-mix(in srgb, var(--secondary) 14%, transparent);
+}
+
+.productPickerPrice {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.productPickerEmpty {
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 8px 10px;
+}
+
+.productPickerSelected {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.productPickerSelected span {
+  display: grid;
+  gap: 2px;
+}
+
+.productPickerSelected small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
